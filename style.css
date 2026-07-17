@@ -1,0 +1,377 @@
+@import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Crimson+Text:ital,wght@0,400;0,600;1,400&family=IM+Fell+English:ital@0;1&display=swap');
+
+:root {
+  --deep:   #111010;
+  --panel:  #1a1818;
+  --panel2: #211f1f;
+  --panel3: #2a2626;
+  --border: #332e2e;
+  --border2:#453e3e;
+  --gold:   #c9a84c;
+  --gold2:  #8a6d2f;
+  --glow:   #e8c96a;
+  --text:   #d9cdb8;
+  --muted:  #7a6e5a;
+  --dim:    #4a4238;
+  --green:  #4a7c4e;
+  --brown:  #3d2e1a;
+  --brownbg:#2a2218;
+  --sidebar:240px;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%}
+body{background:var(--deep);color:var(--text);font-family:'Crimson Text',Georgia,serif;font-size:16px;line-height:1.6}
+.hidden{display:none!important}
+.screen{min-height:100vh}
+
+/* ── LOGIN ── */
+.login-wrap{
+  min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;
+  padding:40px 20px;
+  background:linear-gradient(rgba(10,8,6,0.72),rgba(10,8,6,0.88)),
+    url('https://upload.wikimedia.org/wikipedia/commons/thumb/5/5a/Rembrandt_van_Rijn_-_Self-Portrait_-_Google_Art_Project.jpg/800px-Rembrandt_van_Rijn_-_Self-Portrait_-_Google_Art_Project.jpg') center/cover no-repeat;
+}
+.login-ornament{color:var(--gold2);letter-spacing:12px;font-size:11px;margin-bottom:24px}
+.login-title{font-family:'Cinzel',serif;font-size:3em;color:var(--gold);text-align:center;letter-spacing:5px;line-height:1.2;text-shadow:0 0 60px rgba(201,168,76,0.25);margin-bottom:8px}
+.login-sub{font-family:'IM Fell English',serif;font-style:italic;color:var(--muted);margin-bottom:32px;letter-spacing:1px;font-size:1.05em}
+.login-divider{width:260px;height:1px;background:linear-gradient(90deg,transparent,var(--border2),transparent);margin-bottom:32px}
+.pass-input{width:300px;background:rgba(26,24,24,0.9);border:1px solid var(--border2);color:var(--text);padding:13px 18px;font-family:'Crimson Text',serif;font-size:1.05em;border-radius:2px;margin-bottom:14px;text-align:center;letter-spacing:3px;outline:none;transition:border-color 0.2s}
+.pass-input:focus{border-color:var(--gold2)}
+.login-err{color:#c05050;font-size:0.85em;margin-top:10px;min-height:20px;font-style:italic}
+.login-frame{width:120px;height:150px;margin-bottom:28px;border:3px solid var(--gold2);box-shadow:0 0 30px rgba(201,168,76,0.15);object-fit:cover}
+
+/* ── APP ── */
+#app{display:flex;height:100vh;overflow:hidden}
+
+/* ── SIDEBAR ── */
+.sidebar{
+  width:var(--sidebar);background:var(--panel);border-right:1px solid var(--border);
+  display:flex;flex-direction:column;align-items:center;padding:0 0 20px;
+  flex-shrink:0;overflow-y:auto;
+}
+.sidebar-hero{
+  width:100%;height:110px;
+  background:linear-gradient(rgba(10,8,6,0.3),rgba(10,8,6,0.7)),
+    url('https://upload.wikimedia.org/wikipedia/commons/thumb/e/ec/Mona_Lisa%2C_by_Leonardo_da_Vinci%2C_from_C2RMF_retouched.jpg/400px-Mona_Lisa%2C_by_Leonardo_da_Vinci%2C_from_C2RMF_retouched.jpg') center/cover;
+  display:flex;flex-direction:column;align-items:center;justify-content:flex-end;
+  padding-bottom:8px;flex-shrink:0;
+}
+.sidebar-moon{font-size:1.6em;margin-bottom:2px}
+.sidebar-title{font-family:'Cinzel',serif;font-size:0.62em;letter-spacing:4px;color:var(--gold);text-transform:uppercase}
+.nav-section{width:100%;padding:14px 14px 4px;font-family:'Cinzel',serif;font-size:0.55em;letter-spacing:4px;color:var(--gold2);text-transform:uppercase}
+.nav-link{
+  display:flex;align-items:center;gap:10px;padding:9px 18px;
+  color:var(--muted);cursor:pointer;font-size:0.88em;letter-spacing:0.5px;
+  transition:all 0.15s;border-left:2px solid transparent;text-decoration:none;width:100%;
+}
+.nav-link:hover{color:var(--text);background:var(--panel2)}
+.nav-link.active{color:var(--gold);border-left-color:var(--gold);background:var(--panel2)}
+.nav-icon{font-size:1em;width:20px;text-align:center}
+.btn-logout{
+  background:transparent;border:1px solid var(--border2);color:var(--muted);
+  font-family:'Cinzel',serif;font-size:0.6em;letter-spacing:2px;padding:7px 14px;
+  cursor:pointer;text-transform:uppercase;border-radius:2px;transition:all 0.18s;margin-top:16px;
+}
+.btn-logout:hover{border-color:var(--gold2);color:var(--gold)}
+
+/* ── CONTENT ── */
+.content{flex:1;overflow-y:auto;background:var(--deep)}
+.content::-webkit-scrollbar{width:4px}
+.content::-webkit-scrollbar-track{background:var(--panel)}
+.content::-webkit-scrollbar-thumb{background:var(--border2);border-radius:2px}
+
+/* ── PAGE COVER ── */
+.page-cover{
+  width:100%;height:180px;object-fit:cover;display:block;
+  background:linear-gradient(rgba(0,0,0,0.2),rgba(17,16,16,1)),
+    url('https://upload.wikimedia.org/wikipedia/commons/thumb/4/4b/The_Night_Watch_by_Rembrandt_van_Rijn%2C_1642.jpg/1200px-The_Night_Watch_by_Rembrandt_van_Rijn%2C_1642.jpg') center 30%/cover;
+}
+.cover-img{width:100%;height:180px;object-fit:cover;object-position:center 30%;display:block}
+.cover-fade{
+  position:relative;margin-top:-60px;height:60px;
+  background:linear-gradient(transparent,var(--deep));
+  pointer-events:none;
+}
+
+/* ── PAGE INNER ── */
+.page-inner{padding:0 36px 60px}
+.page{display:none}
+.page.active{display:block}
+.page-header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:28px;padding-bottom:18px;border-bottom:1px solid var(--border)}
+.page-title{font-family:'Cinzel',serif;font-size:1.5em;color:var(--gold);letter-spacing:3px;font-weight:400}
+.page-sub{font-family:'IM Fell English',serif;font-style:italic;color:var(--muted);font-size:0.95em;margin-top:4px}
+
+/* ── BUTTONS ── */
+.btn-gold{
+  background:transparent;border:1px solid var(--gold2);color:var(--gold);
+  font-family:'Cinzel',serif;font-size:0.68em;letter-spacing:2px;
+  padding:9px 18px;cursor:pointer;text-transform:uppercase;border-radius:2px;transition:all 0.18s;
+}
+.btn-gold:hover{background:var(--gold2);color:var(--deep)}
+.btn-gold.small{padding:6px 13px;font-size:0.62em}
+.btn-ghost{
+  background:transparent;border:1px solid var(--border2);color:var(--muted);
+  font-family:'Cinzel',serif;font-size:0.62em;letter-spacing:2px;
+  padding:8px 14px;cursor:pointer;text-transform:uppercase;border-radius:2px;transition:all 0.18s;
+}
+.btn-ghost:hover{border-color:var(--gold2);color:var(--gold)}
+
+/* ── SECTION HEADING (like Reading Nook brown headers) ── */
+.sec-heading{
+  background:var(--brownbg);border-left:3px solid var(--gold2);
+  padding:8px 14px;margin:28px 0 14px;
+  font-family:'IM Fell English',serif;font-style:italic;
+  color:var(--text);font-size:1.05em;letter-spacing:0.5px;
+}
+
+/* ── CALLOUT (Notion-style) ── */
+.callout{
+  background:var(--panel2);border-left:3px solid var(--gold2);
+  border-radius:3px;padding:16px 18px;margin-bottom:14px;
+  position:relative;
+}
+.callout-icon{font-size:1.2em;margin-bottom:6px;display:block}
+.callout-title{font-family:'Cinzel',serif;font-size:0.72em;letter-spacing:3px;color:var(--gold2);text-transform:uppercase;margin-bottom:8px}
+.callout-body{font-size:0.9em;color:var(--text);line-height:1.7}
+.callout-body b{color:var(--gold)}
+.callout-body .arrow{color:var(--gold2)}
+
+/* ── DASHBOARD TWO-COL ── */
+.dash-cols{display:grid;grid-template-columns:280px 1fr;gap:20px;align-items:start}
+.dash-left{display:flex;flex-direction:column;gap:14px}
+.dash-right{display:flex;flex-direction:column;gap:20px}
+
+/* ── PROFILE PORTRAIT ── */
+.portrait-wrap{position:relative;width:160px;margin:0 auto 14px;display:block}
+.portrait-frame{
+  width:160px;height:190px;object-fit:cover;
+  border:4px solid var(--gold2);
+  box-shadow:0 0 0 1px var(--dim),0 8px 32px rgba(0,0,0,0.6);
+  display:block;
+}
+.portrait-name{
+  text-align:center;font-family:'Cinzel',serif;font-size:0.75em;
+  letter-spacing:3px;color:var(--gold);text-transform:uppercase;margin-top:8px;
+}
+
+/* ── XP BAR ── */
+.xp-bar-wrap{margin:10px 0}
+.xp-bar-labels{display:flex;justify-content:space-between;font-size:0.78em;color:var(--muted);margin-bottom:5px}
+.xp-bar-bg{height:7px;background:var(--deep);border:1px solid var(--border2);border-radius:1px;overflow:hidden;margin-bottom:4px}
+.xp-bar-fill{height:100%;background:linear-gradient(90deg,var(--gold2),var(--glow));transition:width 1s ease;box-shadow:0 0 8px rgba(201,168,76,0.3);width:0%}
+.xp-next-label{font-size:0.75em;color:var(--muted);font-style:italic}
+
+/* ── STATS ROW ── */
+.stats-row{display:flex;gap:0;border:1px solid var(--border);border-radius:2px;overflow:hidden;margin-top:4px}
+.stat-box{flex:1;text-align:center;padding:10px 4px;border-right:1px solid var(--border)}
+.stat-box:last-child{border-right:none}
+.stat-v{font-family:'Cinzel',serif;font-size:1.4em;color:var(--glow);display:block}
+.stat-l{font-size:0.6em;color:var(--muted);letter-spacing:1px;text-transform:uppercase}
+
+/* ── STREAK DOTS ── */
+.streak-row{display:flex;gap:6px;margin-top:6px;justify-content:center}
+.sdot{
+  width:30px;height:30px;border-radius:50%;background:var(--panel3);
+  border:1px solid var(--border2);display:flex;align-items:center;justify-content:center;
+  font-size:0.6em;color:var(--muted);font-family:'Cinzel',serif;transition:all 0.2s;
+}
+.sdot.lit{background:#6b2e00;border-color:#c4680a;color:#ffb347;box-shadow:0 0 8px rgba(196,104,10,0.4)}
+
+/* ── LANG GRID ── */
+.lang-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:6px}
+.lang-item{
+  background:var(--panel3);border:1px solid var(--border);border-radius:2px;
+  padding:9px 5px;text-align:center;transition:all 0.18s;
+}
+.lang-item.active{border-color:var(--gold2)}
+.lang-item.locked{opacity:0.28}
+.lang-flag{font-size:1.3em;margin-bottom:2px}
+.lang-nm{font-size:0.58em;color:var(--gold);letter-spacing:0.5px;text-transform:uppercase}
+.lang-st{font-size:0.56em;color:var(--muted);margin-top:1px}
+.lang-mini-bar{height:2px;background:var(--deep);margin-top:5px;overflow:hidden}
+.lang-mini-fill{height:100%;background:var(--gold2)}
+
+/* ── QUEST CARDS ── */
+.quest-card{
+  background:var(--panel);border:1px solid var(--border);border-radius:2px;
+  padding:13px 16px;display:flex;align-items:center;gap:13px;
+  margin-bottom:7px;cursor:pointer;transition:all 0.18s;
+}
+.quest-card:hover:not(.locked):not(.done){border-color:var(--gold2);background:var(--panel2)}
+.quest-card.locked{opacity:0.3;cursor:not-allowed}
+.quest-card.done{border-color:var(--green);opacity:0.55}
+.quest-ico{font-size:1.2em;width:28px;text-align:center;flex-shrink:0}
+.quest-info{flex:1}
+.quest-name{color:var(--gold);font-size:0.88em;letter-spacing:1px;margin-bottom:2px}
+.quest-desc{color:var(--muted);font-size:0.78em;font-style:italic}
+.quest-badge{display:inline-block;font-size:0.58em;padding:1px 5px;border:1px solid var(--border2);color:var(--muted);letter-spacing:1px;text-transform:uppercase;margin-top:3px;border-radius:2px}
+.quest-xp{color:var(--gold2);font-size:0.78em;white-space:nowrap;font-family:'Cinzel',serif}
+.quest-section-title{font-family:'Cinzel',serif;font-size:0.65em;letter-spacing:4px;color:var(--gold2);text-transform:uppercase;margin:22px 0 10px;display:flex;align-items:center;gap:12px}
+.quest-section-title::after{content:'';flex:1;height:1px;background:var(--border)}
+
+/* ── RITUAL ── */
+.ritual-item{display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--border);cursor:pointer;font-size:0.86em;transition:color 0.15s}
+.ritual-item:last-child{border-bottom:none}
+.ritual-item:hover{color:var(--gold)}
+.rchk{width:15px;height:15px;border:1px solid var(--gold2);border-radius:2px;flex-shrink:0;display:flex;align-items:center;justify-content:center;transition:all 0.15s}
+.rchk.on{background:var(--gold2)}
+.rchk.on::after{content:'✓';color:var(--deep);font-size:10px}
+.ritual-item.done{color:var(--muted);text-decoration:line-through}
+
+/* ── RANK LADDER ── */
+.rank-row{display:flex;align-items:center;gap:9px;padding:7px 0;border-bottom:1px solid rgba(51,46,46,0.6);font-size:0.84em}
+.rank-row:last-child{border-bottom:none}
+.rank-dot{width:6px;height:6px;border-radius:50%;background:var(--dim);flex-shrink:0}
+.rank-dot.done{background:var(--gold)}
+.rank-dot.now{background:var(--glow);box-shadow:0 0 6px var(--glow);animation:pulse 2s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:0.3}}
+.rank-row.now .rrn{color:var(--gold)}
+.rank-row.done .rrn{color:var(--muted)}
+.rank-row.future .rrn{color:var(--dim)}
+.rr-num{width:20px;color:var(--muted);font-size:0.78em}
+.rrn{flex:1}
+.rr-xp{color:var(--gold2);font-size:0.72em}
+
+/* ── VOCAB ── */
+.filter-bar{display:flex;gap:8px;margin-bottom:18px;flex-wrap:wrap}
+.filter-select,.filter-input{background:var(--panel2);border:1px solid var(--border2);color:var(--text);padding:8px 11px;border-radius:2px;font-family:'Crimson Text',serif;font-size:0.9em;outline:none;transition:border-color 0.18s}
+.filter-select:focus,.filter-input:focus{border-color:var(--gold2)}
+.filter-input{flex:1;min-width:160px}
+.vocab-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:11px}
+.word-card{background:var(--panel);border:1px solid var(--border);border-radius:2px;padding:15px;transition:all 0.18s;cursor:default;position:relative}
+.word-card:hover{border-color:var(--border2)}
+.word-arabic{font-size:1.7em;color:var(--gold);margin-bottom:4px;direction:rtl;line-height:1.3}
+.word-meaning{font-size:0.9em;color:var(--text);margin-bottom:2px}
+.word-pronun{font-size:0.78em;color:var(--muted);font-style:italic;margin-bottom:6px}
+.word-lang-badge,.mastery-badge{font-size:0.58em;padding:2px 6px;border:1px solid var(--border2);color:var(--muted);letter-spacing:1px;text-transform:uppercase;border-radius:2px;display:inline-block;margin-right:4px}
+.mastery-New{background:rgba(74,124,78,0.15);color:#6ab56e;border-color:rgba(74,124,78,0.3)}
+.mastery-Learning{background:rgba(201,168,76,0.1);color:var(--gold);border-color:rgba(201,168,76,0.3)}
+.mastery-Reviewing{background:rgba(180,100,20,0.15);color:#d4820a;border-color:rgba(180,100,20,0.3)}
+.mastery-Mastered{background:rgba(100,50,150,0.15);color:#b088d0;border-color:rgba(100,50,150,0.3)}
+.word-delete{position:absolute;top:8px;right:8px;background:transparent;border:none;color:var(--dim);cursor:pointer;font-size:0.85em;transition:color 0.15s}
+.word-delete:hover{color:#c05050}
+.empty-state{text-align:center;padding:60px 20px;color:var(--muted);font-style:italic}
+.empty-state .big{font-size:2.2em;margin-bottom:10px}
+
+/* ── FLASHCARDS ── */
+.fc-controls{display:flex;gap:10px;margin-bottom:22px;flex-wrap:wrap}
+.fc-area{display:flex;flex-direction:column;align-items:center;padding:20px 0}
+.fc-empty{color:var(--muted);font-style:italic;text-align:center;padding:60px}
+.fc-card-wrap{width:100%;max-width:480px}
+.fc-progress{color:var(--muted);font-size:0.78em;margin-bottom:16px;text-align:center;letter-spacing:1px}
+.fc-card{
+  background:var(--panel);border:1px solid var(--border2);border-radius:2px;
+  padding:50px 36px;text-align:center;min-height:220px;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  cursor:pointer;transition:all 0.25s;margin-bottom:18px;position:relative;overflow:hidden;
+}
+.fc-card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,var(--gold2),transparent)}
+.fc-card:hover{border-color:var(--gold2)}
+.fc-hint{font-size:0.68em;color:var(--muted);letter-spacing:2px;text-transform:uppercase;margin-bottom:14px}
+.fc-word{font-size:2.2em;color:var(--gold);margin-bottom:8px;line-height:1.2}
+.fc-meaning{font-size:1.1em;color:var(--text);display:none}
+.fc-pronun{font-size:0.84em;color:var(--muted);font-style:italic;display:none;margin-top:6px}
+.fc-card.flipped .fc-meaning,.fc-card.flipped .fc-pronun{display:block}
+.fc-card.flipped .fc-hint{display:none}
+.fc-btns{display:flex;gap:10px}
+.fc-btn{flex:1;padding:10px;border:1px solid var(--border2);background:transparent;color:var(--text);font-family:'Cinzel',serif;font-size:0.65em;letter-spacing:2px;text-transform:uppercase;cursor:pointer;border-radius:2px;transition:all 0.18s}
+.fc-btn.wrong{border-color:#7c2a2a;color:#c05050}
+.fc-btn.wrong:hover{background:rgba(124,42,42,0.2)}
+.fc-btn.right{border-color:var(--green);color:#6ab56e}
+.fc-btn.right:hover{background:rgba(74,124,78,0.2)}
+.fc-done{text-align:center;padding:40px;color:var(--text)}
+.fc-done .big{font-size:2em;color:var(--gold);margin-bottom:12px;display:block}
+
+/* ── QURAN ── */
+.quran-stats{display:flex;gap:12px;margin-bottom:22px;flex-wrap:wrap}
+.qstat{background:var(--panel);border:1px solid var(--border);border-radius:2px;padding:13px 18px;text-align:center;flex:1;min-width:90px}
+.qstat-val{font-family:'Cinzel',serif;font-size:1.7em;color:var(--gold);display:block}
+.qstat-lbl{font-size:0.65em;color:var(--muted);text-transform:uppercase;letter-spacing:1px}
+.surah-card{background:var(--panel);border:1px solid var(--border);border-radius:2px;padding:12px 16px;margin-bottom:5px;display:flex;align-items:center;gap:13px;transition:all 0.18s}
+.surah-card:hover{border-color:var(--border2)}
+.surah-num{font-family:'Cinzel',serif;font-size:0.72em;color:var(--gold2);width:26px;text-align:center;flex-shrink:0}
+.surah-info{flex:1}
+.surah-name{color:var(--gold);font-size:0.88em;letter-spacing:0.5px}
+.surah-arabic{font-size:1em;color:var(--text);direction:rtl}
+.surah-meta{font-size:0.72em;color:var(--muted)}
+.surah-checks{display:flex;gap:8px}
+.schk{display:flex;flex-direction:column;align-items:center;gap:3px;cursor:pointer}
+.schk-box{width:20px;height:20px;border:1px solid var(--border2);border-radius:2px;display:flex;align-items:center;justify-content:center;transition:all 0.18s;font-size:11px}
+.schk-box.on{background:var(--gold2);border-color:var(--gold);color:var(--deep)}
+.schk-lbl{font-size:0.52em;color:var(--muted);letter-spacing:0.5px;text-transform:uppercase;white-space:nowrap}
+
+/* ── TAJWEED ── */
+.tajweed-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(290px,1fr));gap:13px}
+.taj-card{background:var(--panel);border:1px solid var(--border);border-radius:2px;padding:17px;transition:all 0.18s}
+.taj-card:hover{border-color:var(--border2)}
+.taj-header{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:8px}
+.taj-name{font-family:'Cinzel',serif;color:var(--gold);font-size:0.88em;letter-spacing:1px}
+.taj-arabic{font-size:1.05em;color:var(--text);direction:rtl;margin-top:2px}
+.taj-category{font-size:0.58em;padding:2px 6px;border:1px solid var(--border2);color:var(--muted);letter-spacing:1px;text-transform:uppercase;border-radius:2px;white-space:nowrap}
+.taj-desc{font-size:0.83em;color:var(--text);margin-bottom:10px;line-height:1.6}
+.taj-example{background:var(--panel3);border-left:2px solid var(--gold2);padding:8px 11px;font-size:0.78em;color:var(--muted);margin-bottom:10px;font-style:italic}
+.taj-mastered{display:flex;align-items:center;gap:8px;cursor:pointer;font-size:0.72em;color:var(--muted)}
+.taj-chk{width:15px;height:15px;border:1px solid var(--border2);border-radius:2px;display:flex;align-items:center;justify-content:center}
+.taj-chk.on{background:var(--gold2);color:var(--deep);font-size:10px}
+
+/* ── SESSIONS ── */
+.session-card{background:var(--panel);border:1px solid var(--border);border-radius:2px;padding:14px 18px;margin-bottom:7px;display:flex;align-items:center;gap:15px}
+.sess-date{font-size:0.72em;color:var(--muted);text-align:center;min-width:46px}
+.sess-day{font-family:'Cinzel',serif;font-size:1.6em;color:var(--gold);display:block}
+.sess-info{flex:1}
+.sess-title{color:var(--text);font-size:0.9em;margin-bottom:2px}
+.sess-meta{font-size:0.75em;color:var(--muted)}
+.sess-xp{font-family:'Cinzel',serif;color:var(--gold);font-size:0.88em}
+
+/* ── RESOURCES ── */
+.resources-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:13px}
+.res-card{background:var(--panel);border:1px solid var(--border);border-radius:2px;padding:15px;transition:all 0.18s}
+.res-card:hover{border-color:var(--gold2)}
+.res-header{display:flex;align-items:center;gap:9px;margin-bottom:7px}
+.res-type{font-size:1.2em}
+.res-name{color:var(--gold);font-size:0.88em;letter-spacing:0.5px;flex:1}
+.res-badges{display:flex;gap:5px;margin-bottom:7px;flex-wrap:wrap}
+.res-badge{font-size:0.58em;padding:2px 6px;border:1px solid var(--border2);color:var(--muted);letter-spacing:1px;text-transform:uppercase;border-radius:2px}
+.res-notes{font-size:0.8em;color:var(--muted);font-style:italic}
+.res-link{display:inline-block;margin-top:9px;font-size:0.72em;color:var(--gold2);text-decoration:none}
+.res-link:hover{color:var(--gold)}
+
+/* ── MODAL ── */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.88);z-index:100;display:flex;align-items:center;justify-content:center}
+.modal{background:var(--panel);border:1px solid var(--gold2);border-radius:2px;padding:26px;width:90%;max-width:420px;max-height:90vh;overflow-y:auto;position:relative}
+.modal::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,var(--gold),transparent)}
+.modal-title{font-family:'Cinzel',serif;color:var(--gold);font-size:0.88em;letter-spacing:2px;margin-bottom:18px;font-weight:400}
+.modal-label{display:block;font-size:0.68em;color:var(--muted);letter-spacing:1px;text-transform:uppercase;margin-bottom:4px;margin-top:12px}
+.modal-label:first-of-type{margin-top:0}
+.modal-input{width:100%;background:var(--deep);border:1px solid var(--border2);color:var(--text);padding:9px 11px;border-radius:2px;font-family:'Crimson Text',serif;font-size:1em;outline:none;transition:border-color 0.18s}
+.modal-input:focus{border-color:var(--gold2)}
+textarea.modal-input{resize:vertical}
+.modal-btns{display:flex;gap:9px;justify-content:flex-end;margin-top:18px}
+
+/* ── TOAST ── */
+.toast{position:fixed;bottom:22px;right:22px;background:var(--panel2);border:1px solid var(--gold2);color:var(--gold);font-family:'Cinzel',serif;font-size:0.72em;letter-spacing:1px;padding:11px 18px;border-radius:2px;z-index:200;transform:translateY(80px);opacity:0;transition:all 0.35s;pointer-events:none}
+.toast.show{transform:translateY(0);opacity:1}
+
+/* ── SEE ALL ── */
+.see-all{display:block;margin-top:11px;font-size:0.76em;color:var(--gold2);cursor:pointer;text-decoration:none;font-style:italic}
+.see-all:hover{color:var(--gold)}
+
+/* ── QUEST PREVIEW ── */
+.qpi{display:flex;align-items:center;gap:9px;padding:7px 0;border-bottom:1px solid var(--border);font-size:0.84em}
+.qpi:last-child{border-bottom:none}
+.qpi-name{flex:1;color:var(--text)}
+.qpi-xp{color:var(--gold2);font-size:0.78em}
+
+/* ── RESPONSIVE ── */
+@media(max-width:900px){
+  .dash-cols{grid-template-columns:1fr}
+  .lang-grid{grid-template-columns:repeat(5,1fr)}
+}
+@media(max-width:640px){
+  .sidebar{width:56px}
+  .sidebar-title,.nav-link span:last-child,.btn-logout,.nav-section{display:none}
+  .nav-link{justify-content:center;padding:11px}
+  .page-inner{padding:0 14px 40px}
+  .dash-cols{grid-template-columns:1fr}
+  .lang-grid{grid-template-columns:repeat(3,1fr)}
+}
