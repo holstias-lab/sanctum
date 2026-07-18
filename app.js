@@ -829,8 +829,21 @@ function showPage(name) {
   playSound('click');
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
   document.querySelectorAll('.nav-link').forEach(l=>l.classList.remove('active'));
-  document.getElementById(`page-${name}`).classList.add('active');
-  document.querySelector(`[data-page="${name}"]`)?.classList.add('active');
+  const pg = document.getElementById('page-'+name);
+  if(pg) pg.classList.add('active');
+  const lk = document.querySelector('[data-page="'+name+'"]');
+  if(lk) lk.classList.add('active');
+  // Re-render the specific page every time it's opened
+  try {
+    if(name==='quests') renderQuests();
+    else if(name==='vocab') renderVocab();
+    else if(name==='flashcards') { const fc=document.getElementById('fcArea'); if(fc&&fc.innerHTML.trim()==='') fc.innerHTML='<div class="fc-empty">Select a language above and hit Start.</div>'; }
+    else if(name==='quran') renderQuran();
+    else if(name==='tajweed') renderTajweed();
+    else if(name==='sessions') renderSessions();
+    else if(name==='resources') renderResources();
+    else if(name==='pomodoro') renderPom();
+  } catch(e) { console.log('Page render error:', e); }
 }
 
 // ── MODALS ────────────────────────────────────────────────────────────────────
