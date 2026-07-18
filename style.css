@@ -491,6 +491,43 @@ body.edit-mode [data-edit-cover]:hover {
 .word-card { animation:fadeInUp 0.3s ease both; }
 .surah-card:hover { background:var(--panel2); }
 
+/* ── POMODORO ── */
+.pom-wrap { display:flex; flex-direction:column; align-items:center; gap:24px; padding:20px 0; }
+.pom-modes { display:flex; gap:8px; flex-wrap:wrap; justify-content:center; }
+.pom-mode-btn { background:var(--panel2); border:1px solid var(--border2); color:var(--muted); font-family:'Cinzel',serif; font-size:0.65em; letter-spacing:1px; padding:8px 14px; cursor:pointer; border-radius:2px; transition:all 0.18s; }
+.pom-mode-btn:hover,.pom-mode-btn.active { border-color:var(--gold2); color:var(--gold); background:var(--panel3); }
+.pom-ring-wrap { position:relative; width:220px; height:220px; display:flex; align-items:center; justify-content:center; }
+.pom-svg { position:absolute; top:0; left:0; width:100%; height:100%; }
+.pom-center { text-align:center; z-index:1; }
+.pom-mode-label { font-size:0.72em; color:var(--gold2); letter-spacing:2px; text-transform:uppercase; margin-bottom:6px; }
+.pom-display { font-family:'Cinzel',serif; font-size:2.8em; color:var(--gold); letter-spacing:3px; text-shadow:0 0 30px rgba(201,168,76,0.3); }
+.pom-cycles { font-size:0.75em; color:var(--muted); margin-top:4px; }
+.pom-controls { display:flex; gap:12px; }
+.pom-btn-start { background:transparent; border:1px solid var(--gold); color:var(--gold); font-family:'Cinzel',serif; font-size:0.78em; letter-spacing:2px; padding:12px 28px; cursor:pointer; border-radius:2px; transition:all 0.2s; text-transform:uppercase; }
+.pom-btn-start:hover { background:var(--gold); color:var(--deep); }
+.pom-btn-reset { background:transparent; border:1px solid var(--border2); color:var(--muted); font-family:'Cinzel',serif; font-size:0.72em; letter-spacing:2px; padding:12px 20px; cursor:pointer; border-radius:2px; transition:all 0.2s; text-transform:uppercase; }
+.pom-btn-reset:hover { border-color:var(--gold2); color:var(--gold); }
+.pom-session-info { width:100%; }
+
+/* ── XP POP ── */
+.xp-pop { position:fixed; z-index:999; font-family:'Cinzel',serif; font-size:1.1em; color:var(--glow); text-shadow:0 0 20px rgba(232,201,106,0.8); pointer-events:none; animation:xpFloat 1.2s ease-out forwards; white-space:nowrap; }
+@keyframes xpFloat { 0%{transform:translateY(0) translateX(-50%);opacity:1} 100%{transform:translateY(-80px) translateX(-50%);opacity:0} }
+
+/* ── ANIMATIONS ── */
+@keyframes fadeInUp { from{opacity:0;transform:translateY(16px)} to{opacity:1;transform:translateY(0)} }
+@keyframes fadeIn { from{opacity:0} to{opacity:1} }
+@keyframes shake { 0%,100%{transform:translateX(0)} 25%{transform:translateX(-8px)} 75%{transform:translateX(8px)} }
+@keyframes questPop { 0%{transform:scale(1)} 50%{transform:scale(1.02)} 100%{transform:scale(1)} }
+@keyframes glowPulse { 0%,100%{box-shadow:none} 50%{box-shadow:0 0 20px rgba(201,168,76,0.2)} }
+
+.page.active { animation:fadeIn 0.3s ease; }
+.callout { animation:fadeInUp 0.4s ease; }
+.quest-anim:hover { animation:questPop 0.2s ease; }
+.shake { animation:shake 0.4s ease; }
+.taj-card.mastered { border-color:var(--gold2); animation:glowPulse 2s infinite; }
+.word-card { animation:fadeInUp 0.3s ease both; }
+.surah-card:hover { background:var(--panel2); }
+
 /* ── EDIT MODE ── */
 .edit-toggle-btn { position:fixed; top:14px; right:20px; z-index:300; background:var(--panel2); border:1px solid var(--border2); color:var(--muted); font-family:'Cinzel',serif; font-size:0.62em; letter-spacing:2px; padding:7px 14px; cursor:pointer; text-transform:uppercase; border-radius:2px; transition:all 0.18s; }
 .edit-toggle-btn:hover { border-color:var(--gold2); color:var(--gold); }

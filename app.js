@@ -246,6 +246,7 @@ function renderPom() {
   // Ring progress
   const total = pomMode==='work' ? POM_WORK : pomMode==='short' ? POM_SHORT : POM_LONG;
   const pct = pomSeconds / total;
+  const cd = document.getElementById('pomCyclesDisp'); if(cd) cd.textContent = pomCycles;
   const ring = document.getElementById('pomRing');
   if (ring) {
     const r = 54, circ = 2*Math.PI*r;
@@ -296,26 +297,44 @@ async function init() {
 
 async function loadState() {
   try {
-    const {data} = await sb.from('sanctum_state').select('*').eq('key','main').single();
-    if (data) {
+    const {data, error} = await sb.from('sanctum_state').select('*').eq('key','main').single();
+    if (data && !error) {
       const saved = JSON.parse(data.value);
       S = {...S, ...saved};
       if (saved.custom) S.custom = {...DEFAULT_CUSTOM, ...saved.custom};
       if (saved.custom?.quests) S.custom.quests = saved.custom.quests;
       if (saved.custom?.ritualItems) S.custom.ritualItems = saved.custom.ritualItems;
     }
-  } catch(e) {}
+  } catch(e) { console.log('State load error:', e); }
+
   try {
-    const {data} = await sb.from('sanctum_words').select('*').order('created_at',{ascending:false});
-    if (data && data.length > 0) S.words = data;
-    else {
-      // Seed default words for new users
-      const {data:seeded} = await sb.from('sanctum_words').insert(DEFAULT_WORDS).select();
-      if (seeded) S.words = seeded;
+    const {data, error} = await sb.from('sanctum_words').select('*').order('created_at',{ascending:false});
+    if (!error && data && data.length > 0) {
+      S.words = data;
+    } else if (!error && data && data.length === 0) {
+      // First time — seed starter words
+      try {
+        const {data:seeded} = await sb.from('sanctum_words').insert(DEFAULT_WORDS).select();
+        if (seeded) S.words = seeded;
+      } catch(e2) { S.words = DEFAULT_WORDS.map((w,i)=>({...w,id:'local-'+i,created_at:new Date().toISOString()})); }
+    } else {
+      // DB error — use defaults locally so page still renders
+      S.words = DEFAULT_WORDS.map((w,i)=>({...w,id:'local-'+i,created_at:new Date().toISOString()}));
     }
-  } catch(e) {}
-  try {const {data}=await sb.from('sanctum_sessions').select('*').order('created_at',{ascending:false});if(data)S.sessions=data;}catch(e){}
-  try {const {data}=await sb.from('sanctum_resources').select('*').order('created_at',{ascending:false});if(data)S.resources=data;}catch(e){}
+  } catch(e) {
+    console.log('Words load error:', e);
+    S.words = DEFAULT_WORDS.map((w,i)=>({...w,id:'local-'+i,created_at:new Date().toISOString()}));
+  }
+
+  try {
+    const {data, error} = await sb.from('sanctum_sessions').select('*').order('created_at',{ascending:false});
+    if (!error && data) S.sessions = data;
+  } catch(e) { console.log('Sessions load error:', e); }
+
+  try {
+    const {data, error} = await sb.from('sanctum_resources').select('*').order('created_at',{ascending:false});
+    if (!error && data) S.resources = data;
+  } catch(e) { console.log('Resources load error:', e); }
 }
 
 async function saveState() {
@@ -480,11 +499,12 @@ async function deleteRitualItem(i) {
 
 // ── RENDER ALL ────────────────────────────────────────────────────────────────
 function renderAll() {
-  renderProfile(); renderStreak(); renderLangGrid();
-  renderQuestsPreview(); renderRitual(); renderRankLadder();
-  renderQuests(); renderVocab(); renderQuran();
-  renderTajweed(); renderSessions(); renderResources();
-  if(editMode) attachEditListeners();
+  const fns = [renderProfile, renderStreak, renderLangGrid,
+    renderQuestsPreview, renderRitual, renderRankLadder,
+    renderQuests, renderVocab, renderQuran,
+    renderTajweed, renderSessions, renderResources];
+  fns.forEach(fn => { try { fn(); } catch(e) { console.log(fn.name, 'error:', e); } });
+  if(editMode) try { attachEditListeners(); } catch(e) {}
 }
 
 // ── PROFILE ───────────────────────────────────────────────────────────────────
