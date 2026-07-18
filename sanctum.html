@@ -1,0 +1,1371 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>The Polyglot Sanctum</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600&family=Crimson+Text:ital,wght@0,400;0,600;1,400&display=swap');
+:root{--deep:#0f0d0a;--panel:#181410;--panel2:#201c16;--panel3:#28221a;--border:#332b1e;--border2:#4a3e2a;--gold:#c9a84c;--gold2:#8a6d2f;--glow:#e8c96a;--text:#d4c4a0;--muted:#7a6a4a;--dim:#4a3e28;--green:#4a7c4e;--sidebar:220px}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;background:var(--deep);color:var(--text);font-family:'Crimson Text',Georgia,serif;font-size:16px}
+.hidden{display:none!important}
+
+/* LOGIN */
+#loginScreen{min-height:100vh;display:flex;align-items:center;justify-content:center;background:linear-gradient(rgba(0,0,0,0.75),rgba(0,0,0,0.9)),url('https://images.unsplash.com/photo-1481627834876-b7833e8f5570?w=1400&q=80') center/cover}
+.login-box{text-align:center;padding:40px 20px;max-width:400px;width:100%}
+.login-orn{color:var(--gold2);letter-spacing:10px;font-size:11px;margin-bottom:20px}
+.login-img{width:130px;height:160px;object-fit:cover;border:3px solid var(--gold2);margin-bottom:20px;display:block;margin-left:auto;margin-right:auto}
+.login-title{font-family:'Cinzel',serif;font-size:2.2em;color:var(--gold);letter-spacing:4px;margin-bottom:6px}
+.login-sub{font-style:italic;color:var(--muted);margin-bottom:28px}
+.login-line{width:240px;height:1px;background:linear-gradient(90deg,transparent,var(--border2),transparent);margin:0 auto 28px}
+.pass-input{width:280px;background:rgba(24,20,16,0.95);border:1px solid var(--border2);color:var(--text);padding:12px 16px;font-family:'Crimson Text',serif;font-size:1em;border-radius:2px;margin-bottom:12px;text-align:center;letter-spacing:2px;outline:none;display:block;margin-left:auto;margin-right:auto}
+.pass-input:focus{border-color:var(--gold2)}
+.login-err{color:#c05050;font-size:0.85em;margin-top:8px;min-height:20px;font-style:italic}
+
+/* APP */
+#app{display:flex;height:100vh;overflow:hidden}
+
+/* SIDEBAR */
+.sidebar{width:var(--sidebar);background:var(--panel);border-right:1px solid var(--border);display:flex;flex-direction:column;flex-shrink:0;overflow-y:auto}
+.sb-hero{height:100px;background:linear-gradient(rgba(0,0,0,0.4),rgba(0,0,0,0.7)),url('https://images.unsplash.com/photo-1578662996442-48f60103fc96?w=400&q=80') center/cover;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;padding-bottom:10px;flex-shrink:0}
+.sb-moon{font-size:1.5em}
+.sb-title{font-family:'Cinzel',serif;font-size:0.6em;letter-spacing:4px;color:var(--gold);text-transform:uppercase}
+.nav-sec{padding:14px 16px 4px;font-family:'Cinzel',serif;font-size:0.52em;letter-spacing:4px;color:var(--gold2);text-transform:uppercase}
+.nav-a{display:flex;align-items:center;gap:10px;padding:9px 18px;color:var(--muted);cursor:pointer;font-size:0.88em;border-left:2px solid transparent;transition:all 0.15s;text-decoration:none;width:100%}
+.nav-a:hover{color:var(--text);background:var(--panel2)}
+.nav-a.on{color:var(--gold);border-left-color:var(--gold);background:var(--panel2)}
+.sb-leave{margin:auto 0 16px;background:transparent;border:1px solid var(--border2);color:var(--muted);font-family:'Cinzel',serif;font-size:0.6em;letter-spacing:2px;padding:7px 14px;cursor:pointer;text-transform:uppercase;border-radius:2px;align-self:center;transition:all 0.18s}
+.sb-leave:hover{border-color:var(--gold2);color:var(--gold)}
+
+/* CONTENT */
+.content{flex:1;overflow-y:auto;background:var(--deep)}
+.content::-webkit-scrollbar{width:4px}
+.content::-webkit-scrollbar-thumb{background:var(--border2)}
+
+/* PAGES */
+.page{display:none;animation:fadeIn 0.3s ease}
+.page.on{display:block}
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+@keyframes fadeUp{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
+@keyframes xpFloat{0%{opacity:1;transform:translateY(0) translateX(-50%)}100%{opacity:0;transform:translateY(-70px) translateX(-50%)}}
+@keyframes shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-8px)}75%{transform:translateX(8px)}}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:0.4}}
+
+.cover{width:100%;height:160px;background-size:cover!important;background-position:center!important}
+.pi{padding:24px 32px 60px}
+
+/* PAGE HEADER */
+.ph{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:24px;padding-bottom:16px;border-bottom:1px solid var(--border)}
+.pt{font-family:'Cinzel',serif;font-size:1.4em;color:var(--gold);letter-spacing:3px;font-weight:400}
+.ps{font-style:italic;color:var(--muted);font-size:0.9em;margin-top:4px}
+
+/* BUTTONS */
+.btn{background:transparent;border:1px solid var(--gold2);color:var(--gold);font-family:'Cinzel',serif;font-size:0.68em;letter-spacing:2px;padding:9px 18px;cursor:pointer;text-transform:uppercase;border-radius:2px;transition:all 0.18s}
+.btn:hover{background:var(--gold2);color:var(--deep)}
+.btn.sm{padding:6px 12px;font-size:0.6em}
+.btn.ghost{border-color:var(--border2);color:var(--muted)}
+.btn.ghost:hover{border-color:var(--gold2);color:var(--gold)}
+
+/* SECTION HEADING */
+.sh{background:#1e1810;border-left:3px solid var(--gold2);padding:8px 14px;margin:24px 0 12px;font-style:italic;color:var(--text);font-size:1em}
+
+/* CALLOUT */
+.co{background:var(--panel2);border-left:3px solid var(--gold2);border-radius:2px;padding:16px 18px;margin-bottom:14px;animation:fadeUp 0.4s ease}
+.co-icon{font-size:1.2em;margin-bottom:5px;display:block}
+.co-title{font-family:'Cinzel',serif;font-size:0.65em;letter-spacing:3px;color:var(--gold2);text-transform:uppercase;margin-bottom:8px}
+.co-body{font-size:0.9em;line-height:1.8}
+.co-body b{color:var(--gold)}
+.arrow{color:var(--gold2)}
+
+/* DASHBOARD */
+.dash-cols{display:grid;grid-template-columns:260px 1fr;gap:18px;align-items:start}
+.dash-l{display:flex;flex-direction:column;gap:12px}
+.dash-r{display:flex;flex-direction:column;gap:18px}
+.portrait-wrap{width:150px;margin:0 auto 12px;display:block}
+.portrait-img{width:150px;height:180px;object-fit:cover;border:3px solid var(--gold2);box-shadow:0 0 0 1px var(--dim),0 8px 28px rgba(0,0,0,0.6);display:block;cursor:pointer}
+.p-name{text-align:center;font-family:'Cinzel',serif;font-size:0.75em;letter-spacing:3px;color:var(--gold);text-transform:uppercase;margin-top:6px;cursor:pointer}
+.p-rank{text-align:center;font-family:'Cinzel',serif;font-size:0.85em;color:var(--glow);margin-bottom:4px}
+.p-rankn{text-align:center;font-size:0.72em;color:var(--muted);margin-bottom:14px}
+.xp-labels{display:flex;justify-content:space-between;font-size:0.78em;color:var(--muted);margin-bottom:5px}
+.xp-bg{height:8px;background:var(--deep);border:1px solid var(--border2);border-radius:1px;overflow:hidden;margin-bottom:4px}
+.xp-fill{height:100%;background:linear-gradient(90deg,var(--gold2),var(--glow));transition:width 0.8s ease;box-shadow:0 0 8px rgba(201,168,76,0.3);width:0%}
+.xp-next{font-size:0.75em;color:var(--muted);font-style:italic;margin-bottom:14px}
+.stats-row{display:flex;border:1px solid var(--border);border-radius:2px;overflow:hidden}
+.sbox{flex:1;text-align:center;padding:10px 4px;border-right:1px solid var(--border)}
+.sbox:last-child{border-right:none}
+.sv{font-family:'Cinzel',serif;font-size:1.4em;color:var(--glow);display:block}
+.sl{font-size:0.6em;color:var(--muted);letter-spacing:1px;text-transform:uppercase}
+
+/* STREAK */
+.sdots{display:flex;gap:6px;margin-top:6px;justify-content:center;flex-wrap:wrap}
+.sdot{width:30px;height:30px;border-radius:50%;background:var(--panel3);border:1px solid var(--border2);display:flex;align-items:center;justify-content:center;font-size:0.58em;color:var(--muted);font-family:'Cinzel',serif;transition:all 0.2s}
+.sdot.lit{background:#6b2e00;border-color:#c4680a;color:#ffb347;box-shadow:0 0 8px rgba(196,104,10,0.4)}
+
+/* RANK LADDER */
+.rrow{display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid rgba(51,43,30,0.6);font-size:0.83em}
+.rrow:last-child{border-bottom:none}
+.rdot{width:6px;height:6px;border-radius:50%;background:var(--dim);flex-shrink:0}
+.rdot.done{background:var(--gold)}
+.rdot.now{background:var(--glow);box-shadow:0 0 5px var(--glow);animation:pulse 2s infinite}
+.rrow.now .rlabel{color:var(--gold)}
+.rrow.done .rlabel{color:var(--muted)}
+.rrow.future .rlabel{color:var(--dim)}
+.rnum{width:20px;color:var(--muted);font-size:0.78em}
+.rlabel{flex:1}
+.rxp{color:var(--gold2);font-size:0.72em}
+
+/* LANG GRID */
+.lang-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:6px}
+.lang-item{background:var(--panel3);border:1px solid var(--border);border-radius:2px;padding:9px 4px;text-align:center;transition:all 0.18s}
+.lang-item.active{border-color:var(--gold2)}
+.lang-item.locked{opacity:0.28}
+.lf{font-size:1.3em;margin-bottom:2px}
+.ln{font-size:0.58em;color:var(--gold);letter-spacing:0.5px;text-transform:uppercase}
+.lst{font-size:0.55em;color:var(--muted);margin-top:1px}
+.lbar{height:2px;background:var(--deep);margin-top:5px;overflow:hidden}
+.lbar-fill{height:100%;background:var(--gold2)}
+
+/* QUEST PREVIEW */
+.qpi{display:flex;align-items:center;gap:9px;padding:7px 0;border-bottom:1px solid var(--border);font-size:0.84em}
+.qpi:last-child{border-bottom:none}
+.qpi-n{flex:1;color:var(--text)}
+.qpi-x{color:var(--gold2);font-size:0.78em}
+.see-all{display:block;margin-top:10px;font-size:0.76em;color:var(--gold2);cursor:pointer;font-style:italic}
+.see-all:hover{color:var(--gold)}
+
+/* RITUAL */
+.rit-item{display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--border);cursor:pointer;font-size:0.85em;transition:color 0.15s}
+.rit-item:last-child{border-bottom:none}
+.rit-item:hover{color:var(--gold)}
+.rchk{width:15px;height:15px;border:1px solid var(--gold2);border-radius:2px;flex-shrink:0;display:flex;align-items:center;justify-content:center;transition:all 0.15s}
+.rchk.on{background:var(--gold2)}
+.rchk.on::after{content:'✓';color:var(--deep);font-size:10px}
+.rit-item.done{color:var(--muted);text-decoration:line-through}
+
+/* POMODORO */
+.pom-wrap{display:flex;flex-direction:column;align-items:center;gap:20px;padding:20px 0}
+.pom-modes{display:flex;gap:8px;flex-wrap:wrap;justify-content:center}
+.pom-mode-btn{background:var(--panel2);border:1px solid var(--border2);color:var(--muted);font-family:'Cinzel',serif;font-size:0.62em;letter-spacing:1px;padding:8px 14px;cursor:pointer;border-radius:2px;transition:all 0.18s}
+.pom-mode-btn:hover,.pom-mode-btn.active{border-color:var(--gold2);color:var(--gold);background:var(--panel3)}
+.pom-ring-wrap{position:relative;width:210px;height:210px;display:flex;align-items:center;justify-content:center}
+.pom-svg{position:absolute;top:0;left:0;width:100%;height:100%}
+.pom-center{text-align:center;z-index:1}
+.pom-mlabel{font-size:0.68em;color:var(--gold2);letter-spacing:2px;text-transform:uppercase;margin-bottom:4px}
+.pom-disp{font-family:'Cinzel',serif;font-size:2.6em;color:var(--gold);letter-spacing:2px;text-shadow:0 0 20px rgba(201,168,76,0.3)}
+.pom-cyc{font-size:0.72em;color:var(--muted);margin-top:3px}
+.pom-btns{display:flex;gap:10px}
+.pom-start{background:transparent;border:1px solid var(--gold);color:var(--gold);font-family:'Cinzel',serif;font-size:0.75em;letter-spacing:2px;padding:11px 26px;cursor:pointer;border-radius:2px;transition:all 0.2s;text-transform:uppercase}
+.pom-start:hover{background:var(--gold);color:var(--deep)}
+.pom-reset{background:transparent;border:1px solid var(--border2);color:var(--muted);font-family:'Cinzel',serif;font-size:0.7em;letter-spacing:2px;padding:11px 18px;cursor:pointer;border-radius:2px;transition:all 0.2s;text-transform:uppercase}
+.pom-reset:hover{border-color:var(--gold2);color:var(--gold)}
+
+/* QUESTS */
+.qsec-title{font-family:'Cinzel',serif;font-size:0.65em;letter-spacing:4px;color:var(--gold2);text-transform:uppercase;margin:20px 0 10px;display:flex;align-items:center;gap:10px}
+.qsec-title::after{content:'';flex:1;height:1px;background:var(--border)}
+.qcard{background:var(--panel);border:1px solid var(--border);border-radius:2px;padding:13px 16px;display:flex;align-items:center;gap:13px;margin-bottom:7px;cursor:pointer;transition:all 0.18s}
+.qcard:hover:not(.locked):not(.done){border-color:var(--gold2);background:var(--panel2);transform:translateY(-1px)}
+.qcard.locked{opacity:0.3;cursor:not-allowed}
+.qcard.done{border-color:var(--green);opacity:0.55}
+.q-ico{font-size:1.2em;width:28px;text-align:center;flex-shrink:0}
+.q-info{flex:1}
+.q-name{color:var(--gold);font-size:0.88em;letter-spacing:1px;margin-bottom:2px}
+.q-desc{color:var(--muted);font-size:0.78em;font-style:italic}
+.q-badge{display:inline-block;font-size:0.58em;padding:1px 5px;border:1px solid var(--border2);color:var(--muted);letter-spacing:1px;text-transform:uppercase;margin-top:3px;border-radius:2px}
+.q-xp{color:var(--gold2);font-size:0.78em;font-family:'Cinzel',serif;white-space:nowrap}
+
+/* VOCAB */
+.filter-bar{display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap}
+.fsel,.finp{background:var(--panel2);border:1px solid var(--border2);color:var(--text);padding:8px 11px;border-radius:2px;font-family:'Crimson Text',serif;font-size:0.9em;outline:none;transition:border-color 0.18s}
+.fsel:focus,.finp:focus{border-color:var(--gold2)}
+.finp{flex:1;min-width:140px}
+.vocab-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:10px}
+.wcard{background:var(--panel);border:1px solid var(--border);border-radius:2px;padding:14px;position:relative;animation:fadeUp 0.3s ease}
+.wcard:hover{border-color:var(--border2)}
+.w-arabic{font-size:1.7em;color:var(--gold);margin-bottom:4px;direction:rtl;line-height:1.3}
+.w-meaning{font-size:0.9em;color:var(--text);margin-bottom:2px}
+.w-pronun{font-size:0.78em;color:var(--muted);font-style:italic}
+.w-badges{margin-top:8px;display:flex;gap:4px;flex-wrap:wrap}
+.wbadge{font-size:0.58em;padding:2px 6px;border:1px solid var(--border2);color:var(--muted);letter-spacing:1px;text-transform:uppercase;border-radius:2px}
+.m-New{background:rgba(74,124,78,0.15);color:#6ab56e;border-color:rgba(74,124,78,0.3)}
+.m-Learning{background:rgba(201,168,76,0.1);color:var(--gold);border-color:rgba(201,168,76,0.3)}
+.m-Reviewing{background:rgba(180,100,20,0.15);color:#d4820a;border-color:rgba(180,100,20,0.3)}
+.m-Mastered{background:rgba(100,50,150,0.15);color:#b088d0;border-color:rgba(100,50,150,0.3)}
+.w-del{position:absolute;top:8px;right:8px;background:transparent;border:none;color:var(--dim);cursor:pointer;font-size:0.85em;transition:color 0.15s}
+.w-del:hover{color:#c05050}
+.empty{text-align:center;padding:60px 20px;color:var(--muted);font-style:italic}
+.empty .big{font-size:2em;margin-bottom:10px}
+
+/* FLASHCARDS */
+.fc-area{display:flex;flex-direction:column;align-items:center;padding:20px 0}
+.fc-empty{color:var(--muted);font-style:italic;text-align:center;padding:60px}
+.fc-wrap{width:100%;max-width:460px}
+.fc-prog{color:var(--muted);font-size:0.78em;text-align:center;margin-bottom:14px;letter-spacing:1px}
+.fc-card{background:var(--panel);border:1px solid var(--border2);border-radius:2px;padding:46px 32px;text-align:center;min-height:210px;display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;transition:all 0.25s;margin-bottom:16px;position:relative;overflow:hidden}
+.fc-card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,var(--gold2),transparent)}
+.fc-card:hover{border-color:var(--gold2)}
+.fc-hint{font-size:0.65em;color:var(--muted);letter-spacing:2px;text-transform:uppercase;margin-bottom:12px}
+.fc-word{font-size:2.2em;color:var(--gold);margin-bottom:8px;line-height:1.2}
+.fc-meaning{font-size:1.1em;color:var(--text);display:none}
+.fc-pronun{font-size:0.82em;color:var(--muted);font-style:italic;display:none;margin-top:5px}
+.fc-card.flipped .fc-meaning,.fc-card.flipped .fc-pronun{display:block}
+.fc-card.flipped .fc-hint{display:none}
+.fc-btns{display:flex;gap:10px}
+.fc-btn{flex:1;padding:10px;border:1px solid var(--border2);background:transparent;color:var(--text);font-family:'Cinzel',serif;font-size:0.62em;letter-spacing:2px;text-transform:uppercase;cursor:pointer;border-radius:2px;transition:all 0.18s}
+.fc-btn.wrong{border-color:#7c2a2a;color:#c05050}
+.fc-btn.wrong:hover{background:rgba(124,42,42,0.2)}
+.fc-btn.right{border-color:var(--green);color:#6ab56e}
+.fc-btn.right:hover{background:rgba(74,124,78,0.2)}
+.fc-done{text-align:center;padding:40px;color:var(--text)}
+.fc-done .big{font-size:2em;color:var(--gold);margin-bottom:12px;display:block}
+
+/* QURAN */
+.q-stats{display:flex;gap:10px;margin-bottom:20px;flex-wrap:wrap}
+.qstat{background:var(--panel);border:1px solid var(--border);border-radius:2px;padding:12px 16px;text-align:center;flex:1;min-width:80px}
+.qstat-v{font-family:'Cinzel',serif;font-size:1.6em;color:var(--gold);display:block}
+.qstat-l{font-size:0.62em;color:var(--muted);text-transform:uppercase;letter-spacing:1px}
+.surah-card{background:var(--panel);border:1px solid var(--border);border-radius:2px;padding:11px 15px;margin-bottom:5px;display:flex;align-items:center;gap:12px;transition:all 0.18s}
+.surah-card:hover{border-color:var(--border2);background:var(--panel2)}
+.s-num{font-family:'Cinzel',serif;font-size:0.7em;color:var(--gold2);width:26px;text-align:center;flex-shrink:0}
+.s-info{flex:1}
+.s-name{color:var(--gold);font-size:0.87em;letter-spacing:0.5px}
+.s-arabic{font-size:1em;color:var(--text);direction:rtl}
+.s-meta{font-size:0.7em;color:var(--muted)}
+.s-checks{display:flex;gap:8px}
+.schk{display:flex;flex-direction:column;align-items:center;gap:3px;cursor:pointer}
+.schk-box{width:20px;height:20px;border:1px solid var(--border2);border-radius:2px;display:flex;align-items:center;justify-content:center;transition:all 0.18s;font-size:11px;color:transparent}
+.schk-box.on{background:var(--gold2);border-color:var(--gold);color:var(--deep)}
+.schk-lbl{font-size:0.5em;color:var(--muted);letter-spacing:0.5px;text-transform:uppercase;white-space:nowrap}
+
+/* TAJWEED */
+.taj-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:12px}
+.taj-card{background:var(--panel);border:1px solid var(--border);border-radius:2px;padding:16px;transition:all 0.18s}
+.taj-card:hover{border-color:var(--border2)}
+.taj-card.mastered{border-color:var(--gold2)}
+.taj-hdr{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:8px}
+.taj-name{font-family:'Cinzel',serif;color:var(--gold);font-size:0.87em;letter-spacing:1px}
+.taj-arabic{font-size:1em;color:var(--text);direction:rtl;margin-top:2px}
+.taj-cat{font-size:0.57em;padding:2px 5px;border:1px solid var(--border2);color:var(--muted);letter-spacing:1px;text-transform:uppercase;border-radius:2px;white-space:nowrap}
+.taj-desc{font-size:0.82em;color:var(--text);margin-bottom:8px;line-height:1.6}
+.taj-ex{background:var(--panel3);border-left:2px solid var(--gold2);padding:7px 10px;font-size:0.76em;color:var(--muted);margin-bottom:9px;font-style:italic}
+.taj-m{display:flex;align-items:center;gap:8px;cursor:pointer;font-size:0.72em;color:var(--muted)}
+.taj-chk{width:15px;height:15px;border:1px solid var(--border2);border-radius:2px;display:flex;align-items:center;justify-content:center;font-size:10px;color:transparent}
+.taj-chk.on{background:var(--gold2);color:var(--deep);border-color:var(--gold)}
+
+/* SESSIONS */
+.sess-card{background:var(--panel);border:1px solid var(--border);border-radius:2px;padding:13px 17px;margin-bottom:7px;display:flex;align-items:center;gap:14px}
+.sess-date{font-size:0.7em;color:var(--muted);text-align:center;min-width:44px}
+.sess-day{font-family:'Cinzel',serif;font-size:1.5em;color:var(--gold);display:block}
+.sess-info{flex:1}
+.sess-title{color:var(--text);font-size:0.88em;margin-bottom:2px}
+.sess-meta{font-size:0.73em;color:var(--muted)}
+.sess-xp{font-family:'Cinzel',serif;color:var(--gold);font-size:0.87em}
+
+/* RESOURCES */
+.res-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:12px}
+.res-card{background:var(--panel);border:1px solid var(--border);border-radius:2px;padding:14px;transition:all 0.18s}
+.res-card:hover{border-color:var(--gold2)}
+.res-hdr{display:flex;align-items:center;gap:9px;margin-bottom:7px}
+.res-type{font-size:1.2em}
+.res-name{color:var(--gold);font-size:0.87em;flex:1}
+.res-badges{display:flex;gap:5px;margin-bottom:7px;flex-wrap:wrap}
+.res-badge{font-size:0.57em;padding:2px 5px;border:1px solid var(--border2);color:var(--muted);letter-spacing:1px;text-transform:uppercase;border-radius:2px}
+.res-notes{font-size:0.8em;color:var(--muted);font-style:italic}
+.res-link{display:inline-block;margin-top:8px;font-size:0.72em;color:var(--gold2);text-decoration:none}
+.res-link:hover{color:var(--gold)}
+
+/* MODAL */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.88);z-index:100;display:flex;align-items:center;justify-content:center}
+.modal{background:var(--panel);border:1px solid var(--gold2);border-radius:2px;padding:24px;width:90%;max-width:400px;max-height:90vh;overflow-y:auto;position:relative}
+.modal::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,var(--gold),transparent)}
+.modal-title{font-family:'Cinzel',serif;color:var(--gold);font-size:0.87em;letter-spacing:2px;margin-bottom:16px;font-weight:400}
+.mlabel{display:block;font-size:0.65em;color:var(--muted);letter-spacing:1px;text-transform:uppercase;margin-bottom:4px;margin-top:10px}
+.mlabel:first-of-type{margin-top:0}
+.minput{width:100%;background:var(--deep);border:1px solid var(--border2);color:var(--text);padding:9px 11px;border-radius:2px;font-family:'Crimson Text',serif;font-size:1em;outline:none;transition:border-color 0.18s}
+.minput:focus{border-color:var(--gold2)}
+textarea.minput{resize:vertical}
+.mbtns{display:flex;gap:9px;justify-content:flex-end;margin-top:16px}
+
+/* TOAST */
+.toast{position:fixed;bottom:20px;right:20px;background:var(--panel2);border:1px solid var(--gold2);color:var(--gold);font-family:'Cinzel',serif;font-size:0.7em;letter-spacing:1px;padding:10px 18px;border-radius:2px;z-index:200;transform:translateY(80px);opacity:0;transition:all 0.35s;pointer-events:none}
+.toast.show{transform:translateY(0);opacity:1}
+
+/* XP POP */
+.xp-pop{position:fixed;z-index:999;font-family:'Cinzel',serif;font-size:1.1em;color:var(--glow);text-shadow:0 0 20px rgba(232,201,106,0.8);pointer-events:none;animation:xpFloat 1.2s ease-out forwards;white-space:nowrap}
+
+/* EDIT */
+.edit-btn{position:fixed;top:12px;right:16px;z-index:300;background:var(--panel2);border:1px solid var(--border2);color:var(--muted);font-family:'Cinzel',serif;font-size:0.6em;letter-spacing:2px;padding:7px 13px;cursor:pointer;text-transform:uppercase;border-radius:2px;transition:all 0.18s}
+.edit-btn:hover{border-color:var(--gold2);color:var(--gold)}
+.edit-btn.on{border-color:var(--gold);color:var(--gold);background:rgba(201,168,76,0.1)}
+body.edit [data-editable]:hover,[data-edit-img].edit-active:hover,[data-edit-cover].edit-active:hover{outline:2px dashed var(--gold2)!important;outline-offset:3px;cursor:pointer!important}
+.epop{position:fixed;z-index:500;background:var(--panel);border:1px solid var(--gold2);border-radius:3px;padding:13px;width:290px;box-shadow:0 8px 32px rgba(0,0,0,0.7)}
+.epop-lbl{font-size:0.58em;color:var(--gold2);letter-spacing:3px;text-transform:uppercase;margin-bottom:7px}
+.epop-input{width:100%;background:var(--deep);border:1px solid var(--border2);color:var(--text);padding:8px 10px;border-radius:2px;font-family:'Crimson Text',serif;font-size:1em;outline:none;margin-bottom:9px}
+.epop-input:focus{border-color:var(--gold2)}
+.epop-btns{display:flex;gap:7px;justify-content:flex-end}
+.epop-save{background:var(--gold2);border:none;color:var(--deep);font-family:'Cinzel',serif;font-size:0.6em;letter-spacing:2px;padding:7px 13px;cursor:pointer;border-radius:2px;text-transform:uppercase}
+.epop-cancel{background:transparent;border:1px solid var(--border2);color:var(--muted);font-family:'Cinzel',serif;font-size:0.6em;letter-spacing:2px;padding:7px 13px;cursor:pointer;border-radius:2px;text-transform:uppercase}
+.edel{background:transparent;border:1px solid #7c2a2a;color:#c05050;font-size:0.65em;padding:2px 7px;cursor:pointer;border-radius:2px;transition:all 0.15s}
+.edel:hover{background:rgba(124,42,42,0.3)}
+
+/* GUIDE */
+.guide-wrap{max-width:660px}
+
+@media(max-width:860px){.dash-cols{grid-template-columns:1fr}.lang-grid{grid-template-columns:repeat(5,1fr)}}
+@media(max-width:600px){.sidebar{width:56px}.sb-title,.nav-a span:last-child,.nav-sec,.sb-leave{display:none}.nav-a{justify-content:center;padding:11px}.pi{padding:16px 14px 40px}.lang-grid{grid-template-columns:repeat(3,1fr)}}
+</style>
+</head>
+<body>
+
+<div id="loginScreen">
+  <div class="login-box">
+    <div class="login-orn">✦ ✦ ✦</div>
+    <img class="login-img" id="loginImg" src="https://images.unsplash.com/photo-1578662996442-48f60103fc96?w=400&q=80" alt="">
+    <h1 class="login-title" id="loginTitle">The Polyglot Sanctum</h1>
+    <p class="login-sub" id="loginSub">A private realm of language & learning</p>
+    <div class="login-line"></div>
+    <input id="passInput" type="password" class="pass-input" placeholder="Enter the passphrase…" onkeydown="if(event.key==='Enter')doLogin()">
+    <button class="btn" onclick="doLogin()" style="margin-top:4px">Enter the Sanctum</button>
+    <p class="login-err" id="loginErr"></p>
+    <div class="login-orn" style="margin-top:24px">✦ ✦ ✦</div>
+  </div>
+</div>
+
+<div id="app" class="hidden">
+  <nav class="sidebar">
+    <div class="sb-hero" id="sbHero">
+      <div class="sb-moon">🌙</div>
+      <div class="sb-title">Sanctum</div>
+    </div>
+    <div class="nav-sec">Study</div>
+    <a class="nav-a on" onclick="go('dashboard')" data-p="dashboard"><span>⚡</span><span>Dashboard</span></a>
+    <a class="nav-a" onclick="go('pomodoro')" data-p="pomodoro"><span>🍅</span><span>Focus Timer</span></a>
+    <a class="nav-a" onclick="go('quests')" data-p="quests"><span>⚔️</span><span>Quests</span></a>
+    <a class="nav-a" onclick="go('vocab')" data-p="vocab"><span>📖</span><span>Vocabulary</span></a>
+    <a class="nav-a" onclick="go('flashcards')" data-p="flashcards"><span>🃏</span><span>Flashcards</span></a>
+    <div class="nav-sec">Arabic</div>
+    <a class="nav-a" onclick="go('quran')" data-p="quran"><span>🕌</span><span>Quran</span></a>
+    <a class="nav-a" onclick="go('tajweed')" data-p="tajweed"><span>📜</span><span>Tajweed</span></a>
+    <div class="nav-sec">Log</div>
+    <a class="nav-a" onclick="go('sessions')" data-p="sessions"><span>📝</span><span>Sessions</span></a>
+    <a class="nav-a" onclick="go('resources')" data-p="resources"><span>📦</span><span>Resources</span></a>
+    <a class="nav-a" onclick="go('guide')" data-p="guide"><span>📗</span><span>Guide</span></a>
+    <button class="sb-leave" onclick="doLogout()">✦ Leave</button>
+  </nav>
+  <main class="content" id="contentArea"></main>
+</div>
+
+<div id="modalOverlay" class="modal-overlay hidden" onclick="if(event.target===this)closeModal()">
+  <div id="modalBox" class="modal"></div>
+</div>
+
+<div id="toast" class="toast"></div>
+<button class="edit-btn" id="editBtn" onclick="toggleEdit()">✏️ Edit</button>
+
+<script>
+const SB_URL='https://ruwuvwqsrenluygvigox.supabase.co';
+const SB_KEY='sb_publishable_XFMGI1GqaBvuv_TsVNEXJQ_dYrRoqQ6';
+const PASS='sanctum2026';
+const sb=supabase.createClient(SB_URL,SB_KEY);
+
+// ── AUDIO ──
+let actx=null;
+function snd(type){
+  try{
+    if(!actx)actx=new(window.AudioContext||window.webkitAudioContext)();
+    const beep=(f,t,d,v=0.1)=>{const o=actx.createOscillator(),g=actx.createGain();o.connect(g);g.connect(actx.destination);o.frequency.value=f;g.gain.setValueAtTime(v,actx.currentTime+t);g.gain.exponentialRampToValueAtTime(0.001,actx.currentTime+t+d);o.start(actx.currentTime+t);o.stop(actx.currentTime+t+d);};
+    if(type==='xp'){beep(523,0,0.1);beep(659,0.1,0.1);beep(784,0.2,0.2);}
+    else if(type==='quest'){[523,659,784,1047].forEach((f,i)=>beep(f,i*0.12,0.25,0.12));}
+    else if(type==='flip'){beep(440,0,0.12,0.07);}
+    else if(type==='timer'){beep(800,0,0.18);beep(600,0.22,0.18);beep(800,0.44,0.25);}
+    else if(type==='click'){beep(300,0,0.07,0.05);}
+  }catch(e){}
+}
+
+// ── STATIC DATA ──
+const RANKS=[
+  {n:'I',label:'Apprentice Linguist',xp:0},
+  {n:'II',label:'Wandering Scholar',xp:500},
+  {n:'III',label:'Keeper of Tongues',xp:1500},
+  {n:'IV',label:'Arcane Wordsmith',xp:3500},
+  {n:'V',label:'Grand Polyglot',xp:7000},
+  {n:'VI',label:'Sovereign of Languages',xp:15000},
+];
+const LANGS=[
+  {f:'🇸🇦',n:'Arabic',active:true,locked:false},
+  {f:'📖',n:'Quranic',active:true,locked:false},
+  {f:'🇨🇳',n:'Mandarin',active:false,locked:true},
+  {f:'🇩🇪',n:'German',active:false,locked:true},
+  {f:'🇪🇸',n:'Spanish',active:false,locked:true},
+  {f:'🇫🇷',n:'French',active:false,locked:true},
+  {f:'🇮🇹',n:'Italian',active:false,locked:true},
+  {f:'🇯🇵',n:'Japanese',active:false,locked:true},
+  {f:'🇰🇷',n:'Korean',active:false,locked:true},
+  {f:'🇬🇭',n:'Twi',active:false,locked:true},
+];
+const SURAHS=[
+  {num:1,name:'Al-Fatiha',ar:'الفاتحة',juz:1,v:7},
+  {num:114,name:'An-Nas',ar:'الناس',juz:30,v:6},
+  {num:113,name:'Al-Falaq',ar:'الفلق',juz:30,v:5},
+  {num:112,name:'Al-Ikhlas',ar:'الإخلاص',juz:30,v:4},
+  {num:111,name:'Al-Masad',ar:'المسد',juz:30,v:5},
+  {num:110,name:'An-Nasr',ar:'النصر',juz:30,v:3},
+  {num:109,name:'Al-Kafirun',ar:'الكافرون',juz:30,v:6},
+  {num:108,name:'Al-Kawthar',ar:'الكوثر',juz:30,v:3},
+  {num:107,name:"Al-Ma'un",ar:'الماعون',juz:30,v:7},
+  {num:106,name:'Quraysh',ar:'قريش',juz:30,v:4},
+  {num:105,name:'Al-Fil',ar:'الفيل',juz:30,v:5},
+  {num:104,name:'Al-Humazah',ar:'الهمزة',juz:30,v:9},
+  {num:103,name:'Al-Asr',ar:'العصر',juz:30,v:3},
+  {num:102,name:'At-Takathur',ar:'التكاثر',juz:30,v:8},
+  {num:101,name:"Al-Qari'ah",ar:'القارعة',juz:30,v:11},
+  {num:100,name:'Al-Adiyat',ar:'العاديات',juz:30,v:11},
+  {num:99,name:'Az-Zalzalah',ar:'الزلزلة',juz:30,v:8},
+  {num:98,name:'Al-Bayyinah',ar:'البينة',juz:30,v:8},
+  {num:97,name:'Al-Qadr',ar:'القدر',juz:30,v:5},
+  {num:96,name:'Al-Alaq',ar:'العلق',juz:30,v:19},
+];
+const TAJWEED=[
+  {name:'Izhar',ar:'إظهار',cat:'Noon & Meem',desc:'When noon sakinah or tanween is followed by one of 6 throat letters (أ ه ع ح غ خ), the noon is pronounced clearly with no nasalisation.',ex:'مِنْ عِلْمٍ — "min ilm"'},
+  {name:'Idghaam',ar:'إدغام',cat:'Noon & Meem',desc:'When noon sakinah or tanween is followed by (ي ر م ل و ن), the noon merges into the following letter.',ex:'مَن يَعمل — noon merges into ya'},
+  {name:'Ikhfa',ar:'إخفاء',cat:'Noon & Meem',desc:'When noon sakinah or tanween is followed by 15 letters, the noon is nasalised and slightly hidden.',ex:'مِن تَحت — nasal concealment'},
+  {name:'Iqlab',ar:'إقلاب',cat:'Noon & Meem',desc:'When noon sakinah or tanween is followed by ب, the noon converts to a meem sound with ghunna.',ex:'مِنْ بَعد — noon becomes meem'},
+  {name:'Ghunna',ar:'غنة',cat:'General',desc:'A nasal resonance from the nasal passage. Applied to shadda on noon or meem, held for 2 counts.',ex:'إِنَّ — shadda on noon requires ghunna'},
+  {name:'Qalqalah',ar:'قلقلة',cat:'Letters',desc:"Echoing bounce on 5 letters (ق ط ب ج د) when they carry sukoon. Stronger at end of verse. Remember 'QaTaBaJaDa'.",ex:'يَقطَع — both ق and ط have qalqalah'},
+  {name:"Madd Tabee'i",ar:'مد طبيعي',cat:'Madd',desc:'Natural 2-count elongation: alif after fatha, waw after damma, ya after kasra.',ex:'كِتَاب — alif after fatha = 2 counts'},
+];
+const DEFAULT_WORDS=[
+  {word:'بِسْمِ',meaning:'In the name of',pronunciation:'Bismi',language:'Quranic Arabic',example:'بِسْمِ اللهِ',mastery:'New'},
+  {word:'اللهِ',meaning:'Allah / God',pronunciation:'Allahi',language:'Quranic Arabic',example:'بِسْمِ اللهِ',mastery:'New'},
+  {word:'الرَّحْمَٰنِ',meaning:'The Most Gracious',pronunciation:'Ar-Rahman',language:'Quranic Arabic',example:'Al-Fatiha verse 1',mastery:'New'},
+  {word:'الرَّحِيمِ',meaning:'The Most Merciful',pronunciation:'Ar-Raheem',language:'Quranic Arabic',example:'Al-Fatiha verse 1',mastery:'New'},
+  {word:'الْحَمْدُ',meaning:'All praise',pronunciation:'Al-hamdu',language:'Quranic Arabic',example:'الْحَمْدُ لِلَّهِ',mastery:'New'},
+  {word:'رَبِّ',meaning:'Lord / Sustainer',pronunciation:'Rabbi',language:'Quranic Arabic',example:'رَبِّ الْعَالَمِينَ',mastery:'New'},
+  {word:'الْعَالَمِينَ',meaning:'All of creation / The worlds',pronunciation:"Al-'alameen",language:'Quranic Arabic',example:'Lord of the worlds',mastery:'New'},
+  {word:'مَالِكِ',meaning:'Master / King',pronunciation:'Maliki',language:'Quranic Arabic',example:'مَالِكِ يَوْمِ الدِّينِ',mastery:'New'},
+  {word:'يَوْمِ',meaning:'Day',pronunciation:'Yawmi',language:'Quranic Arabic',example:'Day of Judgement',mastery:'New'},
+  {word:'الدِّينِ',meaning:'Judgement / Religion',pronunciation:'Ad-deen',language:'Quranic Arabic',example:'يَوْمِ الدِّينِ',mastery:'New'},
+  {word:'كِتَاب',meaning:'Book',pronunciation:'Kitaab',language:'Arabic',example:'هَذَا كِتَابٌ — This is a book',mastery:'New'},
+  {word:'مَاء',meaning:'Water',pronunciation:'Maa',language:'Arabic',example:'I want water',mastery:'New'},
+  {word:'بَيْت',meaning:'House / Home',pronunciation:'Bayt',language:'Arabic',example:'This is my house',mastery:'New'},
+  {word:'أَهْلاً',meaning:'Welcome / Hello',pronunciation:'Ahlan',language:'Arabic',example:'أَهْلاً وَسَهْلاً',mastery:'New'},
+  {word:'شُكْراً',meaning:'Thank you',pronunciation:'Shukran',language:'Arabic',example:'شُكْراً جَزِيلاً',mastery:'New'},
+];
+const DEFAULT_QUESTS=[
+  {ico:'⚔️',name:'The Opening',desc:'Read Surah Al-Fatiha fluently without hesitation',xp:50,type:'Main Quest',status:'active'},
+  {ico:'⚔️',name:'First Steps',desc:'Complete 7 study sessions',xp:75,type:'Main Quest',status:'active'},
+  {ico:'📜',name:'Word Hoarder I',desc:'Learn your first 50 Arabic words',xp:60,type:'Side Quest',status:'active'},
+  {ico:'⚡',name:'Daily Devotion',desc:'Study for at least 15 minutes today',xp:10,type:'Daily',status:'active'},
+  {ico:'🏆',name:'Streak Keeper I',desc:'Study 7 days in a row',xp:50,type:'Challenge',status:'active'},
+  {ico:'⚔️',name:'The Reciter',desc:"Complete Juz' Amma — all 37 surahs fluently",xp:300,type:'Main Quest',status:'locked'},
+  {ico:'🏆',name:'The Scholar',desc:'Master all 7 tajweed rules',xp:100,type:'Challenge',status:'locked'},
+  {ico:'📜',name:'Word Hoarder II',desc:'Reach 200 words in your Vocabulary Bank',xp:150,type:'Side Quest',status:'locked'},
+  {ico:'🌟',name:'Unlock Mandarin',desc:'Earn 500 XP to unlock your next language',xp:50,type:'Milestone',status:'locked'},
+  {ico:'🌟',name:'Streak Keeper II',desc:'Study 30 days in a row',xp:200,type:'Challenge',status:'locked'},
+];
+const DEFAULT_RITUAL=["Log today's session","Review 10 words","Practise one surah","Add XP for today","Check active quests"];
+
+// ── STATE ──
+let S={
+  xp:0,streak:0,lastLog:null,ritual:[],ritualDate:null,
+  completedQuests:[],quranProgress:{},tajweedMastered:[],
+  words:[],sessions:[],resources:[],
+  c:{
+    name:'Scholar',
+    portraitUrl:'https://images.unsplash.com/photo-1578662996442-48f60103fc96?w=400&q=80',
+    dashCover:'https://images.unsplash.com/photo-1532012197267-da84d127e765?w=1400&q=80',
+    questsCover:'https://images.unsplash.com/photo-1519389950473-47ba0277781c?w=1200&q=80',
+    vocabCover:'https://images.unsplash.com/photo-1524578271613-d550eacf6090?w=1200&q=80',
+    quranCover:'https://images.unsplash.com/photo-1564769662533-4f00a87b4056?w=1200&q=80',
+    loginBg:'https://images.unsplash.com/photo-1481627834876-b7833e8f5570?w=1200&q=80',
+    title:'The Polyglot Sanctum',
+    sub:'A private realm of language & learning',
+    quests:DEFAULT_QUESTS.map(q=>({...q})),
+    ritual:[...DEFAULT_RITUAL],
+  }
+};
+let editMode=false,todayXP=0;
+let pomSecs=0,pomRunning=false,pomMode='work',pomCycles=0,pomTimer=null;
+const POM_WORK=25*60,POM_SHORT=5*60,POM_LONG=15*60;
+let currentPage='dashboard';
+let fcDeck=[],fcIdx=0;
+
+// ── AUTH ──
+function doLogin(){
+  const v=document.getElementById('passInput').value;
+  if(v===PASS){
+    document.getElementById('loginScreen').classList.add('hidden');
+    document.getElementById('app').classList.remove('hidden');
+    init();
+  } else {
+    const e=document.getElementById('loginErr');
+    e.textContent='✦ Incorrect passphrase';
+    e.style.animation='none';
+    setTimeout(()=>e.style.animation='shake 0.4s ease',10);
+  }
+}
+function doLogout(){
+  document.getElementById('app').classList.add('hidden');
+  document.getElementById('loginScreen').classList.remove('hidden');
+  document.getElementById('passInput').value='';
+}
+
+// ── INIT ──
+async function init(){
+  await loadAll();
+  applyCustom();
+  go('dashboard');
+}
+
+async function loadAll(){
+  // Load main state
+  try{
+    const {data}=await sb.from('sanctum_state').select('*').eq('key','main').single();
+    if(data){
+      const sv=JSON.parse(data.value);
+      if(sv.xp!==undefined)S.xp=sv.xp;
+      if(sv.streak!==undefined)S.streak=sv.streak;
+      if(sv.lastLog!==undefined)S.lastLog=sv.lastLog;
+      if(sv.ritual)S.ritual=sv.ritual;
+      if(sv.ritualDate)S.ritualDate=sv.ritualDate;
+      if(sv.completedQuests)S.completedQuests=sv.completedQuests;
+      if(sv.quranProgress)S.quranProgress=sv.quranProgress;
+      if(sv.tajweedMastered)S.tajweedMastered=sv.tajweedMastered;
+      if(sv.c){
+        S.c={...S.c,...sv.c};
+        if(sv.c.quests)S.c.quests=sv.c.quests;
+        if(sv.c.ritual)S.c.ritual=sv.c.ritual;
+      }
+    }
+  }catch(e){console.log('state load:',e);}
+
+  // Load words
+  try{
+    const {data,error}=await sb.from('sanctum_words').select('*').order('created_at',{ascending:false});
+    if(!error&&data&&data.length>0){
+      S.words=data;
+    } else if(!error&&data&&data.length===0){
+      try{
+        const {data:ins}=await sb.from('sanctum_words').insert(DEFAULT_WORDS).select();
+        if(ins)S.words=ins;
+        else S.words=DEFAULT_WORDS.map((w,i)=>({...w,id:'tmp'+i,created_at:new Date().toISOString()}));
+      }catch(e2){
+        S.words=DEFAULT_WORDS.map((w,i)=>({...w,id:'tmp'+i,created_at:new Date().toISOString()}));
+      }
+    } else {
+      S.words=DEFAULT_WORDS.map((w,i)=>({...w,id:'tmp'+i,created_at:new Date().toISOString()}));
+    }
+  }catch(e){
+    console.log('words:',e);
+    S.words=DEFAULT_WORDS.map((w,i)=>({...w,id:'tmp'+i,created_at:new Date().toISOString()}));
+  }
+
+  // Load sessions
+  try{const {data,error}=await sb.from('sanctum_sessions').select('*').order('created_at',{ascending:false});if(!error&&data)S.sessions=data;}catch(e){}
+  // Load resources
+  try{const {data,error}=await sb.from('sanctum_resources').select('*').order('created_at',{ascending:false});if(!error&&data)S.resources=data;}catch(e){}
+}
+
+async function save(){
+  const payload={
+    xp:S.xp,streak:S.streak,lastLog:S.lastLog,
+    ritual:S.ritual,ritualDate:S.ritualDate,
+    completedQuests:S.completedQuests,
+    quranProgress:S.quranProgress,
+    tajweedMastered:S.tajweedMastered,
+    c:S.c,
+  };
+  try{await sb.from('sanctum_state').upsert({key:'main',value:JSON.stringify(payload)},{onConflict:'key'});}
+  catch(e){console.log('save error:',e);}
+}
+
+// ── APPLY CUSTOM ──
+function applyCustom(){
+  const c=S.c;
+  document.getElementById('loginScreen').querySelector('.login-box').style.cssText='';
+  document.getElementById('loginScreen').style.backgroundImage=`linear-gradient(rgba(0,0,0,0.75),rgba(0,0,0,0.9)),url('${c.loginBg}')`;
+  document.getElementById('loginImg').src=c.portraitUrl;
+  document.getElementById('loginTitle').textContent=c.title;
+  document.getElementById('loginSub').textContent=c.sub;
+  const sh=document.getElementById('sbHero');
+  if(sh)sh.style.backgroundImage=`linear-gradient(rgba(0,0,0,0.4),rgba(0,0,0,0.7)),url('${c.portraitUrl}')`;
+}
+
+// ── NAVIGATION ──
+function go(page){
+  snd('click');
+  currentPage=page;
+  document.querySelectorAll('.nav-a').forEach(a=>a.classList.remove('on'));
+  const link=document.querySelector(`.nav-a[data-p="${page}"]`);
+  if(link)link.classList.add('on');
+  renderPage(page);
+}
+
+function renderPage(page){
+  const el=document.getElementById('contentArea');
+  if(!el)return;
+  const renders={
+    dashboard:renderDashboard,
+    pomodoro:renderPomodoro,
+    quests:renderQuestsPage,
+    vocab:renderVocabPage,
+    flashcards:renderFlashcardsPage,
+    quran:renderQuranPage,
+    tajweed:renderTajweedPage,
+    sessions:renderSessionsPage,
+    resources:renderResourcesPage,
+    guide:renderGuidePage,
+  };
+  try{
+    el.innerHTML='';
+    const div=document.createElement('div');
+    div.className='page on';
+    el.appendChild(div);
+    if(renders[page])renders[page](div);
+  }catch(e){
+    console.log('render error:',e);
+    el.innerHTML='<div style="padding:40px;color:var(--muted)">Error loading page — '+e.message+'</div>';
+  }
+}
+
+// ── HELPERS ──
+function getRank(xp){let r=RANKS[0];for(const x of RANKS){if(xp>=x.xp)r=x;}return r;}
+function getNext(xp){for(const x of RANKS){if(xp<x.xp)return x;}return null;}
+function xpPop(txt,x,y){const p=document.createElement('div');p.className='xp-pop';p.textContent=txt;p.style.left=(x||window.innerWidth/2)+'px';p.style.top=(y||200)+'px';document.body.appendChild(p);setTimeout(()=>p.remove(),1300);}
+function toast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');clearTimeout(t._t);t._t=setTimeout(()=>t.classList.remove('show'),3200);}
+
+// ── DASHBOARD ──
+function renderDashboard(el){
+  const rank=getRank(S.xp),next=getNext(S.xp);
+  const pct=next?Math.min(100,((S.xp-rank.xp)/(next.xp-rank.xp))*100):100;
+  const mastered=S.words.filter(w=>w.mastery==='Mastered').length;
+  const today=new Date().toLocaleDateString('en-GB',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
+  const todayStr=new Date().toLocaleDateString('en-GB',{weekday:'long',day:'numeric',month:'long'});
+  const surahRead=SURAHS.filter(s=>S.quranProgress[s.num]?.canRead).length;
+
+  // Streak dots
+  const dayNames=['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
+  const lit=S.streak%7||(S.streak>0&&S.streak%7===0?7:0);
+  const sdots=dayNames.map((d,i)=>`<div class="sdot ${i<lit?'lit':''}">${d}</div>`).join('');
+
+  // Ritual
+  const rdate=new Date().toDateString();
+  if(S.ritualDate!==rdate){S.ritual=[];S.ritualDate=rdate;}
+  const ritual=S.c.ritual.map((r,i)=>{
+    const on=S.ritual.includes(i);
+    return `<div class="rit-item ${on?'done':''}" onclick="toggleRitual(${i})">
+      <div class="rchk ${on?'on':''}"></div><span>${r}</span></div>`;
+  }).join('');
+
+  // Rank ladder
+  const ladder=RANKS.map(r=>{
+    const done=S.xp>=r.xp&&r.label!==rank.label,now=r.label===rank.label;
+    const cls=now?'now':done?'done':'future',dc=now?'now':done?'done':'';
+    return `<div class="rrow ${cls}"><div class="rdot ${dc}"></div><div class="rnum">${r.n}</div><div class="rlabel">${r.label}</div><div class="rxp">${r.xp.toLocaleString()}</div></div>`;
+  }).join('');
+
+  // Quests preview
+  const aqp=S.c.quests.filter((q,i)=>q.status==='active'&&!S.completedQuests.includes(i)).slice(0,4);
+  const qprev=aqp.length?aqp.map(q=>`<div class="qpi"><span>${q.ico}</span><span class="qpi-n">${q.name}</span><span class="qpi-x">+${q.xp} XP</span></div>`).join(''):'<p style="color:var(--muted);font-style:italic;font-size:0.85em">All quests complete! 🎉</p>';
+
+  // Lang grid
+  const unlocked=S.xp>=500;
+  const langG=LANGS.map(l=>{
+    const lk=l.locked&&!unlocked,pct2=l.active?Math.min(100,(S.xp/500)*100):0;
+    return `<div class="lang-item ${l.active?'active':''} ${lk?'locked':''}">
+      <div class="lf">${l.f}</div><div class="ln">${l.n}</div>
+      <div class="lst">${lk?'🔒':l.active?'🟢':'✦'}</div>
+      ${!lk?`<div class="lbar"><div class="lbar-fill" style="width:${pct2}%"></div></div>`:''}
+    </div>`;
+  }).join('');
+
+  el.innerHTML=`
+    <div id="dashCover" class="cover" style="background:linear-gradient(rgba(0,0,0,0.1),rgba(15,13,10,1)),url('${S.c.dashCover}') center/cover"></div>
+    <div class="pi">
+      <div class="ph">
+        <div><div class="pt">🌙 ${S.c.title}</div><div class="ps">${today}</div></div>
+        <button class="btn sm" onclick="openAddXP()">+ Add XP</button>
+      </div>
+      <div class="dash-cols">
+        <div class="dash-l">
+          <div class="co" style="text-align:center;padding-bottom:16px">
+            <img class="portrait-img" src="${S.c.portraitUrl}" alt="" onclick="editMode&&openImgPicker('portraitUrl')">
+            <div class="p-name" onclick="editMode&&openEditPop(event,'name',S.c.name,v=>{S.c.name=v;save();go('dashboard');})">${S.c.name}</div>
+            <div class="p-rank">${rank.label}</div>
+            <div class="p-rankn">Rank ${rank.n}</div>
+            <div class="xp-labels"><span>${S.xp.toLocaleString()} XP</span><span>${next?next.xp.toLocaleString()+' XP':'MAX'}</span></div>
+            <div class="xp-bg"><div class="xp-fill" style="width:${pct}%"></div></div>
+            <div class="xp-next">Next: ${next?next.label:'Maximum Rank'}</div>
+            <div class="stats-row">
+              <div class="sbox"><span class="sv">${S.xp.toLocaleString()}</span><span class="sl">XP</span></div>
+              <div class="sbox"><span class="sv">${S.streak}</span><span class="sl">Streak 🔥</span></div>
+              <div class="sbox"><span class="sv">${mastered}</span><span class="sl">Mastered</span></div>
+            </div>
+          </div>
+          <div class="co">
+            <span class="co-icon">🔥</span>
+            <div class="co-title">This Week</div>
+            <div class="sdots">${sdots}</div>
+            <button class="btn ghost" style="margin-top:12px;width:100%;font-size:0.62em;padding:8px" onclick="logToday()">Log Today's Study</button>
+          </div>
+          <div class="co">
+            <span class="co-icon">✦</span>
+            <div class="co-title">Daily Ritual</div>
+            <div id="ritualContainer">${ritual}</div>
+          </div>
+          <div class="co">
+            <span class="co-icon">🏆</span>
+            <div class="co-title">Rank Ladder</div>
+            ${ladder}
+          </div>
+        </div>
+        <div class="dash-r">
+          <div class="co">
+            <div class="co-body">
+              <b>⚡ Today is ${todayStr}</b><br>
+              <span class="arrow">↳</span> You have earned <b>${todayXP} XP</b> today<br>
+              <span class="arrow">✦</span> Current rank: <b>${rank.label}</b><br>
+              <span class="arrow">✦</span> Words mastered: <b>${mastered}</b><br>
+              <span class="arrow">✦</span> Surahs can read: <b>${surahRead}</b>
+            </div>
+          </div>
+          <div>
+            <div class="sh">🗺️ Language Map</div>
+            <div class="lang-grid">${langG}</div>
+            <p style="font-size:0.7em;color:var(--muted);margin-top:7px;font-style:italic;text-align:center">🔒 Languages unlock at 500 XP</p>
+          </div>
+          <div>
+            <div class="sh">⚔️ Active Quests</div>
+            ${qprev}
+            <a class="see-all" onclick="go('quests')">View all quests →</a>
+          </div>
+          <div>
+            <div class="sh">⚡ How XP Works</div>
+            <div class="co">
+              <div class="co-body">
+                🍅 Pomodoro (25 min) <span class="arrow">→</span> <b>+25 XP auto</b><br>
+                15 min session <span class="arrow">→</span> <b>+10 XP</b><br>
+                30 min session <span class="arrow">→</span> <b>+25 XP</b><br>
+                Save a vocab word <span class="arrow">→</span> <b>+2 XP</b><br>
+                Master a word <span class="arrow">→</span> <b>+5 XP</b><br>
+                Surah (can read) <span class="arrow">→</span> <b>+20 XP</b><br>
+                Surah (understand) <span class="arrow">→</span> <b>+30 XP</b><br>
+                Tajweed rule mastered <span class="arrow">→</span> <b>+10 XP</b><br>
+                Quest complete <span class="arrow">→</span> <b>+100 XP</b><br>
+                7-day streak <span class="arrow">→</span> <b>+50 XP bonus</b>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>`;
+
+  if(editMode){
+    const dc=el.querySelector('#dashCover');
+    if(dc){dc.style.cursor='pointer';dc.title='Click to change cover';dc.onclick=()=>openImgPicker('dashCover');}
+  }
+}
+
+async function toggleRitual(i){
+  if(S.ritual.includes(i))S.ritual=S.ritual.filter(x=>x!==i);
+  else{S.ritual.push(i);snd('click');if(S.ritual.length===S.c.ritual.length){toast('✦ Daily ritual complete!');snd('quest');}}
+  await save();
+  const rc=document.getElementById('ritualContainer');
+  if(rc){
+    const rdate=new Date().toDateString();
+    rc.innerHTML=S.c.ritual.map((r,idx)=>{
+      const on=S.ritual.includes(idx);
+      return `<div class="rit-item ${on?'done':''}" onclick="toggleRitual(${idx})">
+        <div class="rchk ${on?'on':''}"></div><span>${r}</span></div>`;
+    }).join('');
+  }
+}
+
+async function logToday(){
+  const today=new Date().toDateString(),yest=new Date(Date.now()-86400000).toDateString();
+  if(S.lastLog===today){toast('Already logged today!');return;}
+  S.streak=S.lastLog===yest?S.streak+1:1;S.lastLog=today;
+  let bonus=0;
+  if(S.streak===7){bonus=50;toast('🔥 7-day streak! +50 XP!');}
+  else if(S.streak===30){bonus=200;toast('🔥 30-day streak! +200 XP!');}
+  else toast(`🔥 Day ${S.streak} streak!`);
+  if(bonus){S.xp+=bonus;todayXP+=bonus;snd('xp');xpPop('+'+bonus+' XP',window.innerWidth/2,300);}
+  await save();go('dashboard');
+}
+
+// ── POMODORO ──
+function renderPomodoro(el){
+  const secs=pomSecs||(pomMode==='work'?POM_WORK:pomMode==='short'?POM_SHORT:POM_LONG);
+  const m=String(Math.floor(secs/60)).padStart(2,'0'),s=String(secs%60).padStart(2,'0');
+  const total=pomMode==='work'?POM_WORK:pomMode==='short'?POM_SHORT:POM_LONG;
+  const pct=pomSecs?pomSecs/total:1;
+  const circ=2*Math.PI*54,offset=circ*pct;
+  const modeLabel=pomMode==='work'?'🍅 Focus Time':pomMode==='short'?'☕ Short Break':'🌙 Long Break';
+
+  el.innerHTML=`
+    <div class="pi" style="padding-top:32px">
+      <div class="ph">
+        <div><div class="pt">🍅 Focus Timer</div><div class="ps">Study in sprints — XP auto-awards when the timer ends</div></div>
+      </div>
+      <div class="pom-wrap">
+        <div class="pom-modes">
+          <button class="pom-mode-btn ${pomMode==='work'?'active':''}" onclick="setPomMode('work')">🍅 Focus (25m)</button>
+          <button class="pom-mode-btn ${pomMode==='short'?'active':''}" onclick="setPomMode('short')">☕ Short Break (5m)</button>
+          <button class="pom-mode-btn ${pomMode==='long'?'active':''}" onclick="setPomMode('long')">🌙 Long Break (15m)</button>
+        </div>
+        <div class="pom-ring-wrap">
+          <svg class="pom-svg" viewBox="0 0 120 120">
+            <circle cx="60" cy="60" r="54" fill="none" stroke="var(--border)" stroke-width="6"/>
+            <circle id="pomRing" cx="60" cy="60" r="54" fill="none" stroke="var(--gold)" stroke-width="6"
+              stroke-linecap="round" stroke-dasharray="${circ.toFixed(1)}" stroke-dashoffset="${offset.toFixed(1)}"
+              transform="rotate(-90 60 60)" style="transition:stroke-dashoffset 1s linear"/>
+          </svg>
+          <div class="pom-center">
+            <div class="pom-mlabel" id="pomModeLabel">${modeLabel}</div>
+            <div class="pom-disp" id="pomDisp">${m}:${s}</div>
+            <div class="pom-cyc">Cycles: ${pomCycles}</div>
+          </div>
+        </div>
+        <div class="pom-btns">
+          <button class="pom-start" id="pomStartBtn" onclick="${pomRunning?'pausePom()':'startPom()'}">${pomRunning?'⏸ Pause':'▶ Start'}</button>
+          <button class="pom-reset" onclick="resetPom()">↺ Reset</button>
+        </div>
+        <div style="width:100%;max-width:400px">
+          <div class="co">
+            <div class="co-title">Session Settings</div>
+            <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:6px">
+              <div style="flex:1"><label class="mlabel">Language</label>
+                <select id="pomLang" class="fsel" style="width:100%"><option>Arabic</option><option>Quranic Arabic</option><option>Mandarin</option><option>German</option><option>Spanish</option></select>
+              </div>
+              <div style="flex:1"><label class="mlabel">Type</label>
+                <select id="pomType" class="fsel" style="width:100%"><option>Study</option><option>Vocabulary</option><option>Reading</option><option>Quran Recitation</option><option>Tajweed</option><option>Grammar</option></select>
+              </div>
+            </div>
+            <p style="font-size:0.8em;color:var(--muted);margin-top:10px;font-style:italic">✦ When Focus ends, <b style="color:var(--gold)">+25 XP is automatically added</b> and your session is logged.</p>
+          </div>
+        </div>
+      </div>
+    </div>`;
+}
+
+function setPomMode(mode){
+  if(pomRunning)return;
+  pomMode=mode;
+  pomSecs=mode==='work'?POM_WORK:mode==='short'?POM_SHORT:POM_LONG;
+  go('pomodoro');
+}
+function startPom(){
+  if(pomRunning)return;
+  if(!pomSecs)pomSecs=pomMode==='work'?POM_WORK:pomMode==='short'?POM_SHORT:POM_LONG;
+  pomRunning=true;snd('click');
+  const btn=document.getElementById('pomStartBtn');
+  if(btn){btn.textContent='⏸ Pause';btn.onclick=pausePom;}
+  pomTimer=setInterval(pomTick,1000);
+}
+function pausePom(){
+  clearInterval(pomTimer);pomRunning=false;
+  const btn=document.getElementById('pomStartBtn');
+  if(btn){btn.textContent='▶ Resume';btn.onclick=startPom;}
+}
+function resetPom(){
+  clearInterval(pomTimer);pomRunning=false;pomSecs=0;pomMode='work';pomCycles=0;
+  go('pomodoro');
+}
+async function pomTick(){
+  pomSecs--;
+  // Update display
+  const m=String(Math.floor(pomSecs/60)).padStart(2,'0'),s=String(pomSecs%60).padStart(2,'0');
+  const d=document.getElementById('pomDisp');if(d)d.textContent=m+':'+s;
+  const total=pomMode==='work'?POM_WORK:pomMode==='short'?POM_SHORT:POM_LONG;
+  const ring=document.getElementById('pomRing');
+  if(ring){const circ=2*Math.PI*54;ring.style.strokeDashoffset=(circ*(pomSecs/total)).toFixed(1);}
+
+  if(pomSecs<=0){
+    clearInterval(pomTimer);pomRunning=false;snd('timer');
+    if(pomMode==='work'){
+      pomCycles++;
+      S.xp+=25;todayXP+=25;
+      await save();
+      xpPop('+25 XP',window.innerWidth/2,200);
+      toast('🍅 Session complete! +25 XP earned!');
+      // Auto-log
+      try{
+        const lang=document.getElementById('pomLang')?.value||'Arabic';
+        const type=document.getElementById('pomType')?.value||'Study';
+        const {data}=await sb.from('sanctum_sessions').insert([{title:'Pomodoro Session #'+pomCycles,language:lang,duration_label:'25 minutes',type:type,notes:'Auto-logged via Pomodoro timer',xp_earned:25}]).select();
+        if(data)S.sessions.unshift(data[0]);
+      }catch(e){}
+      pomMode=pomCycles%4===0?'long':'short';
+      pomSecs=pomCycles%4===0?POM_LONG:POM_SHORT;
+      const ml=document.getElementById('pomModeLabel');
+      if(ml)ml.textContent=pomCycles%4===0?'🌙 Long Break':'☕ Short Break';
+    } else {
+      pomMode='work';pomSecs=POM_WORK;
+      const ml=document.getElementById('pomModeLabel');
+      if(ml)ml.textContent='🍅 Focus Time';
+      toast('Break over — time to focus!');
+    }
+    const btn=document.getElementById('pomStartBtn');
+    if(btn){btn.textContent='▶ Start';btn.onclick=startPom;}
+  }
+}
+
+// ── QUESTS ──
+function renderQuestsPage(el){
+  const qs=S.c.quests;
+  const active=qs.filter((q,i)=>q.status==='active'&&!S.completedQuests.includes(i));
+  const done=qs.filter((q,i)=>S.completedQuests.includes(i));
+  const locked=qs.filter((q,i)=>q.status==='locked'&&!S.completedQuests.includes(i));
+
+  const qcard=(q,lk,dn)=>`
+    <div class="qcard ${lk?'locked':''} ${dn?'done':''}" onclick="${editMode?`openQuestEditor(${qs.indexOf(q)})`:dn||lk?'':(`completeQuest(${qs.indexOf(q)})`)}">
+      <div class="q-ico">${dn?'✅':lk?'🔒':q.ico}</div>
+      <div class="q-info">
+        <div class="q-name">${q.name}${editMode?' ✏️':''}</div>
+        <div class="q-desc">${q.desc}</div>
+        <span class="q-badge">${q.type}</span>
+      </div>
+      <div style="display:flex;flex-direction:column;align-items:flex-end;gap:5px">
+        <div class="q-xp">+${q.xp} XP</div>
+        ${editMode?`<button class="edel" onclick="event.stopPropagation();delQuest(${qs.indexOf(q)})">✕</button>`:''}
+      </div>
+    </div>`;
+
+  el.innerHTML=`
+    <div class="cover" style="background:linear-gradient(rgba(0,0,0,0.2),rgba(15,13,10,1)),url('${S.c.questsCover}') center/cover" onclick="${editMode?'openImgPicker(\'questsCover\')':''}"></div>
+    <div class="pi">
+      <div class="ph">
+        <div><div class="pt">⚔️ Quests & Goals</div><div class="ps">Click a quest to mark it complete and claim XP</div></div>
+      </div>
+      ${active.length?'<div class="qsec-title">Active</div>'+active.map(q=>qcard(q,false,false)).join(''):''}
+      ${locked.length?'<div class="qsec-title">Locked</div>'+locked.map(q=>qcard(q,true,false)).join(''):''}
+      ${done.length?'<div class="qsec-title">Completed</div>'+done.map(q=>qcard(q,false,true)).join(''):''}
+      ${editMode?'<div style="margin-top:14px"><button class="btn sm" onclick="addQuest()">+ Add Quest</button></div>':''}
+    </div>`;
+}
+
+async function completeQuest(i){
+  if(S.completedQuests.includes(i))return;
+  S.completedQuests.push(i);
+  const xp=S.c.quests[i].xp;
+  S.xp+=xp;todayXP+=xp;
+  snd('quest');xpPop('+'+xp+' XP',window.innerWidth/2,200);
+  toast('⚔️ Quest complete! +'+xp+' XP');
+  await save();go('quests');
+}
+function openQuestEditor(i){
+  const q=S.c.quests[i];
+  openModal('editQuest',`
+    <div class="modal-title">✏️ Edit Quest</div>
+    <label class="mlabel">Icon</label><input id="eqIco" class="minput" value="${q.ico}">
+    <label class="mlabel">Name</label><input id="eqName" class="minput" value="${q.name}">
+    <label class="mlabel">Description</label><input id="eqDesc" class="minput" value="${q.desc}">
+    <label class="mlabel">XP</label><input id="eqXP" class="minput" type="number" value="${q.xp}">
+    <label class="mlabel">Type</label>
+    <select id="eqType" class="minput"><option ${q.type==='Main Quest'?'selected':''}>Main Quest</option><option ${q.type==='Side Quest'?'selected':''}>Side Quest</option><option ${q.type==='Daily'?'selected':''}>Daily</option><option ${q.type==='Challenge'?'selected':''}>Challenge</option><option ${q.type==='Milestone'?'selected':''}>Milestone</option></select>
+    <label class="mlabel">Status</label>
+    <select id="eqStatus" class="minput"><option value="active" ${q.status==='active'?'selected':''}>Active</option><option value="locked" ${q.status==='locked'?'selected':''}>Locked</option></select>
+    <div class="mbtns">
+      <button class="btn ghost" onclick="closeModal()">Cancel</button>
+      <button class="btn" onclick="saveQuest(${i})">Save</button>
+    </div>`);
+}
+async function saveQuest(i){
+  S.c.quests[i]={...S.c.quests[i],
+    ico:document.getElementById('eqIco').value,
+    name:document.getElementById('eqName').value,
+    desc:document.getElementById('eqDesc').value,
+    xp:parseInt(document.getElementById('eqXP').value)||0,
+    type:document.getElementById('eqType').value,
+    status:document.getElementById('eqStatus').value,
+  };
+  await save();closeModal();go('quests');toast('Quest updated!');
+}
+async function addQuest(){
+  S.c.quests.push({ico:'⚔️',name:'New Quest',desc:'Describe this quest',xp:50,type:'Side Quest',status:'active'});
+  await save();go('quests');
+}
+async function delQuest(i){
+  S.c.quests.splice(i,1);
+  S.completedQuests=S.completedQuests.filter(x=>x!==i).map(x=>x>i?x-1:x);
+  await save();go('quests');
+}
+
+// ── VOCAB ──
+function renderVocabPage(el){
+  el.innerHTML=`
+    <div class="cover" style="background:linear-gradient(rgba(0,0,0,0.2),rgba(15,13,10,1)),url('${S.c.vocabCover}') center/cover"></div>
+    <div class="pi">
+      <div class="ph">
+        <div><div class="pt">📖 Vocabulary Bank</div><div class="ps">${S.words.length} words — 15 Quranic Arabic starter words pre-loaded</div></div>
+        <button class="btn sm" onclick="openAddWord()">+ Add Word</button>
+      </div>
+      <div class="filter-bar">
+        <select id="vLang" class="fsel" onchange="filterVocab()">
+          <option value="">All Languages</option>
+          <option>Arabic</option><option>Quranic Arabic</option><option>Mandarin</option>
+          <option>German</option><option>Spanish</option><option>French</option>
+          <option>Italian</option><option>Japanese</option><option>Korean</option><option>Twi</option>
+        </select>
+        <select id="vMastery" class="fsel" onchange="filterVocab()">
+          <option value="">All Levels</option>
+          <option value="New">🌱 New</option><option value="Learning">📖 Learning</option>
+          <option value="Reviewing">⚡ Reviewing</option><option value="Mastered">✨ Mastered</option>
+        </select>
+        <input id="vSearch" class="finp" placeholder="Search…" oninput="filterVocab()">
+      </div>
+      <div id="vocabResults"></div>
+    </div>`;
+  filterVocab();
+}
+function filterVocab(){
+  const lang=document.getElementById('vLang')?.value||'';
+  const mastery=document.getElementById('vMastery')?.value||'';
+  const search=document.getElementById('vSearch')?.value.toLowerCase()||'';
+  const words=S.words.filter(w=>(!lang||w.language===lang)&&(!mastery||w.mastery===mastery)&&(!search||w.word.toLowerCase().includes(search)||w.meaning.toLowerCase().includes(search)));
+  const el=document.getElementById('vocabResults');
+  if(!el)return;
+  if(!words.length){el.innerHTML='<div class="empty"><div class="big">📖</div>No words match — add your first one!</div>';return;}
+  el.innerHTML=`<div class="vocab-grid">${words.map(w=>`
+    <div class="wcard">
+      <button class="w-del" onclick="delWord('${w.id}')">✕</button>
+      <div class="w-arabic">${w.word}</div>
+      <div class="w-meaning">${w.meaning}</div>
+      ${w.pronunciation?`<div class="w-pronun">${w.pronunciation}</div>`:''}
+      ${w.example?`<div class="w-pronun" style="margin-top:4px;font-size:0.75em">"${w.example}"</div>`:''}
+      <div class="w-badges">
+        <span class="wbadge">${w.language}</span>
+        <span class="wbadge m-${w.mastery}">${w.mastery}</span>
+      </div>
+    </div>`).join('')}</div>`;
+}
+function openAddWord(){
+  openModal('addWord',`
+    <div class="modal-title">📖 Add Word</div>
+    <label class="mlabel">Word</label><input id="nWord" class="minput" placeholder="e.g. كتاب">
+    <label class="mlabel">Meaning</label><input id="nMeaning" class="minput" placeholder="e.g. Book">
+    <label class="mlabel">Pronunciation</label><input id="nPronun" class="minput" placeholder="e.g. kitaab">
+    <label class="mlabel">Language</label>
+    <select id="nLang" class="minput"><option>Arabic</option><option>Quranic Arabic</option><option>Mandarin</option><option>German</option><option>Spanish</option><option>French</option><option>Italian</option><option>Japanese</option><option>Korean</option><option>Twi</option></select>
+    <label class="mlabel">Example (optional)</label><input id="nEx" class="minput" placeholder="Example sentence">
+    <div class="mbtns"><button class="btn ghost" onclick="closeModal()">Cancel</button><button class="btn" onclick="saveWord()">Save (+2 XP)</button></div>`);
+}
+async function saveWord(){
+  const w={word:document.getElementById('nWord').value.trim(),meaning:document.getElementById('nMeaning').value.trim(),pronunciation:document.getElementById('nPronun').value.trim(),language:document.getElementById('nLang').value,example:document.getElementById('nEx').value.trim(),mastery:'New'};
+  if(!w.word||!w.meaning){toast('Word and meaning required!');return;}
+  try{
+    const {data,error}=await sb.from('sanctum_words').insert([w]).select();
+    if(!error&&data){S.words.unshift(data[0]);}
+    else{S.words.unshift({...w,id:'tmp'+Date.now(),created_at:new Date().toISOString()});}
+  }catch(e){S.words.unshift({...w,id:'tmp'+Date.now(),created_at:new Date().toISOString()});}
+  S.xp+=2;todayXP+=2;snd('xp');xpPop('+2 XP',window.innerWidth/2,200);
+  toast('📖 Word saved! +2 XP');await save();closeModal();go('vocab');
+}
+async function delWord(id){
+  try{await sb.from('sanctum_words').delete().eq('id',id);}catch(e){}
+  S.words=S.words.filter(w=>w.id!==id);filterVocab();toast('Word removed');
+}
+
+// ── FLASHCARDS ──
+function renderFlashcardsPage(el){
+  el.innerHTML=`
+    <div class="pi" style="padding-top:32px">
+      <div class="ph"><div><div class="pt">🃏 Flashcard Mode</div><div class="ps">Tap to flip — mark right to level up mastery</div></div></div>
+      <div class="filter-bar">
+        <select id="fcLang" class="fsel"><option value="">All Languages</option><option>Arabic</option><option>Quranic Arabic</option><option>Mandarin</option><option>German</option><option>Spanish</option></select>
+        <select id="fcMastery" class="fsel"><option value="">All Levels</option><option value="New">New only</option><option value="Learning">Learning only</option><option value="Reviewing">Reviewing only</option></select>
+        <button class="btn sm" onclick="startFC()">Start Session</button>
+      </div>
+      <div id="fcArea" class="fc-area"><div class="fc-empty">Select a language and hit Start to begin.</div></div>
+    </div>`;
+}
+function startFC(){
+  const lang=document.getElementById('fcLang')?.value||'';
+  const mastery=document.getElementById('fcMastery')?.value||'';
+  fcDeck=S.words.filter(w=>(!lang||w.language===lang)&&(!mastery||w.mastery===mastery)).sort(()=>Math.random()-0.5);
+  fcIdx=0;
+  if(!fcDeck.length){document.getElementById('fcArea').innerHTML='<div class="fc-empty">No words match. Add some words in the Vocabulary tab first!</div>';return;}
+  showCard();
+}
+function showCard(){
+  const el=document.getElementById('fcArea');if(!el)return;
+  if(fcIdx>=fcDeck.length){el.innerHTML=`<div class="fc-done"><span class="big">✦</span><p>Session complete! ${fcDeck.length} cards reviewed.</p><button class="btn" style="margin-top:18px" onclick="startFC()">Go again</button></div>`;return;}
+  const w=fcDeck[fcIdx];
+  el.innerHTML=`<div class="fc-wrap">
+    <div class="fc-prog">${fcIdx+1} / ${fcDeck.length}</div>
+    <div class="fc-card" id="fcCard" onclick="flipCard()">
+      <div class="fc-hint">Tap to reveal meaning</div>
+      <div class="fc-word">${w.word}</div>
+      <div class="fc-meaning">${w.meaning}</div>
+      ${w.pronunciation?`<div class="fc-pronun">${w.pronunciation}</div>`:''}
+    </div>
+    <div class="fc-btns" id="fcBtns" style="display:none">
+      <button class="fc-btn wrong" onclick="fcAns(false)">✕ Didn't know</button>
+      <button class="fc-btn right" onclick="fcAns(true)">✓ Got it</button>
+    </div>
+  </div>`;
+}
+function flipCard(){snd('flip');document.getElementById('fcCard')?.classList.add('flipped');const b=document.getElementById('fcBtns');if(b)b.style.display='flex';}
+async function fcAns(correct){
+  const w=fcDeck[fcIdx],levels=['New','Learning','Reviewing','Mastered'];
+  let idx=levels.indexOf(w.mastery);
+  if(correct&&idx<3)idx++;else if(!correct&&idx>0)idx--;
+  const newM=levels[idx];
+  try{await sb.from('sanctum_words').update({mastery:newM}).eq('id',w.id);}catch(e){}
+  const sw=S.words.find(x=>x.id===w.id);if(sw)sw.mastery=newM;
+  if(correct&&newM==='Mastered'){S.xp+=5;todayXP+=5;snd('quest');xpPop('+5 XP',window.innerWidth/2,200);toast('+5 XP — word mastered! ✨');await save();}
+  else if(correct)snd('xp');
+  fcIdx++;showCard();
+}
+
+// ── QURAN ──
+function renderQuranPage(el){
+  const p=S.quranProgress||{};
+  const cr=SURAHS.filter(s=>p[s.num]?.canRead).length;
+  const cm=SURAHS.filter(s=>p[s.num]?.canRecite).length;
+  const cu=SURAHS.filter(s=>p[s.num]?.understand).length;
+  const surahs=SURAHS.map(s=>{
+    const sp=p[s.num]||{};
+    return `<div class="surah-card">
+      <div class="s-num">${s.num}</div>
+      <div class="s-info"><div class="s-name">${s.name}</div><div class="s-arabic">${s.ar}</div><div class="s-meta">${s.v} verses · Juz ${s.juz}</div></div>
+      <div class="s-checks">
+        <div class="schk" onclick="toggleSurah(${s.num},'canRead')"><div class="schk-box ${sp.canRead?'on':''}">✓</div><div class="schk-lbl">Read</div></div>
+        <div class="schk" onclick="toggleSurah(${s.num},'canRecite')"><div class="schk-box ${sp.canRecite?'on':''}">✓</div><div class="schk-lbl">Memory</div></div>
+        <div class="schk" onclick="toggleSurah(${s.num},'understand')"><div class="schk-box ${sp.understand?'on':''}">✓</div><div class="schk-lbl">Meaning</div></div>
+      </div>
+    </div>`;
+  }).join('');
+  el.innerHTML=`
+    <div class="cover" style="background:linear-gradient(rgba(0,0,0,0.3),rgba(15,13,10,1)),url('${S.c.quranCover}') center/cover"></div>
+    <div class="pi">
+      <div class="ph"><div><div class="pt">🕌 Quran Progress</div><div class="ps">Tick off each surah as you read, memorise, and understand it</div></div></div>
+      <div class="q-stats">
+        <div class="qstat"><span class="qstat-v">${cr}</span><span class="qstat-l">Can Read</span></div>
+        <div class="qstat"><span class="qstat-v">${cm}</span><span class="qstat-l">Memorised</span></div>
+        <div class="qstat"><span class="qstat-v">${cu}</span><span class="qstat-l">Understand</span></div>
+        <div class="qstat"><span class="qstat-v">${SURAHS.length}</span><span class="qstat-l">Total</span></div>
+      </div>
+      ${surahs}
+    </div>`;
+}
+async function toggleSurah(num,field){
+  if(!S.quranProgress[num])S.quranProgress[num]={};
+  const wasOn=S.quranProgress[num][field];S.quranProgress[num][field]=!wasOn;
+  if(!wasOn){const xm={canRead:20,canRecite:25,understand:30};const x=xm[field];S.xp+=x;todayXP+=x;snd('xp');xpPop('+'+x+' XP',window.innerWidth/2,200);toast('+'+x+' XP!');}
+  await save();go('quran');
+}
+
+// ── TAJWEED ──
+function renderTajweedPage(el){
+  const cards=TAJWEED.map((r,i)=>{
+    const m=S.tajweedMastered.includes(i);
+    return `<div class="taj-card ${m?'mastered':''}">
+      <div class="taj-hdr"><div><div class="taj-name">${r.name}</div><div class="taj-arabic">${r.ar}</div></div><span class="taj-cat">${r.cat}</span></div>
+      <div class="taj-desc">${r.desc}</div>
+      <div class="taj-ex">${r.ex}</div>
+      <div class="taj-m" onclick="toggleTajweed(${i})"><div class="taj-chk ${m?'on':''}">${m?'✓':''}</div><span>${m?'✦ Mastered':'Mark as mastered (+10 XP)'}</span></div>
+    </div>`;
+  }).join('');
+  el.innerHTML=`
+    <div class="pi" style="padding-top:32px">
+      <div class="ph"><div><div class="pt">📜 Tajweed Scrolls</div><div class="ps">Master each rule for +10 XP — your Quranic recitation reference</div></div></div>
+      <div class="taj-grid">${cards}</div>
+    </div>`;
+}
+async function toggleTajweed(i){
+  if(S.tajweedMastered.includes(i))S.tajweedMastered=S.tajweedMastered.filter(x=>x!==i);
+  else{S.tajweedMastered.push(i);S.xp+=10;todayXP+=10;snd('quest');xpPop('+10 XP',window.innerWidth/2,200);toast('+10 XP — Tajweed rule mastered! 📜');}
+  await save();go('tajweed');
+}
+
+// ── SESSIONS ──
+function renderSessionsPage(el){
+  const list=S.sessions.length?S.sessions.map(s=>{
+    const d=new Date(s.created_at);
+    return `<div class="sess-card">
+      <div class="sess-date"><span class="sess-day">${d.getDate()}</span>${d.toLocaleDateString('en-GB',{month:'short'})}</div>
+      <div class="sess-info"><div class="sess-title">${s.title}</div><div class="sess-meta">${s.language} · ${s.type} · ${s.duration_label}</div>${s.notes?`<div class="sess-meta" style="font-style:italic">${s.notes}</div>`:''}</div>
+      <div class="sess-xp">+${s.xp_earned} XP</div>
+    </div>`;
+  }).join(''):'<div class="empty"><div class="big">📝</div>No sessions yet — start a Pomodoro or log one manually!</div>';
+  el.innerHTML=`
+    <div class="pi" style="padding-top:32px">
+      <div class="ph">
+        <div><div class="pt">📝 Study Sessions</div><div class="ps">Pomodoro sessions auto-log here</div></div>
+        <button class="btn sm" onclick="openAddSession()">+ Log Manually</button>
+      </div>
+      ${list}
+    </div>`;
+}
+function openAddSession(){
+  openModal('addSess',`
+    <div class="modal-title">📝 Log Session</div>
+    <label class="mlabel">Title</label><input id="sTitle" class="minput" placeholder="e.g. Al-Fatiha practice">
+    <label class="mlabel">Language</label>
+    <select id="sLang" class="minput"><option>Arabic</option><option>Quranic Arabic</option><option>Mandarin</option><option>German</option><option>Spanish</option></select>
+    <label class="mlabel">Duration</label>
+    <select id="sDur" class="minput"><option value="10">15 minutes (+10 XP)</option><option value="25">30 minutes (+25 XP)</option><option value="40">45 minutes (+40 XP)</option><option value="50">60 minutes (+50 XP)</option><option value="75">90+ minutes (+75 XP)</option></select>
+    <label class="mlabel">Type</label>
+    <select id="sType" class="minput"><option>Vocabulary</option><option>Reading</option><option>Quran Recitation</option><option>Tajweed</option><option>Grammar</option><option>Listening</option><option>Speaking</option></select>
+    <label class="mlabel">Notes</label><textarea id="sNotes" class="minput" rows="2" placeholder="What did you cover?"></textarea>
+    <div class="mbtns"><button class="btn ghost" onclick="closeModal()">Cancel</button><button class="btn" onclick="saveSession()">Log Session</button></div>`);
+}
+async function saveSession(){
+  const xp=parseInt(document.getElementById('sDur').value);
+  const durLabel=document.getElementById('sDur').options[document.getElementById('sDur').selectedIndex].text.split(' (')[0];
+  const sess={title:document.getElementById('sTitle').value.trim()||'Study Session',language:document.getElementById('sLang').value,duration_label:durLabel,type:document.getElementById('sType').value,notes:document.getElementById('sNotes').value.trim(),xp_earned:xp};
+  try{const {data,error}=await sb.from('sanctum_sessions').insert([sess]).select();if(!error&&data)S.sessions.unshift(data[0]);}catch(e){}
+  S.xp+=xp;todayXP+=xp;snd('xp');toast('📝 Session logged! +'+xp+' XP');await save();closeModal();go('sessions');
+}
+
+// ── RESOURCES ──
+function renderResourcesPage(el){
+  const icons={'📱 App':'📱','🌐 Website':'🌐','📚 Book':'📚','🎥 YouTube':'🎥','🎧 Podcast':'🎧'};
+  const list=S.resources.length?`<div class="res-grid">${S.resources.map(r=>`
+    <div class="res-card">
+      <div class="res-hdr"><div class="res-type">${icons[r.type]||'📦'}</div><div class="res-name">${r.name}</div></div>
+      <div class="res-badges"><span class="res-badge">${r.language}</span><span class="res-badge">${r.type}</span></div>
+      ${r.notes?`<div class="res-notes">${r.notes}</div>`:''}
+      ${r.link?`<a href="${r.link}" target="_blank" class="res-link">Open ↗</a>`:''}
+    </div>`).join('')}</div>`:'<div class="empty"><div class="big">📦</div>No resources yet — add your favourite apps and books!</div>';
+  el.innerHTML=`
+    <div class="pi" style="padding-top:32px">
+      <div class="ph">
+        <div><div class="pt">📦 Resource Library</div><div class="ps">Books, apps, videos and links by language</div></div>
+        <button class="btn sm" onclick="openAddRes()">+ Add Resource</button>
+      </div>
+      ${list}
+    </div>`;
+}
+function openAddRes(){
+  openModal('addRes',`
+    <div class="modal-title">📦 Add Resource</div>
+    <label class="mlabel">Name</label><input id="rName" class="minput" placeholder="e.g. Quran.com">
+    <label class="mlabel">Language</label>
+    <select id="rLang" class="minput"><option>Arabic</option><option>Quranic Arabic</option><option>All Languages</option><option>Mandarin</option><option>German</option><option>Spanish</option></select>
+    <label class="mlabel">Type</label>
+    <select id="rType" class="minput"><option>📱 App</option><option>🌐 Website</option><option>📚 Book</option><option>🎥 YouTube</option><option>🎧 Podcast</option></select>
+    <label class="mlabel">Link</label><input id="rLink" class="minput" placeholder="https://...">
+    <label class="mlabel">Notes</label><input id="rNotes" class="minput" placeholder="Why you like it">
+    <div class="mbtns"><button class="btn ghost" onclick="closeModal()">Cancel</button><button class="btn" onclick="saveRes()">Save</button></div>`);
+}
+async function saveRes(){
+  const res={name:document.getElementById('rName').value.trim(),language:document.getElementById('rLang').value,type:document.getElementById('rType').value,link:document.getElementById('rLink').value.trim(),notes:document.getElementById('rNotes').value.trim()};
+  if(!res.name){toast('Name required!');return;}
+  try{const {data,error}=await sb.from('sanctum_resources').insert([res]).select();if(!error&&data)S.resources.unshift(data[0]);}catch(e){}
+  toast('📦 Resource saved!');closeModal();go('resources');
+}
+
+// ── GUIDE ──
+function renderGuidePage(el){
+  el.innerHTML=`
+    <div class="pi" style="padding-top:32px">
+      <div class="ph"><div><div class="pt">📗 Guide</div><div class="ps">How to use every part of The Sanctum</div></div></div>
+      <div style="max-width:640px">
+        <div class="co"><span class="co-icon">🍅</span><div class="co-title">Focus Timer — The Main Loop</div><div class="co-body">Go to <b>Focus Timer</b>. Pick language and type, hit <b>▶ Start</b>. Study for 25 minutes. When the timer ends — <b>+25 XP is automatically added</b> and your session is logged. Take the 5-minute break, then repeat.</div></div>
+        <div class="co"><span class="co-icon">⚔️</span><div class="co-title">Quests — Your Goals</div><div class="co-body">Go to <b>Quests</b>. When you complete a real-life goal (e.g. you can now read Al-Fatiha), <b>click the quest card</b> to claim XP. Use <b>✏️ Edit mode</b> to rename, edit, add or delete quests.</div></div>
+        <div class="co"><span class="co-icon">📖</span><div class="co-title">Vocabulary — Adding Words</div><div class="co-body">Go to <b>Vocabulary</b>. 15 Quranic Arabic starter words are already there. Click <b>+ Add Word</b> in the top right. Fill in the word, meaning, pronunciation, and an example. Hit Save — <b>+2 XP instantly</b>.</div></div>
+        <div class="co"><span class="co-icon">🃏</span><div class="co-title">Flashcards — Review Words</div><div class="co-body">Go to <b>Flashcards</b>. Pick a language, hit Start. Tap the card to flip it. Hit <b>✓ Got it</b> to level up that word's mastery. When a word reaches Mastered, you earn <b>+5 XP</b>.</div></div>
+        <div class="co"><span class="co-icon">🕌</span><div class="co-title">Quran — Track Surahs</div><div class="co-body">Go to <b>Quran</b>. Each surah has 3 checkboxes: <b>Read</b>, <b>Memory</b>, <b>Meaning</b>. Tick each one as you achieve it — each tick earns XP automatically.</div></div>
+        <div class="co"><span class="co-icon">📜</span><div class="co-title">Tajweed Rules</div><div class="co-body">Go to <b>Tajweed</b>. 7 core rules explained in plain English. Once you feel confident with a rule, click <b>Mark as mastered</b> for <b>+10 XP</b>.</div></div>
+        <div class="co"><span class="co-icon">✏️</span><div class="co-title">Edit Mode</div><div class="co-body">Click <b>✏️ Edit</b> in the top-right. While on:<br>• Click <b>any text</b> to rename it<br>• Click your <b>portrait or cover images</b> to change them (paste a URL)<br>• Click <b>any quest</b> to edit it<br>• Add new quests with <b>+ Add Quest</b><br>Everything saves to Supabase automatically.</div></div>
+        <div class="co"><span class="co-icon">💡</span><div class="co-title">Finding Images</div><div class="co-body">Go to <b>unsplash.com</b>, find an image, right-click → <b>Copy image address</b>. In Edit mode, click any portrait or cover and paste the URL. Try searching "dark library", "old books", "mosque", "arabic calligraphy".</div></div>
+      </div>
+    </div>`;
+}
+
+// ── ADD XP MODAL ──
+function openAddXP(){
+  openModal('addXP',`
+    <div class="modal-title">⚡ Add XP</div>
+    <label class="mlabel">What did you do?</label>
+    <select id="xpAct" class="minput">
+      <option value="10">15-min study session (+10 XP)</option>
+      <option value="25">30-min study session (+25 XP)</option>
+      <option value="50">60-min study session (+50 XP)</option>
+      <option value="15">Learned 10 vocab words (+15 XP)</option>
+      <option value="5">Mastered a vocab word (+5 XP)</option>
+      <option value="20">Completed surah — can read (+20 XP)</option>
+      <option value="30">Completed surah — understand (+30 XP)</option>
+      <option value="10">Mastered a tajweed rule (+10 XP)</option>
+      <option value="100">Finished a quest (+100 XP)</option>
+      <option value="50">7-day streak bonus (+50 XP)</option>
+    </select>
+    <div class="mbtns"><button class="btn ghost" onclick="closeModal()">Cancel</button><button class="btn" onclick="doAddXP()">Add XP</button></div>`);
+}
+async function doAddXP(){
+  const v=parseInt(document.getElementById('xpAct').value);
+  S.xp+=v;todayXP+=v;snd('xp');xpPop('+'+v+' XP',window.innerWidth/2,200);
+  toast('+'+v+' XP earned!');await save();closeModal();go(currentPage);
+}
+
+// ── MODAL ──
+function openModal(id,html){
+  document.getElementById('modalOverlay').classList.remove('hidden');
+  document.getElementById('modalBox').innerHTML=html;
+}
+function closeModal(){document.getElementById('modalOverlay').classList.add('hidden');}
+
+// ── EDIT MODE ──
+function toggleEdit(){
+  editMode=!editMode;
+  document.body.classList.toggle('edit',editMode);
+  const btn=document.getElementById('editBtn');
+  btn.textContent=editMode?'✓ Done':'✏️ Edit';
+  btn.classList.toggle('on',editMode);
+  if(editMode)toast('✏️ Click anything to edit it');
+  else toast('✓ Changes saved');
+  go(currentPage);
+}
+
+function openEditPop(e,label,cur,onSave){
+  document.getElementById('epop')?.remove();
+  const pop=document.createElement('div');
+  pop.id='epop';pop.className='epop';
+  const x=Math.min(e.clientX,window.innerWidth-310),y=Math.min(e.clientY,window.innerHeight-140);
+  pop.style.cssText=`left:${x}px;top:${y}px`;
+  pop.innerHTML=`<div class="epop-lbl">${label}</div>
+    <input id="epopInput" class="epop-input" value="${(cur||'').replace(/"/g,'&quot;').replace(/</g,'&lt;')}">
+    <div class="epop-btns">
+      <button class="epop-cancel" onclick="document.getElementById('epop').remove()">Cancel</button>
+      <button class="epop-save" onclick="commitEpop()">Save ✓</button>
+    </div>`;
+  document.body.appendChild(pop);
+  document.getElementById('epopInput').focus();
+  document.getElementById('epopInput').select();
+  window._epopSave=onSave;
+  document.getElementById('epopInput').onkeydown=e=>{
+    if(e.key==='Enter')commitEpop();
+    if(e.key==='Escape')pop.remove();
+  };
+}
+function commitEpop(){
+  const v=document.getElementById('epopInput')?.value?.trim();
+  document.getElementById('epop')?.remove();
+  if(v!==undefined&&window._epopSave)window._epopSave(v);
+}
+
+function openImgPicker(key){
+  openModal('imgPick',`
+    <div class="modal-title">🖼️ Change Image</div>
+    <label class="mlabel">Paste any image URL</label>
+    <input id="imgUrl" class="minput" placeholder="https://images.unsplash.com/..." value="${S.c[key]||''}" oninput="prevImg()">
+    <div style="margin:10px 0 4px;font-size:0.65em;color:var(--muted);letter-spacing:1px;text-transform:uppercase">Preview</div>
+    <img id="imgPrev" src="${S.c[key]||''}" style="width:100%;max-height:150px;object-fit:cover;border:1px solid var(--border2);border-radius:2px;${S.c[key]?'':'display:none'};margin-bottom:8px" onerror="this.style.display='none'">
+    <p style="font-size:0.75em;color:var(--muted);font-style:italic">Go to <b style="color:var(--gold2)">unsplash.com</b> → right-click image → Copy image address</p>
+    <div class="mbtns">
+      <button class="btn ghost" onclick="closeModal()">Cancel</button>
+      <button class="btn" onclick="saveImg('${key}')">Set Image ✓</button>
+    </div>`);
+}
+function prevImg(){const u=document.getElementById('imgUrl')?.value;const p=document.getElementById('imgPrev');if(p&&u){p.src=u;p.style.display='block';}}
+async function saveImg(key){
+  const u=document.getElementById('imgUrl')?.value?.trim();
+  if(!u){toast('Please enter a URL');return;}
+  S.c[key]=u;await save();closeModal();applyCustom();go(currentPage);toast('✦ Image updated!');
+}
+</script>
+</body>
+</html>
