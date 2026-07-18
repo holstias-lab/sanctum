@@ -83,6 +83,12 @@ html,body{height:100%;background:var(--deep);color:var(--text);font-family:'Crim
 .dash-cols{display:grid;grid-template-columns:260px 1fr;gap:18px;align-items:start}
 .dash-l{display:flex;flex-direction:column;gap:12px}
 .dash-r{display:flex;flex-direction:column;gap:18px}
+.dash-block{position:relative}
+.dash-block[draggable="true"]{cursor:grab}
+.dash-block[draggable="true"]:hover{outline:1px dashed var(--border2);outline-offset:4px}
+.dash-block.dragging{opacity:0.35}
+.drag-handle{position:absolute;top:6px;right:8px;color:var(--muted);cursor:grab;font-size:15px;z-index:2;padding:2px 5px;line-height:1;user-select:none}
+.drag-handle:hover{color:var(--gold)}
 .portrait-wrap{width:150px;margin:0 auto 12px;display:block}
 .portrait-img{width:150px;height:180px;object-fit:cover;border:3px solid var(--gold2);box-shadow:0 0 0 1px var(--dim),0 8px 28px rgba(0,0,0,0.6);display:block;cursor:pointer}
 .p-name{text-align:center;font-family:'Cinzel',serif;font-size:0.75em;letter-spacing:3px;color:var(--gold);text-transform:uppercase;margin-top:6px;cursor:pointer}
@@ -118,9 +124,13 @@ html,body{height:100%;background:var(--deep);color:var(--text);font-family:'Crim
 
 /* LANG GRID */
 .lang-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:6px}
-.lang-item{background:var(--panel3);border:1px solid var(--border);border-radius:2px;padding:9px 4px;text-align:center;transition:all 0.18s}
+.lang-item{position:relative;background:var(--panel3);border:1px solid var(--border);border-radius:2px;padding:9px 4px;text-align:center;transition:all 0.18s;cursor:pointer}
 .lang-item.active{border-color:var(--gold2)}
 .lang-item.locked{opacity:0.28}
+.lang-item.lang-add{display:flex;flex-direction:column;align-items:center;justify-content:center;border-style:dashed;opacity:0.6}
+.lang-item.lang-add:hover{opacity:1;border-color:var(--gold2)}
+.lang-del{position:absolute;top:1px;right:2px;background:transparent;border:none;color:var(--dim);cursor:pointer;font-size:0.65em;line-height:1;padding:2px}
+.lang-del:hover{color:#c05050}
 .lf{font-size:1.3em;margin-bottom:2px}
 .ln{font-size:0.58em;color:var(--gold);letter-spacing:0.5px;text-transform:uppercase}
 .lst{font-size:0.55em;color:var(--muted);margin-top:1px}
@@ -431,17 +441,17 @@ const RANKS=[
   {n:'V',label:'Grand Polyglot',xp:7000},
   {n:'VI',label:'Sovereign of Languages',xp:15000},
 ];
-const LANGS=[
-  {f:'🇸🇦',n:'Arabic',active:true,locked:false},
-  {f:'📖',n:'Quranic',active:true,locked:false},
-  {f:'🇨🇳',n:'Mandarin',active:false,locked:true},
-  {f:'🇩🇪',n:'German',active:false,locked:true},
-  {f:'🇪🇸',n:'Spanish',active:false,locked:true},
-  {f:'🇫🇷',n:'French',active:false,locked:true},
-  {f:'🇮🇹',n:'Italian',active:false,locked:true},
-  {f:'🇯🇵',n:'Japanese',active:false,locked:true},
-  {f:'🇰🇷',n:'Korean',active:false,locked:true},
-  {f:'🇬🇭',n:'Twi',active:false,locked:true},
+const DEFAULT_LANGUAGES=[
+  {f:'🇸🇦',n:'Arabic',unlockXp:0},
+  {f:'📖',n:'Quranic Arabic',unlockXp:0},
+  {f:'🇨🇳',n:'Mandarin',unlockXp:500},
+  {f:'🇩🇪',n:'German',unlockXp:500},
+  {f:'🇪🇸',n:'Spanish',unlockXp:500},
+  {f:'🇫🇷',n:'French',unlockXp:500},
+  {f:'🇮🇹',n:'Italian',unlockXp:500},
+  {f:'🇯🇵',n:'Japanese',unlockXp:500},
+  {f:'🇰🇷',n:'Korean',unlockXp:500},
+  {f:'🇬🇭',n:'Twi',unlockXp:500},
 ];
 const SURAHS=[
   {num:1,name:'Al-Fatiha',ar:'الفاتحة',juz:1,v:7},
@@ -616,6 +626,9 @@ let S={
     sub:'A private realm of language & learning',
     quests:DEFAULT_QUESTS.map(q=>({...q})),
     ritual:[...DEFAULT_RITUAL],
+    languages:DEFAULT_LANGUAGES.map(l=>({...l})),
+    dashLeftOrder:['portrait','week','ritual','ladder'],
+    dashRightOrder:['today','langmap','quests','xpinfo'],
   }
 };
 let editMode=false,todayXP=0;
@@ -807,15 +820,89 @@ function renderDashboard(el){
   const qprev=aqp.length?aqp.map(q=>`<div class="qpi"><span>${q.ico}</span><span class="qpi-n">${q.name}</span><span class="qpi-x">+${q.xp} XP</span></div>`).join(''):'<p style="color:var(--muted);font-style:italic;font-size:0.85em">All quests complete! 🎉</p>';
 
   // Lang grid
-  const unlocked=S.xp>=500;
-  const langG=LANGS.map(l=>{
-    const lk=l.locked&&!unlocked,pct2=l.active?Math.min(100,(S.xp/500)*100):0;
-    return `<div class="lang-item ${l.active?'active':''} ${lk?'locked':''}">
+  const langG=S.c.languages.map((l,i)=>{
+    const lk=S.xp<l.unlockXp,pct2=Math.min(100,l.unlockXp?(S.xp/l.unlockXp)*100:100);
+    const onc=editMode?`openEditPop(event,'Language name',S.c.languages[${i}].n,v=>{S.c.languages[${i}].n=v;save();go('dashboard');})`:`clickLanguage(${i})`;
+    return `<div class="lang-item ${!lk?'active':''} ${lk?'locked':''}" onclick="${onc}">
+      ${editMode?`<button class="lang-del" onclick="event.stopPropagation();delLanguage(${i})">✕</button>`:''}
       <div class="lf">${l.f}</div><div class="ln">${l.n}</div>
-      <div class="lst">${lk?'🔒':l.active?'🟢':'✦'}</div>
+      <div class="lst">${lk?'🔒':'🟢'}</div>
       ${!lk?`<div class="lbar"><div class="lbar-fill" style="width:${pct2}%"></div></div>`:''}
     </div>`;
-  }).join('');
+  }).join('')+(editMode?`<div class="lang-item lang-add" onclick="openAddLanguage()"><div class="lf">➕</div><div class="ln">Add</div></div>`:'');
+
+  const leftBlocks={
+    portrait:`<div class="co" style="text-align:center;padding-bottom:16px">
+      <img class="portrait-img" src="${S.c.portraitUrl}" alt="" onclick="editMode&&openImgPicker('portraitUrl')">
+      <div class="p-name" onclick="editMode&&openEditPop(event,'name',S.c.name,v=>{S.c.name=v;save();go('dashboard');})">${S.c.name}</div>
+      <div class="p-rank">${rank.label}</div>
+      <div class="p-rankn">Rank ${rank.n}</div>
+      <div class="xp-labels"><span>${S.xp.toLocaleString()} XP</span><span>${next?next.xp.toLocaleString()+' XP':'MAX'}</span></div>
+      <div class="xp-bg"><div class="xp-fill" style="width:${pct}%"></div></div>
+      <div class="xp-next">Next: ${next?next.label:'Maximum Rank'}</div>
+      <div class="stats-row">
+        <div class="sbox"><span class="sv">${S.xp.toLocaleString()}</span><span class="sl">XP</span></div>
+        <div class="sbox"><span class="sv">${S.streak}</span><span class="sl">Streak 🔥</span></div>
+        <div class="sbox"><span class="sv">${mastered}</span><span class="sl">Mastered</span></div>
+      </div>
+    </div>`,
+    week:`<div class="co">
+      <span class="co-icon">🔥</span>
+      <div class="co-title">This Week</div>
+      <div class="sdots">${sdots}</div>
+      <button class="btn ghost" style="margin-top:12px;width:100%;font-size:0.62em;padding:8px" onclick="logToday()">Log Today's Study</button>
+    </div>`,
+    ritual:`<div class="co">
+      <span class="co-icon">✦</span>
+      <div class="co-title">Daily Ritual</div>
+      <div id="ritualContainer">${ritual}</div>
+    </div>`,
+    ladder:`<div class="co">
+      <span class="co-icon">🏆</span>
+      <div class="co-title">Rank Ladder</div>
+      ${ladder}
+    </div>`,
+  };
+  const rightBlocks={
+    today:`<div class="co">
+      <div class="co-body">
+        <b>⚡ Today is ${todayStr}</b><br>
+        <span class="arrow">↳</span> You have earned <b>${todayXP} XP</b> today<br>
+        <span class="arrow">✦</span> Current rank: <b>${rank.label}</b><br>
+        <span class="arrow">✦</span> Words mastered: <b>${mastered}</b><br>
+        <span class="arrow">✦</span> Surahs can read: <b>${surahRead}</b>
+      </div>
+    </div>`,
+    langmap:`<div>
+      <div class="sh">🗺️ Language Map</div>
+      <div class="lang-grid">${langG}</div>
+      <p style="font-size:0.7em;color:var(--muted);margin-top:7px;font-style:italic;text-align:center">🔒 Click a locked language to see the XP needed</p>
+    </div>`,
+    quests:`<div>
+      <div class="sh">⚔️ Active Quests</div>
+      ${qprev}
+      <a class="see-all" onclick="go('quests')">View all quests →</a>
+    </div>`,
+    xpinfo:`<div>
+      <div class="sh">⚡ How XP Works</div>
+      <div class="co">
+        <div class="co-body">
+          🍅 Pomodoro (25 min) <span class="arrow">→</span> <b>+25 XP auto</b><br>
+          15 min session <span class="arrow">→</span> <b>+10 XP</b><br>
+          30 min session <span class="arrow">→</span> <b>+25 XP</b><br>
+          Save a vocab word <span class="arrow">→</span> <b>+2 XP</b><br>
+          Master a word <span class="arrow">→</span> <b>+5 XP</b><br>
+          Surah (can read) <span class="arrow">→</span> <b>+20 XP</b><br>
+          Surah (understand) <span class="arrow">→</span> <b>+30 XP</b><br>
+          Tajweed rule mastered <span class="arrow">→</span> <b>+10 XP</b><br>
+          Quest complete <span class="arrow">→</span> <b>+100 XP</b><br>
+          7-day streak <span class="arrow">→</span> <b>+50 XP bonus</b>
+        </div>
+      </div>
+    </div>`,
+  };
+  const leftHtml=S.c.dashLeftOrder.map((id,idx)=>wrapBlock('left',idx,leftBlocks[id])).join('');
+  const rightHtml=S.c.dashRightOrder.map((id,idx)=>wrapBlock('right',idx,rightBlocks[id])).join('');
 
   el.innerHTML=`
     <div id="dashCover" class="cover" style="background:linear-gradient(rgba(0,0,0,0.1),rgba(15,13,10,1)),url('${S.c.dashCover}') center/cover"></div>
@@ -824,77 +911,10 @@ function renderDashboard(el){
         <div><div class="pt">🌙 ${S.c.title}</div><div class="ps">${today}</div></div>
         <button class="btn sm" onclick="openAddXP()">+ Add XP</button>
       </div>
+      ${editMode?'<p style="font-size:0.72em;color:var(--muted);margin-bottom:10px;font-style:italic">✦ Drag the ⠿ handle on any block to rearrange this page.</p>':''}
       <div class="dash-cols">
-        <div class="dash-l">
-          <div class="co" style="text-align:center;padding-bottom:16px">
-            <img class="portrait-img" src="${S.c.portraitUrl}" alt="" onclick="editMode&&openImgPicker('portraitUrl')">
-            <div class="p-name" onclick="editMode&&openEditPop(event,'name',S.c.name,v=>{S.c.name=v;save();go('dashboard');})">${S.c.name}</div>
-            <div class="p-rank">${rank.label}</div>
-            <div class="p-rankn">Rank ${rank.n}</div>
-            <div class="xp-labels"><span>${S.xp.toLocaleString()} XP</span><span>${next?next.xp.toLocaleString()+' XP':'MAX'}</span></div>
-            <div class="xp-bg"><div class="xp-fill" style="width:${pct}%"></div></div>
-            <div class="xp-next">Next: ${next?next.label:'Maximum Rank'}</div>
-            <div class="stats-row">
-              <div class="sbox"><span class="sv">${S.xp.toLocaleString()}</span><span class="sl">XP</span></div>
-              <div class="sbox"><span class="sv">${S.streak}</span><span class="sl">Streak 🔥</span></div>
-              <div class="sbox"><span class="sv">${mastered}</span><span class="sl">Mastered</span></div>
-            </div>
-          </div>
-          <div class="co">
-            <span class="co-icon">🔥</span>
-            <div class="co-title">This Week</div>
-            <div class="sdots">${sdots}</div>
-            <button class="btn ghost" style="margin-top:12px;width:100%;font-size:0.62em;padding:8px" onclick="logToday()">Log Today's Study</button>
-          </div>
-          <div class="co">
-            <span class="co-icon">✦</span>
-            <div class="co-title">Daily Ritual</div>
-            <div id="ritualContainer">${ritual}</div>
-          </div>
-          <div class="co">
-            <span class="co-icon">🏆</span>
-            <div class="co-title">Rank Ladder</div>
-            ${ladder}
-          </div>
-        </div>
-        <div class="dash-r">
-          <div class="co">
-            <div class="co-body">
-              <b>⚡ Today is ${todayStr}</b><br>
-              <span class="arrow">↳</span> You have earned <b>${todayXP} XP</b> today<br>
-              <span class="arrow">✦</span> Current rank: <b>${rank.label}</b><br>
-              <span class="arrow">✦</span> Words mastered: <b>${mastered}</b><br>
-              <span class="arrow">✦</span> Surahs can read: <b>${surahRead}</b>
-            </div>
-          </div>
-          <div>
-            <div class="sh">🗺️ Language Map</div>
-            <div class="lang-grid">${langG}</div>
-            <p style="font-size:0.7em;color:var(--muted);margin-top:7px;font-style:italic;text-align:center">🔒 Languages unlock at 500 XP</p>
-          </div>
-          <div>
-            <div class="sh">⚔️ Active Quests</div>
-            ${qprev}
-            <a class="see-all" onclick="go('quests')">View all quests →</a>
-          </div>
-          <div>
-            <div class="sh">⚡ How XP Works</div>
-            <div class="co">
-              <div class="co-body">
-                🍅 Pomodoro (25 min) <span class="arrow">→</span> <b>+25 XP auto</b><br>
-                15 min session <span class="arrow">→</span> <b>+10 XP</b><br>
-                30 min session <span class="arrow">→</span> <b>+25 XP</b><br>
-                Save a vocab word <span class="arrow">→</span> <b>+2 XP</b><br>
-                Master a word <span class="arrow">→</span> <b>+5 XP</b><br>
-                Surah (can read) <span class="arrow">→</span> <b>+20 XP</b><br>
-                Surah (understand) <span class="arrow">→</span> <b>+30 XP</b><br>
-                Tajweed rule mastered <span class="arrow">→</span> <b>+10 XP</b><br>
-                Quest complete <span class="arrow">→</span> <b>+100 XP</b><br>
-                7-day streak <span class="arrow">→</span> <b>+50 XP bonus</b>
-              </div>
-            </div>
-          </div>
-        </div>
+        <div class="dash-l">${leftHtml}</div>
+        <div class="dash-r">${rightHtml}</div>
       </div>
     </div>`;
 
@@ -903,6 +923,33 @@ function renderDashboard(el){
     if(dc){dc.style.cursor='pointer';dc.title='Click to change cover';dc.onclick=()=>openImgPicker('dashCover');}
   }
 }
+function wrapBlock(col,idx,html){
+  return `<div class="dash-block" data-col="${col}" data-idx="${idx}" draggable="${!!editMode}"
+    ondragstart="dragBlockStart(event)" ondragover="dragBlockOver(event)" ondrop="dragBlockDrop(event)" ondragend="dragBlockEnd(event)">
+    ${editMode?'<div class="drag-handle" title="Drag to reorder">⠿</div>':''}
+    ${html||''}
+  </div>`;
+}
+let dragBlockInfo=null;
+function dragBlockStart(e){
+  const t=e.currentTarget;
+  dragBlockInfo={col:t.dataset.col,idx:parseInt(t.dataset.idx)};
+  e.dataTransfer.effectAllowed='move';
+  t.classList.add('dragging');
+}
+function dragBlockOver(e){e.preventDefault();e.dataTransfer.dropEffect='move';}
+async function dragBlockDrop(e){
+  e.preventDefault();
+  const t=e.currentTarget,col=t.dataset.col,idx=parseInt(t.dataset.idx);
+  if(!dragBlockInfo||dragBlockInfo.col!==col||dragBlockInfo.idx===idx)return;
+  const key=col==='left'?'dashLeftOrder':'dashRightOrder';
+  const arr=S.c[key];
+  const [moved]=arr.splice(dragBlockInfo.idx,1);
+  arr.splice(idx,0,moved);
+  dragBlockInfo=null;
+  await save();go('dashboard');
+}
+function dragBlockEnd(e){e.currentTarget.classList.remove('dragging');dragBlockInfo=null;}
 
 async function toggleRitual(i){
   if(S.ritual.includes(i))S.ritual=S.ritual.filter(x=>x!==i);
@@ -973,7 +1020,7 @@ function renderPomodoro(el){
             <div class="co-title">Session Settings</div>
             <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:6px">
               <div style="flex:1"><label class="mlabel">Language</label>
-                <select id="pomLang" class="fsel" style="width:100%"><option>Arabic</option><option>Quranic Arabic</option><option>Mandarin</option><option>German</option><option>Spanish</option></select>
+                <select id="pomLang" class="fsel" style="width:100%">${langOptions()}</select>
               </div>
               <div style="flex:1"><label class="mlabel">Type</label>
                 <select id="pomType" class="fsel" style="width:100%"><option>Study</option><option>Vocabulary</option><option>Reading</option><option>Quran Recitation</option><option>Tajweed</option><option>Grammar</option></select>
@@ -1141,9 +1188,7 @@ function renderVocabPage(el){
       <div class="filter-bar">
         <select id="vLang" class="fsel" onchange="filterVocab()">
           <option value="">All Languages</option>
-          <option>Arabic</option><option>Quranic Arabic</option><option>Mandarin</option>
-          <option>German</option><option>Spanish</option><option>French</option>
-          <option>Italian</option><option>Japanese</option><option>Korean</option><option>Twi</option>
+          ${langOptions(pendingVocabFilter)}
         </select>
         <select id="vMastery" class="fsel" onchange="filterVocab()">
           <option value="">All Levels</option>
@@ -1154,6 +1199,7 @@ function renderVocabPage(el){
       </div>
       <div id="vocabResults"></div>
     </div>`;
+  pendingVocabFilter=null;
   filterVocab();
 }
 function filterVocab(){
@@ -1184,7 +1230,7 @@ function openAddWord(){
     <label class="mlabel">Meaning</label><input id="nMeaning" class="minput" placeholder="e.g. Book">
     <label class="mlabel">Pronunciation</label><input id="nPronun" class="minput" placeholder="e.g. kitaab">
     <label class="mlabel">Language</label>
-    <select id="nLang" class="minput"><option>Arabic</option><option>Quranic Arabic</option><option>Mandarin</option><option>German</option><option>Spanish</option><option>French</option><option>Italian</option><option>Japanese</option><option>Korean</option><option>Twi</option></select>
+    <select id="nLang" class="minput">${langOptions()}</select>
     <label class="mlabel">Example (optional)</label><input id="nEx" class="minput" placeholder="Example sentence">
     <div class="mbtns"><button class="btn ghost" onclick="closeModal()">Cancel</button><button class="btn" onclick="saveWord()">Save (+2 XP)</button></div>`);
 }
@@ -1210,7 +1256,7 @@ function renderFlashcardsPage(el){
     <div class="pi" style="padding-top:32px">
       <div class="ph"><div><div class="pt">🃏 Flashcard Mode</div><div class="ps">Tap to flip — mark right to level up mastery</div></div></div>
       <div class="filter-bar">
-        <select id="fcLang" class="fsel"><option value="">All Languages</option><option>Arabic</option><option>Quranic Arabic</option><option>Mandarin</option><option>German</option><option>Spanish</option></select>
+        <select id="fcLang" class="fsel"><option value="">All Languages</option>${langOptions()}</select>
         <select id="fcMastery" class="fsel"><option value="">All Levels</option><option value="New">New only</option><option value="Learning">Learning only</option><option value="Reviewing">Reviewing only</option></select>
         <button class="btn sm" onclick="startFC()">Start Session</button>
       </div>
@@ -1456,7 +1502,7 @@ function openAddSession(){
     <div class="modal-title">📝 Log Session</div>
     <label class="mlabel">Title</label><input id="sTitle" class="minput" placeholder="e.g. Al-Fatiha practice">
     <label class="mlabel">Language</label>
-    <select id="sLang" class="minput"><option>Arabic</option><option>Quranic Arabic</option><option>Mandarin</option><option>German</option><option>Spanish</option></select>
+    <select id="sLang" class="minput">${langOptions()}</select>
     <label class="mlabel">Duration</label>
     <select id="sDur" class="minput"><option value="10">15 minutes (+10 XP)</option><option value="25">30 minutes (+25 XP)</option><option value="40">45 minutes (+40 XP)</option><option value="50">60 minutes (+50 XP)</option><option value="75">90+ minutes (+75 XP)</option></select>
     <label class="mlabel">Type</label>
@@ -1496,7 +1542,7 @@ function openAddRes(){
     <div class="modal-title">📦 Add Resource</div>
     <label class="mlabel">Name</label><input id="rName" class="minput" placeholder="e.g. Quran.com">
     <label class="mlabel">Language</label>
-    <select id="rLang" class="minput"><option>Arabic</option><option>Quranic Arabic</option><option>All Languages</option><option>Mandarin</option><option>German</option><option>Spanish</option></select>
+    <select id="rLang" class="minput">${langOptions()}<option>All Languages</option></select>
     <label class="mlabel">Type</label>
     <select id="rType" class="minput"><option>📱 App</option><option>🌐 Website</option><option>📚 Book</option><option>🎥 YouTube</option><option>🎧 Podcast</option></select>
     <label class="mlabel">Link</label><input id="rLink" class="minput" placeholder="https://...">
@@ -1553,6 +1599,44 @@ async function doAddXP(){
   toast('+'+v+' XP earned!');await save();closeModal();go(currentPage);
 }
 
+// ── LANGUAGES ──
+function langOptions(selected){
+  return S.c.languages.map(l=>`<option ${l.n===selected?'selected':''}>${l.n}</option>`).join('');
+}
+let pendingVocabFilter=null;
+function clickLanguage(i){
+  const l=S.c.languages[i];
+  if(S.xp<l.unlockXp){toast(`🔒 Reach ${l.unlockXp} XP to unlock ${l.n}`);return;}
+  pendingVocabFilter=l.n;
+  go('vocab');
+}
+function openAddLanguage(){
+  openModal('addLang',`
+    <div class="modal-title">🗺️ Add Language</div>
+    <label class="mlabel">Flag / Icon (emoji)</label>
+    <input id="lFlag" class="minput" placeholder="🇪🇬" maxlength="4">
+    <label class="mlabel">Name</label>
+    <input id="lName" class="minput" placeholder="e.g. Turkish">
+    <label class="mlabel">Unlock at XP</label>
+    <input id="lXp" class="minput" type="number" value="0" placeholder="0 = already unlocked">
+    <div class="mbtns">
+      <button class="btn ghost" onclick="closeModal()">Cancel</button>
+      <button class="btn" onclick="saveLanguage()">Add ✓</button>
+    </div>`);
+}
+async function saveLanguage(){
+  const f=document.getElementById('lFlag').value.trim()||'🌐';
+  const n=document.getElementById('lName').value.trim();
+  const unlockXp=parseInt(document.getElementById('lXp').value)||0;
+  if(!n){toast('Name required!');return;}
+  S.c.languages.push({f,n,unlockXp});
+  await save();closeModal();go('dashboard');toast('🗺️ Language added!');
+}
+async function delLanguage(i){
+  S.c.languages.splice(i,1);
+  await save();go('dashboard');toast('Language removed');
+}
+
 // ── MODAL ──
 function openModal(id,html){
   document.getElementById('modalOverlay').classList.remove('hidden');
@@ -1603,16 +1687,49 @@ function openImgPicker(key){
   openModal('imgPick',`
     <div class="modal-title">🖼️ Change Image</div>
     <label class="mlabel">Paste any image URL</label>
-    <input id="imgUrl" class="minput" placeholder="https://images.unsplash.com/..." value="${S.c[key]||''}" oninput="prevImg()">
+    <input id="imgUrl" class="minput" placeholder="https://..." value="${S.c[key]||''}" oninput="prevImg()">
+    <p style="font-size:0.72em;color:var(--muted);font-style:italic;margin-top:4px">Right-click any image online (Unsplash, Pinterest, Google Images…) → Copy image address, then paste it above.</p>
+    <label class="mlabel">Or upload a photo from your device</label>
+    <input id="imgFile" type="file" accept="image/*" class="minput" style="padding:7px" onchange="handleImgFile(event)">
+    <div id="imgFileStatus" style="font-size:0.7em;color:var(--gold2);margin-top:4px"></div>
     <div style="margin:10px 0 4px;font-size:0.65em;color:var(--muted);letter-spacing:1px;text-transform:uppercase">Preview</div>
     <img id="imgPrev" src="${S.c[key]||''}" style="width:100%;max-height:150px;object-fit:cover;border:1px solid var(--border2);border-radius:2px;${S.c[key]?'':'display:none'};margin-bottom:8px" onerror="this.style.display='none'">
-    <p style="font-size:0.75em;color:var(--muted);font-style:italic">Go to <b style="color:var(--gold2)">unsplash.com</b> → right-click image → Copy image address</p>
     <div class="mbtns">
       <button class="btn ghost" onclick="closeModal()">Cancel</button>
       <button class="btn" onclick="saveImg('${key}')">Set Image ✓</button>
     </div>`);
 }
 function prevImg(){const u=document.getElementById('imgUrl')?.value;const p=document.getElementById('imgPrev');if(p&&u){p.src=u;p.style.display='block';}}
+function handleImgFile(e){
+  const file=e.target.files[0];
+  if(!file)return;
+  const status=document.getElementById('imgFileStatus');
+  if(status)status.textContent='Processing photo…';
+  const reader=new FileReader();
+  reader.onload=(ev)=>{
+    const img=new Image();
+    img.onload=()=>{
+      const maxDim=900;
+      let w=img.width,h=img.height;
+      if(w>maxDim||h>maxDim){
+        if(w>=h){h=Math.round(h*(maxDim/w));w=maxDim;}
+        else{w=Math.round(w*(maxDim/h));h=maxDim;}
+      }
+      const canvas=document.createElement('canvas');
+      canvas.width=w;canvas.height=h;
+      canvas.getContext('2d').drawImage(img,0,0,w,h);
+      const dataUrl=canvas.toDataURL('image/jpeg',0.82);
+      const urlInput=document.getElementById('imgUrl');
+      if(urlInput)urlInput.value=dataUrl;
+      prevImg();
+      const kb=Math.round(dataUrl.length*0.75/1024);
+      if(status)status.textContent=`📷 Photo ready (~${kb} KB) — click "Set Image" to save`;
+    };
+    img.onerror=()=>{if(status)status.textContent='Could not read that image file.';};
+    img.src=ev.target.result;
+  };
+  reader.readAsDataURL(file);
+}
 async function saveImg(key){
   const u=document.getElementById('imgUrl')?.value?.trim();
   if(!u){toast('Please enter a URL');return;}
