@@ -108,6 +108,8 @@ html,body{height:100%;background:var(--deep);color:var(--text);font-family:'Crim
 .sdots{display:flex;gap:6px;margin-top:6px;justify-content:center;flex-wrap:wrap}
 .sdot{width:30px;height:30px;border-radius:50%;background:var(--panel3);border:1px solid var(--border2);display:flex;align-items:center;justify-content:center;font-size:0.58em;color:var(--muted);font-family:'Cinzel',serif;transition:all 0.2s}
 .sdot.lit{background:#6b2e00;border-color:#c4680a;color:#ffb347;box-shadow:0 0 8px rgba(196,104,10,0.4)}
+.sdot.today{outline:2px solid var(--gold);outline-offset:2px}
+.dash-clock{font-family:'Cinzel',serif;color:var(--gold);font-size:0.85em;letter-spacing:1px;margin-top:2px}
 
 /* RANK LADDER */
 .rrow{display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid rgba(51,43,30,0.6);font-size:0.83em}
@@ -609,9 +611,31 @@ const DEFAULT_QUESTS=[
 ];
 const DEFAULT_RITUAL=["Log today's session","Review 10 words","Practise one surah","Add XP for today","Check active quests"];
 
+// ── CALENDAR / STREAK ──
+function dkey(d){return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');}
+function getWeekDates(){
+  const now=new Date(),dow=now.getDay(),mondayOffset=dow===0?-6:1-dow;
+  const monday=new Date(now);monday.setDate(now.getDate()+mondayOffset);
+  const dates=[];
+  for(let i=0;i<7;i++){const d=new Date(monday);d.setDate(monday.getDate()+i);dates.push(d);}
+  return dates;
+}
+function computeStreak(){
+  let streak=0,d=new Date();
+  if(!S.loggedDates.includes(dkey(d)))d.setDate(d.getDate()-1);
+  while(S.loggedDates.includes(dkey(d))){streak++;d.setDate(d.getDate()-1);}
+  return streak;
+}
+function updateClock(){
+  const el=document.getElementById('dashClock');
+  if(!el)return;
+  el.textContent=new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});
+}
+setInterval(updateClock,1000);
+
 // ── STATE ──
 let S={
-  xp:0,streak:0,lastLog:null,ritual:[],ritualDate:null,
+  xp:0,streak:0,lastLog:null,loggedDates:[],ritual:[],ritualDate:null,
   completedQuests:[],quranProgress:{},tajweedMastered:[],quranAnnotations:{},
   words:[],sessions:[],resources:[],
   c:{
@@ -672,8 +696,10 @@ async function loadAll(){
     if(data){
       const sv=JSON.parse(data.value);
       if(sv.xp!==undefined)S.xp=sv.xp;
-      if(sv.streak!==undefined)S.streak=sv.streak;
       if(sv.lastLog!==undefined)S.lastLog=sv.lastLog;
+      if(sv.loggedDates)S.loggedDates=sv.loggedDates;
+      else if(sv.lastLog){const d=new Date(sv.lastLog);if(!isNaN(d))S.loggedDates=[dkey(d)];}
+      S.streak=computeStreak();
       if(sv.ritual)S.ritual=sv.ritual;
       if(sv.ritualDate)S.ritualDate=sv.ritualDate;
       if(sv.completedQuests)S.completedQuests=sv.completedQuests;
@@ -717,7 +743,7 @@ async function loadAll(){
 
 async function save(){
   const payload={
-    xp:S.xp,streak:S.streak,lastLog:S.lastLog,
+    xp:S.xp,streak:S.streak,lastLog:S.lastLog,loggedDates:S.loggedDates,
     ritual:S.ritual,ritualDate:S.ritualDate,
     completedQuests:S.completedQuests,
     quranProgress:S.quranProgress,
@@ -794,10 +820,16 @@ function renderDashboard(el){
   const todayStr=new Date().toLocaleDateString('en-GB',{weekday:'long',day:'numeric',month:'long'});
   const surahRead=SURAHS.filter(s=>S.quranProgress[s.num]?.canRead).length;
 
-  // Streak dots
+  // Streak dots — real calendar week (Mon-Sun), lit only on days actually logged
   const dayNames=['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
-  const lit=S.streak%7||(S.streak>0&&S.streak%7===0?7:0);
-  const sdots=dayNames.map((d,i)=>`<div class="sdot ${i<lit?'lit':''}">${d}</div>`).join('');
+  const weekDates=getWeekDates();
+  const todayKey=dkey(new Date());
+  const sdots=dayNames.map((d,i)=>{
+    const key=dkey(weekDates[i]);
+    const lit=S.loggedDates.includes(key);
+    const isToday=key===todayKey;
+    return `<div class="sdot ${lit?'lit':''} ${isToday?'today':''}">${d}</div>`;
+  }).join('');
 
   // Ritual
   const rdate=new Date().toDateString();
@@ -908,7 +940,7 @@ function renderDashboard(el){
     <div id="dashCover" class="cover" style="background:linear-gradient(rgba(0,0,0,0.1),rgba(15,13,10,1)),url('${S.c.dashCover}') center/cover"></div>
     <div class="pi">
       <div class="ph">
-        <div><div class="pt">🌙 ${S.c.title}</div><div class="ps">${today}</div></div>
+        <div><div class="pt">🌙 ${S.c.title}</div><div class="ps">${today}</div><div class="dash-clock" id="dashClock"></div></div>
         <button class="btn sm" onclick="openAddXP()">+ Add XP</button>
       </div>
       ${editMode?'<p style="font-size:0.72em;color:var(--muted);margin-bottom:10px;font-style:italic">✦ Drag the ⠿ handle on any block to rearrange this page.</p>':''}
@@ -922,6 +954,7 @@ function renderDashboard(el){
     const dc=el.querySelector('#dashCover');
     if(dc){dc.style.cursor='pointer';dc.title='Click to change cover';dc.onclick=()=>openImgPicker('dashCover');}
   }
+  updateClock();
 }
 function wrapBlock(col,idx,html){
   return `<div class="dash-block" data-col="${col}" data-idx="${idx}" draggable="${!!editMode}"
@@ -967,9 +1000,11 @@ async function toggleRitual(i){
 }
 
 async function logToday(){
-  const today=new Date().toDateString(),yest=new Date(Date.now()-86400000).toDateString();
-  if(S.lastLog===today){toast('Already logged today!');return;}
-  S.streak=S.lastLog===yest?S.streak+1:1;S.lastLog=today;
+  const key=dkey(new Date());
+  if(S.loggedDates.includes(key)){toast('Already logged today!');return;}
+  S.loggedDates.push(key);
+  S.lastLog=new Date().toDateString();
+  S.streak=computeStreak();
   let bonus=0;
   if(S.streak===7){bonus=50;toast('🔥 7-day streak! +50 XP!');}
   else if(S.streak===30){bonus=200;toast('🔥 30-day streak! +200 XP!');}
