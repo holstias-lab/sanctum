@@ -110,6 +110,20 @@ html,body{height:100%;background:var(--deep);color:var(--text);font-family:'Crim
 .sdot.lit{background:#6b2e00;border-color:#c4680a;color:#ffb347;box-shadow:0 0 8px rgba(196,104,10,0.4)}
 .sdot.today{outline:2px solid var(--gold);outline-offset:2px}
 .dash-clock{font-family:'Cinzel',serif;color:var(--gold);font-size:0.85em;letter-spacing:1px;margin-top:2px}
+.clock-face{position:relative;width:170px;height:170px;margin:0 auto}
+.clock-face svg{width:100%;height:100%}
+.clock-tick{stroke:var(--gold2);stroke-width:2;stroke-linecap:round}
+.clock-hand{stroke:var(--text);stroke-linecap:round}
+.clock-hand.hour{stroke-width:5;stroke:var(--gold)}
+.clock-hand.min{stroke-width:3.5;stroke:var(--text)}
+.clock-hand.sec{stroke-width:1.5;stroke:var(--gold2)}
+.clock-pivot{fill:var(--gold)}
+.clock-digital{position:absolute;left:50%;top:63%;transform:translate(-50%,-50%);font-family:'Cinzel',serif;color:var(--text);font-size:0.72em;letter-spacing:1px;background:var(--deep);padding:1px 6px;border-radius:2px;z-index:2;pointer-events:none}
+.frame-block{display:flex;justify-content:center;padding:6px 0}
+.frame-ornate{position:relative;padding:10px;border-radius:4px;cursor:default;background:linear-gradient(135deg,#e8cd85,#8a6d2f 35%,#c9a84c 55%,#6b5323 80%,#e8cd85);box-shadow:0 10px 28px rgba(0,0,0,0.55),inset 0 0 0 2px rgba(0,0,0,0.35)}
+body.edit .frame-ornate{cursor:pointer}
+body.edit .frame-ornate:hover{outline:2px dashed var(--gold);outline-offset:4px}
+.frame-ornate img{display:block;width:100%;max-width:200px;border-radius:1px;box-shadow:inset 0 0 22px rgba(0,0,0,0.5)}
 
 /* RANK LADDER */
 .rrow{display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid rgba(51,43,30,0.6);font-size:0.83em}
@@ -627,9 +641,17 @@ function computeStreak(){
   return streak;
 }
 function updateClock(){
+  const now=new Date();
   const el=document.getElementById('dashClock');
-  if(!el)return;
-  el.textContent=new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});
+  if(el)el.textContent=now.toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});
+  const hourHand=document.getElementById('clockHour');
+  if(hourHand){
+    const h=now.getHours()%12,m=now.getMinutes(),s=now.getSeconds();
+    hourHand.setAttribute('transform',`rotate(${(h+m/60)*30} 100 100)`);
+    document.getElementById('clockMin').setAttribute('transform',`rotate(${(m+s/60)*6} 100 100)`);
+    document.getElementById('clockSec').setAttribute('transform',`rotate(${s*6} 100 100)`);
+    document.getElementById('clockDigitalText').textContent=now.toLocaleTimeString([],{hour:'numeric',minute:'2-digit'});
+  }
 }
 setInterval(updateClock,1000);
 
@@ -646,13 +668,14 @@ let S={
     vocabCover:'https://images.unsplash.com/photo-1524578271613-d550eacf6090?w=1200&q=80',
     quranCover:'https://images.unsplash.com/photo-1564769662533-4f00a87b4056?w=1200&q=80',
     loginBg:'https://images.unsplash.com/photo-1481627834876-b7833e8f5570?w=1200&q=80',
+    frameImg:'https://images.unsplash.com/photo-1524578271613-d550eacf6090?w=600&q=80',
     title:'The Polyglot Sanctum',
     sub:'A private realm of language & learning',
     quests:DEFAULT_QUESTS.map(q=>({...q})),
     ritual:[...DEFAULT_RITUAL],
     languages:DEFAULT_LANGUAGES.map(l=>({...l})),
-    dashLeftOrder:['portrait','week','ritual','ladder'],
-    dashRightOrder:['today','langmap','quests','xpinfo'],
+    dashLeftOrder:['portrait','week','ritual','ladder','frame'],
+    dashRightOrder:['today','langmap','quests','xpinfo','clock'],
   }
 };
 let editMode=false,todayXP=0;
@@ -710,6 +733,8 @@ async function loadAll(){
         S.c={...S.c,...sv.c};
         if(sv.c.quests)S.c.quests=sv.c.quests;
         if(sv.c.ritual)S.c.ritual=sv.c.ritual;
+        if(!S.c.dashLeftOrder.includes('frame'))S.c.dashLeftOrder.push('frame');
+        if(!S.c.dashRightOrder.includes('clock'))S.c.dashRightOrder.push('clock');
       }
     }
   }catch(e){console.log('state load:',e);}
@@ -894,6 +919,11 @@ function renderDashboard(el){
       <div class="co-title">Rank Ladder</div>
       ${ladder}
     </div>`,
+    frame:`<div class="frame-block">
+      <div class="frame-ornate" onclick="editMode&&openImgPicker('frameImg')">
+        <img src="${S.c.frameImg}" alt="">
+      </div>
+    </div>`,
   };
   const rightBlocks={
     today:`<div class="co">
@@ -930,6 +960,18 @@ function renderDashboard(el){
           Quest complete <span class="arrow">→</span> <b>+100 XP</b><br>
           7-day streak <span class="arrow">→</span> <b>+50 XP bonus</b>
         </div>
+      </div>
+    </div>`,
+    clock:`<div class="co" style="text-align:center">
+      <div class="clock-face" id="analogClock">
+        <svg viewBox="0 0 200 200">
+          ${[...Array(12)].map((_,i)=>`<line class="clock-tick" x1="100" y1="10" x2="100" y2="22" transform="rotate(${i*30} 100 100)"/>`).join('')}
+          <line id="clockHour" class="clock-hand hour" x1="100" y1="100" x2="100" y2="52"/>
+          <line id="clockMin" class="clock-hand min" x1="100" y1="100" x2="100" y2="28"/>
+          <line id="clockSec" class="clock-hand sec" x1="100" y1="100" x2="100" y2="20"/>
+          <circle cx="100" cy="100" r="4" class="clock-pivot"/>
+        </svg>
+        <div class="clock-digital" id="clockDigitalText"></div>
       </div>
     </div>`,
   };
