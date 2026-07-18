@@ -13,11 +13,9 @@
 <div id="loginScreen" class="screen">
   <div class="login-wrap">
     <div class="login-ornament">✦ ✦ ✦</div>
-    <img class="login-frame"
-      src="https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=400https://images.unsplash.com/photo-1532012197267-da84d127e765?w=1400&q=80"
-      alt="">
-    <h1 id="loginTitle" class="login-title" data-editable="siteTitle">The Polyglot Sanctum</h1>
-    <p id="loginSubtitle" class="login-sub" data-editable="siteSubtitle">A private realm of language & learning</p>
+    <img id="loginPortrait" class="login-frame" src="https://images.unsplash.com/photo-1578662996442-48f60103fc96?w=400&q=80" alt="">
+    <h1 id="loginTitle" class="login-title">The Polyglot Sanctum</h1>
+    <p id="loginSubtitle" class="login-sub">A private realm of language & learning</p>
     <div class="login-divider"></div>
     <input id="passInput" type="password" placeholder="Enter the passphrase…" class="pass-input" onkeydown="if(event.key==='Enter')login()">
     <button class="btn-gold" onclick="login()">Enter the Sanctum</button>
@@ -28,7 +26,6 @@
 
 <!-- APP -->
 <div id="app" class="screen hidden">
-
   <nav class="sidebar">
     <div class="sidebar-hero">
       <div class="sidebar-moon">🌙</div>
@@ -36,6 +33,7 @@
     </div>
     <div class="nav-section">Study</div>
     <a class="nav-link active" onclick="showPage('dashboard')" data-page="dashboard"><span class="nav-icon">⚡</span><span>Dashboard</span></a>
+    <a class="nav-link" onclick="showPage('pomodoro')" data-page="pomodoro"><span class="nav-icon">🍅</span><span>Focus Timer</span></a>
     <a class="nav-link" onclick="showPage('quests')" data-page="quests"><span class="nav-icon">⚔️</span><span>Quests</span></a>
     <a class="nav-link" onclick="showPage('vocab')" data-page="vocab"><span class="nav-icon">📖</span><span>Vocabulary</span></a>
     <a class="nav-link" onclick="showPage('flashcards')" data-page="flashcards"><span class="nav-icon">🃏</span><span>Flashcards</span></a>
@@ -45,6 +43,7 @@
     <div class="nav-section">Log</div>
     <a class="nav-link" onclick="showPage('sessions')" data-page="sessions"><span class="nav-icon">📝</span><span>Sessions</span></a>
     <a class="nav-link" onclick="showPage('resources')" data-page="resources"><span class="nav-icon">📦</span><span>Resources</span></a>
+    <a class="nav-link" onclick="showPage('tutorial')" data-page="tutorial"><span class="nav-icon">📗</span><span>Guide</span></a>
     <button class="btn-logout" onclick="logout()">✦ Leave</button>
   </nav>
 
@@ -52,25 +51,17 @@
 
     <!-- DASHBOARD -->
     <section id="page-dashboard" class="page active">
-      <div style="width:100%;height:180px;background:linear-gradient(rgba(0,0,0,0.1),rgba(17,16,16,1)),url('https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=1200&q=80') center 30%/cover;"></div>
+      <div id="dashCover" data-edit-cover="dashboardCover" style="width:100%;height:180px;background:linear-gradient(rgba(0,0,0,0.1),rgba(17,16,16,1)),url('https://images.unsplash.com/photo-1532012197267-da84d127e765?w=1400&q=80') center/cover;cursor:default"></div>
       <div class="page-inner">
         <div class="page-header" style="margin-top:16px">
-          <div>
-            <h2 class="page-title">🌙 The Polyglot Sanctum</h2>
-            <p class="page-sub" id="dateDisplay"></p>
-          </div>
+          <div><h2 class="page-title" id="siteTitle">🌙 The Polyglot Sanctum</h2><p class="page-sub" id="dateDisplay"></p></div>
           <button class="btn-gold small" onclick="openModal('addXP')">+ Add XP</button>
         </div>
-
         <div class="dash-cols">
           <div class="dash-left">
-
-            <!-- Portrait -->
             <div class="callout" style="text-align:center;padding-bottom:18px">
               <div class="portrait-wrap">
-                <img class="portrait-frame"
-                  src="https://upload.wikimedia.org/wikipedia/commons/thumb/e/ec/Mona_Lisa%2C_by_Leonardo_da_Vinci%2C_from_C2RMF_retouched.jpg/400px-Mona_Lisa%2C_by_Leonardo_da_Vinci%2C_from_C2RMF_retouched.jpg"
-                  alt="">
+                <img id="mainPortrait" class="portrait-frame" src="https://images.unsplash.com/photo-1578662996442-48f60103fc96?w=400&q=80" alt="" data-edit-img="portraitUrl">
               </div>
               <div id="adventurerName" class="portrait-name" data-editable="adventurerName" style="font-size:0.9em;margin-bottom:2px">Scholar</div>
               <div class="portrait-name" id="rankName">Apprentice Linguist</div>
@@ -83,36 +74,27 @@
               <div class="stats-row" style="margin-top:14px">
                 <div class="stat-box"><span class="stat-v" id="totalXPDisp">0</span><span class="stat-l">XP</span></div>
                 <div class="stat-box"><span class="stat-v" id="streakDisp">0</span><span class="stat-l">Streak 🔥</span></div>
-                <div class="stat-box"><span class="stat-v" id="wordsDisp">0</span><span class="stat-l">Words</span></div>
+                <div class="stat-box"><span class="stat-v" id="wordsDisp">0</span><span class="stat-l">Mastered</span></div>
               </div>
             </div>
-
-            <!-- Streak -->
             <div class="callout">
               <span class="callout-icon">🔥</span>
               <div class="callout-title">This Week</div>
               <div class="streak-row" id="streakDots"></div>
               <button class="btn-ghost" style="margin-top:14px;width:100%" onclick="logToday()">Log Today's Study</button>
             </div>
-
-            <!-- Daily Ritual -->
             <div class="callout">
               <span class="callout-icon">✦</span>
               <div class="callout-title">Daily Ritual</div>
               <div id="ritualList"></div>
             </div>
-
-            <!-- Rank Ladder -->
             <div class="callout">
               <span class="callout-icon">🏆</span>
               <div class="callout-title">Rank Ladder</div>
               <div id="rankLadder"></div>
             </div>
-
           </div>
           <div class="dash-right">
-
-            <!-- XP guide callout -->
             <div class="callout">
               <div class="callout-body">
                 <b>⚡ Today is <span id="todayLabel"></span></b><br>
@@ -122,41 +104,84 @@
                 <span class="arrow">✦</span> Surahs can read: <b id="surahCount">0</b>
               </div>
             </div>
-
-            <!-- Language Map -->
-            <div>
-              <div class="sec-heading">🗺️ Language Map</div>
+            <div><div class="sec-heading">🗺️ Language Map</div>
               <div class="lang-grid" id="langGrid"></div>
               <p style="font-size:0.72em;color:var(--muted);margin-top:8px;font-style:italic;text-align:center">🔒 Languages unlock at 500 XP</p>
             </div>
-
-            <!-- Active Quests -->
-            <div>
-              <div class="sec-heading">⚔️ Active Quests</div>
+            <div><div class="sec-heading">⚔️ Active Quests</div>
               <div id="activeQuestsPreview"></div>
               <a class="see-all" onclick="showPage('quests')">View all quests →</a>
             </div>
-
-            <!-- XP Guide -->
-            <div>
-              <div class="sec-heading">⚡ How XP Works</div>
+            <div><div class="sec-heading">⚡ How XP Works</div>
               <div class="callout">
                 <div class="callout-body">
+                  🍅 Pomodoro (25 min) <span class="arrow">→</span> <b>+25 XP auto</b><br>
                   15 min session <span class="arrow">→</span> <b>+10 XP</b><br>
                   30 min session <span class="arrow">→</span> <b>+25 XP</b><br>
                   60 min session <span class="arrow">→</span> <b>+50 XP</b><br>
-                  10 new vocab words <span class="arrow">→</span> <b>+15 XP</b><br>
-                  Master a vocab word <span class="arrow">→</span> <b>+5 XP</b><br>
+                  Save a vocab word <span class="arrow">→</span> <b>+2 XP</b><br>
+                  Master a word (flashcards) <span class="arrow">→</span> <b>+5 XP</b><br>
                   Complete surah (read) <span class="arrow">→</span> <b>+20 XP</b><br>
                   Complete surah (understand) <span class="arrow">→</span> <b>+30 XP</b><br>
                   Master a tajweed rule <span class="arrow">→</span> <b>+10 XP</b><br>
                   Finish a quest <span class="arrow">→</span> <b>+100 XP</b><br>
-                  7-day streak <span class="arrow">→</span> <b>+50 XP bonus</b><br>
-                  30-day streak <span class="arrow">→</span> <b>+200 XP bonus</b>
+                  7-day streak <span class="arrow">→</span> <b>+50 XP bonus</b>
                 </div>
               </div>
             </div>
+          </div>
+        </div>
+      </div>
+    </section>
 
+    <!-- POMODORO -->
+    <section id="page-pomodoro" class="page hidden">
+      <div class="page-inner" style="padding-top:32px">
+        <div class="page-header">
+          <div><h2 class="page-title">🍅 Focus Timer</h2><p class="page-sub">Study in focused sprints — XP auto-awards when the timer ends</p></div>
+        </div>
+        <div class="pom-wrap">
+          <div class="pom-modes">
+            <button class="pom-mode-btn active" onclick="pomSetMode('work')">🍅 Focus (25m)</button>
+            <button class="pom-mode-btn" onclick="pomSetMode('short')">☕ Short Break (5m)</button>
+            <button class="pom-mode-btn" onclick="pomSetMode('long')">🌙 Long Break (15m)</button>
+          </div>
+          <div class="pom-ring-wrap">
+            <svg class="pom-svg" viewBox="0 0 120 120">
+              <circle cx="60" cy="60" r="54" fill="none" stroke="var(--border)" stroke-width="6"/>
+              <circle id="pomRing" cx="60" cy="60" r="54" fill="none" stroke="var(--gold)" stroke-width="6"
+                stroke-linecap="round" stroke-dasharray="339.3" stroke-dashoffset="0"
+                transform="rotate(-90 60 60)" style="transition:stroke-dashoffset 1s linear"/>
+            </svg>
+            <div class="pom-center">
+              <div class="pom-mode-label" id="pomModeLabel">🍅 Focus Time</div>
+              <div class="pom-display" id="pomDisplay">25:00</div>
+              <div class="pom-cycles">Cycles: <span id="pomCyclesDisp">0</span></div>
+            </div>
+          </div>
+          <div class="pom-controls">
+            <button class="pom-btn-start" id="pomStartBtn" onclick="pomStart()">▶ Start</button>
+            <button class="pom-btn-reset" onclick="pomReset()">↺ Reset</button>
+          </div>
+          <div class="pom-session-info">
+            <div class="callout" style="max-width:400px;margin:0 auto">
+              <div class="callout-title">Session Settings</div>
+              <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:4px">
+                <div style="flex:1">
+                  <label class="modal-label">Language</label>
+                  <select id="pomLang" class="filter-select" style="width:100%">
+                    <option>Arabic</option><option>Quranic Arabic</option><option>Mandarin</option><option>German</option><option>Spanish</option>
+                  </select>
+                </div>
+                <div style="flex:1">
+                  <label class="modal-label">Type</label>
+                  <select id="pomType" class="filter-select" style="width:100%">
+                    <option>Study</option><option>Vocabulary</option><option>Reading</option><option>Quran Recitation</option><option>Tajweed</option><option>Grammar</option>
+                  </select>
+                </div>
+              </div>
+              <p style="font-size:0.8em;color:var(--muted);margin-top:12px;font-style:italic">✦ When the Focus timer ends, <b style="color:var(--gold)">+25 XP is automatically added</b> and the session is logged for you.</p>
+            </div>
           </div>
         </div>
       </div>
@@ -164,10 +189,10 @@
 
     <!-- QUESTS -->
     <section id="page-quests" class="page hidden">
-      <div style="width:100%;height:140px;background:linear-gradient(rgba(0,0,0,0.2),rgba(17,16,16,1)),url('https://images.unsplash.com/photo-1519389950473-47ba0277781c?w=1200&q=80') center/cover;"></div>
+      <div id="questsCover" data-edit-cover="questsCover" style="width:100%;height:140px;background:linear-gradient(rgba(0,0,0,0.2),rgba(17,16,16,1)),url('https://images.unsplash.com/photo-1519389950473-47ba0277781c?w=1200&q=80') center/cover;"></div>
       <div class="page-inner">
         <div class="page-header" style="margin-top:16px">
-          <div><h2 class="page-title">⚔️ Quests & Goals</h2><p class="page-sub">Complete quests to earn XP and unlock new languages</p></div>
+          <div><h2 class="page-title">⚔️ Quests & Goals</h2><p class="page-sub">Complete quests to earn XP — click a quest to mark it done</p></div>
         </div>
         <div id="questsContainer"></div>
       </div>
@@ -175,10 +200,10 @@
 
     <!-- VOCAB -->
     <section id="page-vocab" class="page hidden">
-      <div style="width:100%;height:140px;background:linear-gradient(rgba(0,0,0,0.2),rgba(17,16,16,1)),url('https://images.unsplash.com/photo-1524578271613-d550eacf6090?w=1200&q=80') center/cover;"></div>
+      <div id="vocabCover" data-edit-cover="vocabCover" style="width:100%;height:140px;background:linear-gradient(rgba(0,0,0,0.2),rgba(17,16,16,1)),url('https://images.unsplash.com/photo-1524578271613-d550eacf6090?w=1200&q=80') center/cover;"></div>
       <div class="page-inner">
         <div class="page-header" style="margin-top:16px">
-          <div><h2 class="page-title">📖 Vocabulary Bank</h2><p class="page-sub">Your personal word collection across all languages</p></div>
+          <div><h2 class="page-title">📖 Vocabulary Bank</h2><p class="page-sub">Your word collection — 15 Quranic Arabic words are pre-loaded to get you started</p></div>
           <button class="btn-gold small" onclick="openModal('addWord')">+ Add Word</button>
         </div>
         <div class="filter-bar">
@@ -203,23 +228,23 @@
     <section id="page-flashcards" class="page hidden">
       <div class="page-inner" style="padding-top:32px">
         <div class="page-header">
-          <div><h2 class="page-title">🃏 Flashcard Mode</h2><p class="page-sub">Review your vocabulary — tap to flip</p></div>
+          <div><h2 class="page-title">🃏 Flashcard Mode</h2><p class="page-sub">Tap the card to flip it — mark right to level up mastery</p></div>
         </div>
         <div class="fc-controls">
-          <select id="fcLang" class="filter-select"><option value="">All Languages</option><option>Arabic</option><option>Quranic Arabic</option></select>
+          <select id="fcLang" class="filter-select"><option value="">All Languages</option><option>Arabic</option><option>Quranic Arabic</option><option>Mandarin</option><option>German</option><option>Spanish</option></select>
           <select id="fcMastery" class="filter-select"><option value="">All Levels</option><option value="New">New only</option><option value="Learning">Learning only</option><option value="Reviewing">Reviewing only</option></select>
           <button class="btn-gold small" onclick="startFlashcards()">Start Session</button>
         </div>
-        <div id="fcArea" class="fc-area"><div class="fc-empty">Select a language and hit Start to begin.</div></div>
+        <div id="fcArea" class="fc-area"><div class="fc-empty">Select a language above and hit Start to begin your flashcard session.</div></div>
       </div>
     </section>
 
     <!-- QURAN -->
     <section id="page-quran" class="page hidden">
-      <div style="width:100%;height:140px;background:linear-gradient(rgba(0,0,0,0.3),rgba(17,16,16,1)),url('https://images.unsplash.com/photo-1564769662533-4f00a87b4056?w=1200&q=80') center/cover;"></div>
+      <div id="quranCover" data-edit-cover="quranCover" style="width:100%;height:140px;background:linear-gradient(rgba(0,0,0,0.3),rgba(17,16,16,1)),url('https://images.unsplash.com/photo-1564769662533-4f00a87b4056?w=1200&q=80') center/cover;"></div>
       <div class="page-inner">
         <div class="page-header" style="margin-top:16px">
-          <div><h2 class="page-title">🕌 Quran Progress</h2><p class="page-sub">Surah by surah — read, memorise, understand</p></div>
+          <div><h2 class="page-title">🕌 Quran Progress</h2><p class="page-sub">Tick off surahs as you learn to read, memorise, and understand them</p></div>
         </div>
         <div class="quran-stats" id="quranStats"></div>
         <div id="quranList"></div>
@@ -230,7 +255,7 @@
     <section id="page-tajweed" class="page hidden">
       <div class="page-inner" style="padding-top:32px">
         <div class="page-header">
-          <div><h2 class="page-title">📜 Tajweed Scrolls</h2><p class="page-sub">Your personal reference for Quranic recitation rules</p></div>
+          <div><h2 class="page-title">📜 Tajweed Scrolls</h2><p class="page-sub">Master each rule for +10 XP — your personal Quranic recitation reference</p></div>
         </div>
         <div id="tajweedGrid"></div>
       </div>
@@ -240,8 +265,8 @@
     <section id="page-sessions" class="page hidden">
       <div class="page-inner" style="padding-top:32px">
         <div class="page-header">
-          <div><h2 class="page-title">📝 Study Sessions</h2><p class="page-sub">Every session logged, every XP earned</p></div>
-          <button class="btn-gold small" onclick="openModal('addSession')">+ Log Session</button>
+          <div><h2 class="page-title">📝 Study Sessions</h2><p class="page-sub">Pomodoro sessions auto-log here — or add one manually</p></div>
+          <button class="btn-gold small" onclick="openModal('addSession')">+ Log Manually</button>
         </div>
         <div id="sessionsList"></div>
       </div>
@@ -258,11 +283,94 @@
       </div>
     </section>
 
+    <!-- TUTORIAL -->
+    <section id="page-tutorial" class="page hidden">
+      <div class="page-inner" style="padding-top:32px">
+        <div class="page-header">
+          <div><h2 class="page-title">📗 How to Use The Sanctum</h2><p class="page-sub">Your complete guide to everything</p></div>
+        </div>
+        <div style="max-width:680px">
+
+          <div class="callout" style="margin-bottom:16px">
+            <span class="callout-icon">🍅</span>
+            <div class="callout-title">Focus Timer — The Main Loop</div>
+            <div class="callout-body">
+              Go to <b>Focus Timer</b> in the sidebar. Pick your language and session type, then hit <b>▶ Start</b>. Study for 25 minutes, and when the timer ends — <b style="color:var(--gold)">+25 XP is automatically added</b> and your session is logged. No need to do anything. Take the 5-minute break when it switches, then repeat. Every 4 cycles you get a longer 15-minute break.
+            </div>
+          </div>
+
+          <div class="callout" style="margin-bottom:16px">
+            <span class="callout-icon">⚔️</span>
+            <div class="callout-title">Quests — Your Goals</div>
+            <div class="callout-body">
+              Go to <b>Quests</b>. You'll see 5 active quests and some locked ones. When you complete a quest in real life (e.g. you can now read Al-Fatiha fluently), <b>click the quest card</b> to mark it complete and claim the XP. Use <b>✏️ Edit mode</b> to rename, edit, add or delete quests to match your personal goals.
+            </div>
+          </div>
+
+          <div class="callout" style="margin-bottom:16px">
+            <span class="callout-icon">📖</span>
+            <div class="callout-title">Vocabulary — Adding Words</div>
+            <div class="callout-body">
+              Go to <b>Vocabulary</b>. 15 Quranic Arabic starter words are already there. To add more, click the <b>+ Add Word</b> button in the top right. Enter the word (in Arabic script or any language), its meaning, pronunciation, and an example sentence. Hit Save — <b>+2 XP instantly</b>. Use the filters to browse by language or mastery level.
+            </div>
+          </div>
+
+          <div class="callout" style="margin-bottom:16px">
+            <span class="callout-icon">🃏</span>
+            <div class="callout-title">Flashcards — Review Words</div>
+            <div class="callout-body">
+              Go to <b>Flashcards</b>. Pick a language, hit Start. Tap the card to flip it and see the meaning. Hit <b>✓ Got it</b> to level up that word's mastery (New → Learning → Reviewing → Mastered). When a word reaches Mastered, you get <b>+5 XP</b>. The more you review, the more XP you earn.
+            </div>
+          </div>
+
+          <div class="callout" style="margin-bottom:16px">
+            <span class="callout-icon">🕌</span>
+            <div class="callout-title">Quran Progress — Track Surahs</div>
+            <div class="callout-body">
+              Go to <b>Quran</b>. You'll see 20 surahs (Al-Fatiha + Juz' Amma). Each surah has 3 checkboxes: <b>Read</b> (can read the Arabic), <b>Memory</b> (memorised it), <b>Meaning</b> (understand the translation). Tick each one as you achieve it — each tick earns XP automatically.
+            </div>
+          </div>
+
+          <div class="callout" style="margin-bottom:16px">
+            <span class="callout-icon">📜</span>
+            <div class="callout-title">Tajweed — Recitation Rules</div>
+            <div class="callout-body">
+              Go to <b>Tajweed</b>. You'll find 7 core rules explained in plain English with Arabic examples. Once you've practised a rule and feel confident, click <b>Mark as mastered</b> for <b>+10 XP</b>. Use this as your reference while studying the Quran.
+            </div>
+          </div>
+
+          <div class="callout" style="margin-bottom:16px">
+            <span class="callout-icon">✏️</span>
+            <div class="callout-title">Editing Everything</div>
+            <div class="callout-body">
+              Click the <b>✏️ Edit</b> button in the top-right corner. While edit mode is on:<br>
+              • Click <b>any text</b> to rename it<br>
+              • Click your <b>portrait or any cover image</b> to change it (paste a URL from Unsplash)<br>
+              • Click <b>any quest</b> to edit its name, description, XP, or delete it<br>
+              • Add new quests with the <b>+ Add Quest</b> button<br>
+              • Edit your daily ritual items the same way<br>
+              Everything saves automatically to your Supabase database.
+            </div>
+          </div>
+
+          <div class="callout">
+            <span class="callout-icon">💡</span>
+            <div class="callout-title">Tips for Getting Images</div>
+            <div class="callout-body">
+              Go to <b>unsplash.com</b> — it's a free image site. Find an image you like, right-click it and choose <b>"Copy image address"</b>. Then in Edit mode, click the portrait or cover and paste that URL. Dark moody images work best for the aesthetic — try searching "dark library", "old books", "candle", "mosque", "arabic calligraphy".
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </section>
+
   </main>
 </div>
 
 <!-- MODALS -->
 <div id="modalOverlay" class="modal-overlay hidden" onclick="if(event.target===this)closeModal()">
+
   <div id="modal-addXP" class="modal hidden">
     <h3 class="modal-title">⚡ Add XP</h3>
     <label class="modal-label">What did you do?</label>
@@ -284,13 +392,13 @@
 
   <div id="modal-addWord" class="modal hidden">
     <h3 class="modal-title">📖 Add Word</h3>
-    <label class="modal-label">Word</label><input id="newWord" class="modal-input" placeholder="e.g. كتاب">
-    <label class="modal-label">Meaning</label><input id="newMeaning" class="modal-input" placeholder="e.g. Book">
+    <label class="modal-label">Word (Arabic, Mandarin, etc.)</label><input id="newWord" class="modal-input" placeholder="e.g. كتاب">
+    <label class="modal-label">Meaning in English</label><input id="newMeaning" class="modal-input" placeholder="e.g. Book">
     <label class="modal-label">Pronunciation</label><input id="newPronunciation" class="modal-input" placeholder="e.g. kitaab">
     <label class="modal-label">Language</label>
     <select id="newWordLang" class="modal-input"><option>Arabic</option><option>Quranic Arabic</option><option>Mandarin</option><option>German</option><option>Spanish</option><option>French</option><option>Italian</option><option>Japanese</option><option>Korean</option><option>Twi</option></select>
-    <label class="modal-label">Example Sentence</label><input id="newExample" class="modal-input" placeholder="Optional">
-    <div class="modal-btns"><button class="btn-ghost" onclick="closeModal()">Cancel</button><button class="btn-gold" onclick="doAddWord()">Save Word</button></div>
+    <label class="modal-label">Example Sentence (optional)</label><input id="newExample" class="modal-input" placeholder="e.g. هَذَا كِتَابٌ — This is a book">
+    <div class="modal-btns"><button class="btn-ghost" onclick="closeModal()">Cancel</button><button class="btn-gold" onclick="doAddWord()">Save Word (+2 XP)</button></div>
   </div>
 
   <div id="modal-addSession" class="modal hidden">
@@ -321,15 +429,26 @@
   <div id="modal-editQuest" class="modal hidden">
     <h3 class="modal-title">✏️ Edit Quest</h3>
     <label class="modal-label">Icon (emoji)</label><input id="eqIco" class="modal-input" placeholder="⚔️">
-    <label class="modal-label">Quest Name</label><input id="eqName" class="modal-input" placeholder="Quest name">
-    <label class="modal-label">Description</label><input id="eqDesc" class="modal-input" placeholder="What do you need to do?">
-    <label class="modal-label">XP Reward</label><input id="eqXP" class="modal-input" type="number" placeholder="50">
+    <label class="modal-label">Quest Name</label><input id="eqName" class="modal-input">
+    <label class="modal-label">Description</label><input id="eqDesc" class="modal-input">
+    <label class="modal-label">XP Reward</label><input id="eqXP" class="modal-input" type="number">
     <label class="modal-label">Type</label>
     <select id="eqType" class="modal-input"><option>Main Quest</option><option>Side Quest</option><option>Daily</option><option>Challenge</option><option>Milestone</option></select>
     <label class="modal-label">Status</label>
     <select id="eqStatus" class="modal-input"><option value="active">Active</option><option value="locked">Locked</option></select>
     <div class="modal-btns"><button class="btn-ghost" onclick="closeModal()">Cancel</button><button class="btn-gold" onclick="saveQuestEdit()">Save Quest</button></div>
   </div>
+
+  <div id="modal-imgPicker" class="modal hidden">
+    <h3 class="modal-title">🖼️ Change Image</h3>
+    <label class="modal-label">Paste any image URL</label>
+    <input id="imgPickerUrl" class="modal-input" placeholder="https://images.unsplash.com/..." oninput="imgPickerPreview()">
+    <div style="margin:10px 0 4px;font-size:0.68em;color:var(--muted);letter-spacing:1px;text-transform:uppercase">Preview</div>
+    <img id="imgPickerPreview" style="width:100%;max-height:160px;object-fit:cover;border:1px solid var(--border2);border-radius:2px;display:none;margin-bottom:8px" onerror="this.style.display='none'">
+    <div style="font-size:0.75em;color:var(--muted);font-style:italic;margin-bottom:4px">Go to <b style="color:var(--gold2)">unsplash.com</b> → right-click image → Copy image address</div>
+    <div class="modal-btns"><button class="btn-ghost" onclick="closeModal()">Cancel</button><button class="btn-gold" onclick="imgPickerSave()">Set Image ✓</button></div>
+  </div>
+
 </div>
 
 <div id="toast" class="toast"></div>
