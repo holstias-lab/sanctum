@@ -14,10 +14,10 @@
   <div class="login-wrap">
     <div class="login-ornament">✦ ✦ ✦</div>
     <img class="login-frame"
-      src="https://upload.wikimedia.org/wikipedia/commons/thumb/b/b5/Johannes_Vermeer_-_Girl_with_a_Pearl_Earring_-_WGA24666.jpg/400px-Johannes_Vermeer_-_Girl_with_a_Pearl_Earring_-_WGA24666.jpg"
+      src="https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=400https://images.unsplash.com/photo-1532012197267-da84d127e765?w=1400&q=80"
       alt="">
-    <h1 class="login-title">The Polyglot<br>Sanctum</h1>
-    <p class="login-sub">A private realm of language & learning</p>
+    <h1 id="loginTitle" class="login-title" data-editable="siteTitle">The Polyglot Sanctum</h1>
+    <p id="loginSubtitle" class="login-sub" data-editable="siteSubtitle">A private realm of language & learning</p>
     <div class="login-divider"></div>
     <input id="passInput" type="password" placeholder="Enter the passphrase…" class="pass-input" onkeydown="if(event.key==='Enter')login()">
     <button class="btn-gold" onclick="login()">Enter the Sanctum</button>
@@ -52,7 +52,7 @@
 
     <!-- DASHBOARD -->
     <section id="page-dashboard" class="page active">
-      <div style="width:100%;height:180px;background:linear-gradient(rgba(0,0,0,0.1),rgba(17,16,16,1)),url('https://upload.wikimedia.org/wikipedia/commons/thumb/4/4b/The_Night_Watch_by_Rembrandt_van_Rijn%2C_1642.jpg/1200px-The_Night_Watch_by_Rembrandt_van_Rijn%2C_1642.jpg') center 30%/cover;"></div>
+      <div style="width:100%;height:180px;background:linear-gradient(rgba(0,0,0,0.1),rgba(17,16,16,1)),url('https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=1200&q=80') center 30%/cover;"></div>
       <div class="page-inner">
         <div class="page-header" style="margin-top:16px">
           <div>
@@ -72,6 +72,7 @@
                   src="https://upload.wikimedia.org/wikipedia/commons/thumb/e/ec/Mona_Lisa%2C_by_Leonardo_da_Vinci%2C_from_C2RMF_retouched.jpg/400px-Mona_Lisa%2C_by_Leonardo_da_Vinci%2C_from_C2RMF_retouched.jpg"
                   alt="">
               </div>
+              <div id="adventurerName" class="portrait-name" data-editable="adventurerName" style="font-size:0.9em;margin-bottom:2px">Scholar</div>
               <div class="portrait-name" id="rankName">Apprentice Linguist</div>
               <div style="font-size:0.72em;color:var(--muted);margin-top:2px" id="rankNum">Rank I</div>
               <div class="xp-bar-wrap" style="margin-top:14px">
@@ -163,7 +164,7 @@
 
     <!-- QUESTS -->
     <section id="page-quests" class="page hidden">
-      <div style="width:100%;height:140px;background:linear-gradient(rgba(0,0,0,0.2),rgba(17,16,16,1)),url('https://upload.wikimedia.org/wikipedia/commons/thumb/3/30/Knight%2C_Death_and_the_Devil_%281513%29_by_Albrecht_D%C3%BCrer.jpg/800px-Knight%2C_Death_and_the_Devil_%281513%29_by_Albrecht_D%C3%BCrer.jpg') center/cover;"></div>
+      <div style="width:100%;height:140px;background:linear-gradient(rgba(0,0,0,0.2),rgba(17,16,16,1)),url('https://images.unsplash.com/photo-1519389950473-47ba0277781c?w=1200&q=80') center/cover;"></div>
       <div class="page-inner">
         <div class="page-header" style="margin-top:16px">
           <div><h2 class="page-title">⚔️ Quests & Goals</h2><p class="page-sub">Complete quests to earn XP and unlock new languages</p></div>
@@ -174,7 +175,7 @@
 
     <!-- VOCAB -->
     <section id="page-vocab" class="page hidden">
-      <div style="width:100%;height:140px;background:linear-gradient(rgba(0,0,0,0.2),rgba(17,16,16,1)),url('https://upload.wikimedia.org/wikipedia/commons/thumb/9/9e/Pieter_Bruegel_the_Elder_-_The_Tower_of_Babel_%28Vienna%29_-_Google_Art_Project.jpg/1200px-Pieter_Bruegel_the_Elder_-_The_Tower_of_Babel_%28Vienna%29_-_Google_Art_Project.jpg') center/cover;"></div>
+      <div style="width:100%;height:140px;background:linear-gradient(rgba(0,0,0,0.2),rgba(17,16,16,1)),url('https://images.unsplash.com/photo-1524578271613-d550eacf6090?w=1200&q=80') center/cover;"></div>
       <div class="page-inner">
         <div class="page-header" style="margin-top:16px">
           <div><h2 class="page-title">📖 Vocabulary Bank</h2><p class="page-sub">Your personal word collection across all languages</p></div>
@@ -215,7 +216,7 @@
 
     <!-- QURAN -->
     <section id="page-quran" class="page hidden">
-      <div style="width:100%;height:140px;background:linear-gradient(rgba(0,0,0,0.3),rgba(17,16,16,1)),url('https://upload.wikimedia.org/wikipedia/commons/thumb/9/9e/Arabische_geometrische_Kunst.jpg/1200px-Arabische_geometrische_Kunst.jpg') center/cover;"></div>
+      <div style="width:100%;height:140px;background:linear-gradient(rgba(0,0,0,0.3),rgba(17,16,16,1)),url('https://images.unsplash.com/photo-1564769662533-4f00a87b4056?w=1200&q=80') center/cover;"></div>
       <div class="page-inner">
         <div class="page-header" style="margin-top:16px">
           <div><h2 class="page-title">🕌 Quran Progress</h2><p class="page-sub">Surah by surah — read, memorise, understand</p></div>
@@ -316,9 +317,23 @@
     <label class="modal-label">Notes</label><input id="resNotes" class="modal-input" placeholder="Why you like it">
     <div class="modal-btns"><button class="btn-ghost" onclick="closeModal()">Cancel</button><button class="btn-gold" onclick="doAddResource()">Save</button></div>
   </div>
+
+  <div id="modal-editQuest" class="modal hidden">
+    <h3 class="modal-title">✏️ Edit Quest</h3>
+    <label class="modal-label">Icon (emoji)</label><input id="eqIco" class="modal-input" placeholder="⚔️">
+    <label class="modal-label">Quest Name</label><input id="eqName" class="modal-input" placeholder="Quest name">
+    <label class="modal-label">Description</label><input id="eqDesc" class="modal-input" placeholder="What do you need to do?">
+    <label class="modal-label">XP Reward</label><input id="eqXP" class="modal-input" type="number" placeholder="50">
+    <label class="modal-label">Type</label>
+    <select id="eqType" class="modal-input"><option>Main Quest</option><option>Side Quest</option><option>Daily</option><option>Challenge</option><option>Milestone</option></select>
+    <label class="modal-label">Status</label>
+    <select id="eqStatus" class="modal-input"><option value="active">Active</option><option value="locked">Locked</option></select>
+    <div class="modal-btns"><button class="btn-ghost" onclick="closeModal()">Cancel</button><button class="btn-gold" onclick="saveQuestEdit()">Save Quest</button></div>
+  </div>
 </div>
 
 <div id="toast" class="toast"></div>
+<button id="editToggle" class="edit-toggle-btn" onclick="toggleEditMode()">✏️ Edit</button>
 <script src="app.js"></script>
 </body>
 </html>
