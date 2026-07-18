@@ -238,6 +238,44 @@ html,body{height:100%;background:var(--deep);color:var(--text);font-family:'Crim
 .schk-box.on{background:var(--gold2);border-color:var(--gold);color:var(--deep)}
 .schk-lbl{font-size:0.5em;color:var(--muted);letter-spacing:0.5px;text-transform:uppercase;white-space:nowrap}
 
+/* QURAN READER */
+.qr-layout{display:flex;gap:0;height:calc(100vh - 64px);margin:-16px;overflow:hidden}
+.qr-side{width:270px;flex-shrink:0;border-right:1px solid var(--border);overflow-y:auto;background:var(--panel)}
+.qr-side::-webkit-scrollbar{width:4px}
+.qr-side::-webkit-scrollbar-thumb{background:var(--border2)}
+.qr-side-item{display:flex;align-items:center;gap:10px;padding:9px 16px;cursor:pointer;border-left:2px solid transparent;transition:all 0.15s}
+.qr-side-item:hover{background:var(--panel2)}
+.qr-side-item.on{background:var(--panel2);border-left-color:var(--gold)}
+.qr-side-num{font-family:'Cinzel',serif;font-size:0.65em;color:var(--gold2);width:22px;flex-shrink:0;text-align:center}
+.qr-side-name{flex:1;font-size:0.82em;color:var(--text)}
+.qr-side-ar{font-size:0.85em;color:var(--muted);direction:rtl}
+.qr-main{flex:1;overflow-y:auto;padding:24px 32px}
+.qr-empty{display:flex;align-items:center;justify-content:center;height:100%;color:var(--muted);font-style:italic}
+.qr-head{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:14px;padding-bottom:14px;border-bottom:1px solid var(--border)}
+.qr-title{font-family:'Cinzel',serif;color:var(--gold);font-size:1.1em;letter-spacing:1px}
+.qr-title-ar{font-size:1em;color:var(--text);direction:rtl;margin-top:2px}
+.qr-checks{display:flex;gap:16px}
+.ayah-block{background:var(--panel);border:1px solid var(--border);border-left:3px solid var(--border);border-radius:2px;padding:14px 16px;margin-bottom:10px;transition:all 0.18s}
+.ayah-block.hl-yellow{border-left-color:#c9a84c;background:rgba(201,168,76,0.08)}
+.ayah-block.hl-green{border-left-color:#4a7c4e;background:rgba(74,124,78,0.08)}
+.ayah-block.hl-red{border-left-color:#a04a4a;background:rgba(160,74,74,0.08)}
+.ayah-top{display:flex;align-items:flex-start;justify-content:space-between;gap:10px}
+.ayah-num{font-family:'Cinzel',serif;font-size:0.65em;color:var(--gold2);flex-shrink:0;padding-top:4px}
+.ayah-ar{flex:1;font-size:1.35em;line-height:2.1;direction:rtl;text-align:right;color:var(--text)}
+.ayah-en{font-size:0.85em;color:var(--muted);font-style:italic;margin-top:8px;line-height:1.6}
+.ayah-note{font-size:0.78em;color:var(--gold2);margin-top:8px;padding:7px 10px;background:var(--panel3);border-radius:2px;border-left:2px solid var(--gold2)}
+.ayah-tools{display:flex;gap:6px;flex-shrink:0}
+.ayah-dot{width:16px;height:16px;border-radius:50%;border:1px solid var(--border2);cursor:pointer;transition:all 0.15s}
+.ayah-dot:hover{transform:scale(1.15)}
+.ayah-dot.c-yellow{background:#c9a84c}
+.ayah-dot.c-green{background:#4a7c4e}
+.ayah-dot.c-red{background:#a04a4a}
+.ayah-dot.c-none{background:transparent}
+.ayah-dot.active{outline:2px solid var(--gold);outline-offset:2px}
+.ayah-notebtn{background:transparent;border:1px solid var(--border2);color:var(--muted);cursor:pointer;font-size:11px;width:20px;height:20px;border-radius:2px;display:flex;align-items:center;justify-content:center}
+.ayah-notebtn:hover{border-color:var(--gold2);color:var(--gold)}
+@media (max-width:800px){.qr-layout{flex-direction:column;height:auto}.qr-side{width:100%;max-height:220px}}
+
 /* TAJWEED */
 .taj-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:12px}
 .taj-card{background:var(--panel);border:1px solid var(--border);border-radius:2px;padding:16px;transition:all 0.18s}
@@ -345,7 +383,8 @@ body.edit [data-editable]:hover,[data-edit-img].edit-active:hover,[data-edit-cov
     <a class="nav-a" onclick="go('vocab')" data-p="vocab"><span>📖</span><span>Vocabulary</span></a>
     <a class="nav-a" onclick="go('flashcards')" data-p="flashcards"><span>🃏</span><span>Flashcards</span></a>
     <div class="nav-sec">Arabic</div>
-    <a class="nav-a" onclick="go('quran')" data-p="quran"><span>🕌</span><span>Quran</span></a>
+    <a class="nav-a" onclick="go('quranread')" data-p="quranread"><span>🕋</span><span>Quran Reader</span></a>
+    <a class="nav-a" onclick="go('quran')" data-p="quran"><span>🕌</span><span>Quran Progress</span></a>
     <a class="nav-a" onclick="go('tajweed')" data-p="tajweed"><span>📜</span><span>Tajweed</span></a>
     <div class="nav-sec">Log</div>
     <a class="nav-a" onclick="go('sessions')" data-p="sessions"><span>📝</span><span>Sessions</span></a>
@@ -406,25 +445,119 @@ const LANGS=[
 ];
 const SURAHS=[
   {num:1,name:'Al-Fatiha',ar:'الفاتحة',juz:1,v:7},
-  {num:114,name:'An-Nas',ar:'الناس',juz:30,v:6},
-  {num:113,name:'Al-Falaq',ar:'الفلق',juz:30,v:5},
-  {num:112,name:'Al-Ikhlas',ar:'الإخلاص',juz:30,v:4},
-  {num:111,name:'Al-Masad',ar:'المسد',juz:30,v:5},
-  {num:110,name:'An-Nasr',ar:'النصر',juz:30,v:3},
-  {num:109,name:'Al-Kafirun',ar:'الكافرون',juz:30,v:6},
-  {num:108,name:'Al-Kawthar',ar:'الكوثر',juz:30,v:3},
-  {num:107,name:"Al-Ma'un",ar:'الماعون',juz:30,v:7},
-  {num:106,name:'Quraysh',ar:'قريش',juz:30,v:4},
-  {num:105,name:'Al-Fil',ar:'الفيل',juz:30,v:5},
-  {num:104,name:'Al-Humazah',ar:'الهمزة',juz:30,v:9},
-  {num:103,name:'Al-Asr',ar:'العصر',juz:30,v:3},
-  {num:102,name:'At-Takathur',ar:'التكاثر',juz:30,v:8},
-  {num:101,name:"Al-Qari'ah",ar:'القارعة',juz:30,v:11},
-  {num:100,name:'Al-Adiyat',ar:'العاديات',juz:30,v:11},
-  {num:99,name:'Az-Zalzalah',ar:'الزلزلة',juz:30,v:8},
-  {num:98,name:'Al-Bayyinah',ar:'البينة',juz:30,v:8},
-  {num:97,name:'Al-Qadr',ar:'القدر',juz:30,v:5},
+  {num:2,name:'Al-Baqarah',ar:'البقرة',juz:1,v:286},
+  {num:3,name:"Aal-E-Imran",ar:'آل عمران',juz:3,v:200},
+  {num:4,name:'An-Nisa',ar:'النساء',juz:4,v:176},
+  {num:5,name:"Al-Ma'idah",ar:'المائدة',juz:6,v:120},
+  {num:6,name:"Al-An'am",ar:'الأنعام',juz:7,v:165},
+  {num:7,name:"Al-A'raf",ar:'الأعراف',juz:8,v:206},
+  {num:8,name:'Al-Anfal',ar:'الأنفال',juz:9,v:75},
+  {num:9,name:'At-Tawbah',ar:'التوبة',juz:10,v:129},
+  {num:10,name:'Yunus',ar:'يونس',juz:11,v:109},
+  {num:11,name:'Hud',ar:'هود',juz:11,v:123},
+  {num:12,name:'Yusuf',ar:'يوسف',juz:12,v:111},
+  {num:13,name:"Ar-Ra'd",ar:'الرعد',juz:13,v:43},
+  {num:14,name:'Ibrahim',ar:'إبراهيم',juz:13,v:52},
+  {num:15,name:'Al-Hijr',ar:'الحجر',juz:14,v:99},
+  {num:16,name:'An-Nahl',ar:'النحل',juz:14,v:128},
+  {num:17,name:'Al-Isra',ar:'الإسراء',juz:15,v:111},
+  {num:18,name:'Al-Kahf',ar:'الكهف',juz:15,v:110},
+  {num:19,name:'Maryam',ar:'مريم',juz:16,v:98},
+  {num:20,name:'Ta-Ha',ar:'طه',juz:16,v:135},
+  {num:21,name:'Al-Anbiya',ar:'الأنبياء',juz:17,v:112},
+  {num:22,name:'Al-Hajj',ar:'الحج',juz:17,v:78},
+  {num:23,name:"Al-Mu'minun",ar:'المؤمنون',juz:18,v:118},
+  {num:24,name:'An-Nur',ar:'النور',juz:18,v:64},
+  {num:25,name:'Al-Furqan',ar:'الفرقان',juz:18,v:77},
+  {num:26,name:"Ash-Shu'ara",ar:'الشعراء',juz:19,v:227},
+  {num:27,name:'An-Naml',ar:'النمل',juz:19,v:93},
+  {num:28,name:'Al-Qasas',ar:'القصص',juz:20,v:88},
+  {num:29,name:'Al-Ankabut',ar:'العنكبوت',juz:20,v:69},
+  {num:30,name:'Ar-Rum',ar:'الروم',juz:21,v:60},
+  {num:31,name:'Luqman',ar:'لقمان',juz:21,v:34},
+  {num:32,name:'As-Sajdah',ar:'السجدة',juz:21,v:30},
+  {num:33,name:'Al-Ahzab',ar:'الأحزاب',juz:21,v:73},
+  {num:34,name:"Saba'",ar:'سبأ',juz:22,v:54},
+  {num:35,name:'Fatir',ar:'فاطر',juz:22,v:45},
+  {num:36,name:'Ya-Sin',ar:'يس',juz:22,v:83},
+  {num:37,name:'As-Saffat',ar:'الصافات',juz:23,v:182},
+  {num:38,name:'Sad',ar:'ص',juz:23,v:88},
+  {num:39,name:'Az-Zumar',ar:'الزمر',juz:23,v:75},
+  {num:40,name:'Ghafir',ar:'غافر',juz:24,v:85},
+  {num:41,name:'Fussilat',ar:'فصلت',juz:24,v:54},
+  {num:42,name:'Ash-Shuraa',ar:'الشورى',juz:25,v:53},
+  {num:43,name:'Az-Zukhruf',ar:'الزخرف',juz:25,v:89},
+  {num:44,name:'Ad-Dukhan',ar:'الدخان',juz:25,v:59},
+  {num:45,name:'Al-Jathiyah',ar:'الجاثية',juz:25,v:37},
+  {num:46,name:'Al-Ahqaf',ar:'الأحقاف',juz:26,v:35},
+  {num:47,name:'Muhammad',ar:'محمد',juz:26,v:38},
+  {num:48,name:'Al-Fath',ar:'الفتح',juz:26,v:29},
+  {num:49,name:'Al-Hujurat',ar:'الحجرات',juz:26,v:18},
+  {num:50,name:'Qaf',ar:'ق',juz:26,v:45},
+  {num:51,name:'Adh-Dhariyat',ar:'الذاريات',juz:26,v:60},
+  {num:52,name:'At-Tur',ar:'الطور',juz:27,v:49},
+  {num:53,name:'An-Najm',ar:'النجم',juz:27,v:62},
+  {num:54,name:'Al-Qamar',ar:'القمر',juz:27,v:55},
+  {num:55,name:'Ar-Rahman',ar:'الرحمن',juz:27,v:78},
+  {num:56,name:"Al-Waqi'ah",ar:'الواقعة',juz:27,v:96},
+  {num:57,name:'Al-Hadid',ar:'الحديد',juz:27,v:29},
+  {num:58,name:'Al-Mujadila',ar:'المجادلة',juz:28,v:22},
+  {num:59,name:'Al-Hashr',ar:'الحشر',juz:28,v:24},
+  {num:60,name:'Al-Mumtahanah',ar:'الممتحنة',juz:28,v:13},
+  {num:61,name:'As-Saf',ar:'الصف',juz:28,v:14},
+  {num:62,name:"Al-Jumu'ah",ar:'الجمعة',juz:28,v:11},
+  {num:63,name:'Al-Munafiqun',ar:'المنافقون',juz:28,v:11},
+  {num:64,name:'At-Taghabun',ar:'التغابن',juz:28,v:18},
+  {num:65,name:'At-Talaq',ar:'الطلاق',juz:28,v:12},
+  {num:66,name:'At-Tahrim',ar:'التحريم',juz:28,v:12},
+  {num:67,name:'Al-Mulk',ar:'الملك',juz:29,v:30},
+  {num:68,name:'Al-Qalam',ar:'القلم',juz:29,v:52},
+  {num:69,name:'Al-Haqqah',ar:'الحاقة',juz:29,v:52},
+  {num:70,name:"Al-Ma'arij",ar:'المعارج',juz:29,v:44},
+  {num:71,name:'Nuh',ar:'نوح',juz:29,v:28},
+  {num:72,name:'Al-Jinn',ar:'الجن',juz:29,v:28},
+  {num:73,name:'Al-Muzzammil',ar:'المزمل',juz:29,v:20},
+  {num:74,name:'Al-Muddaththir',ar:'المدثر',juz:29,v:56},
+  {num:75,name:'Al-Qiyamah',ar:'القيامة',juz:29,v:40},
+  {num:76,name:'Al-Insan',ar:'الإنسان',juz:29,v:31},
+  {num:77,name:'Al-Mursalat',ar:'المرسلات',juz:29,v:50},
+  {num:78,name:"An-Naba'",ar:'النبأ',juz:30,v:40},
+  {num:79,name:"An-Nazi'at",ar:'النازعات',juz:30,v:46},
+  {num:80,name:"'Abasa",ar:'عبس',juz:30,v:42},
+  {num:81,name:'At-Takwir',ar:'التكوير',juz:30,v:29},
+  {num:82,name:'Al-Infitar',ar:'الانفطار',juz:30,v:19},
+  {num:83,name:'Al-Mutaffifin',ar:'المطففين',juz:30,v:36},
+  {num:84,name:'Al-Inshiqaq',ar:'الانشقاق',juz:30,v:25},
+  {num:85,name:'Al-Buruj',ar:'البروج',juz:30,v:22},
+  {num:86,name:'At-Tariq',ar:'الطارق',juz:30,v:17},
+  {num:87,name:"Al-A'la",ar:'الأعلى',juz:30,v:19},
+  {num:88,name:'Al-Ghashiyah',ar:'الغاشية',juz:30,v:26},
+  {num:89,name:'Al-Fajr',ar:'الفجر',juz:30,v:30},
+  {num:90,name:'Al-Balad',ar:'البلد',juz:30,v:20},
+  {num:91,name:'Ash-Shams',ar:'الشمس',juz:30,v:15},
+  {num:92,name:'Al-Layl',ar:'الليل',juz:30,v:21},
+  {num:93,name:'Ad-Duhaa',ar:'الضحى',juz:30,v:11},
+  {num:94,name:'Ash-Sharh',ar:'الشرح',juz:30,v:8},
+  {num:95,name:'At-Tin',ar:'التين',juz:30,v:8},
   {num:96,name:'Al-Alaq',ar:'العلق',juz:30,v:19},
+  {num:97,name:'Al-Qadr',ar:'القدر',juz:30,v:5},
+  {num:98,name:'Al-Bayyinah',ar:'البينة',juz:30,v:8},
+  {num:99,name:'Az-Zalzalah',ar:'الزلزلة',juz:30,v:8},
+  {num:100,name:'Al-Adiyat',ar:'العاديات',juz:30,v:11},
+  {num:101,name:"Al-Qari'ah",ar:'القارعة',juz:30,v:11},
+  {num:102,name:'At-Takathur',ar:'التكاثر',juz:30,v:8},
+  {num:103,name:'Al-Asr',ar:'العصر',juz:30,v:3},
+  {num:104,name:'Al-Humazah',ar:'الهمزة',juz:30,v:9},
+  {num:105,name:'Al-Fil',ar:'الفيل',juz:30,v:5},
+  {num:106,name:'Quraysh',ar:'قريش',juz:30,v:4},
+  {num:107,name:"Al-Ma'un",ar:'الماعون',juz:30,v:7},
+  {num:108,name:'Al-Kawthar',ar:'الكوثر',juz:30,v:3},
+  {num:109,name:'Al-Kafirun',ar:'الكافرون',juz:30,v:6},
+  {num:110,name:'An-Nasr',ar:'النصر',juz:30,v:3},
+  {num:111,name:'Al-Masad',ar:'المسد',juz:30,v:5},
+  {num:112,name:'Al-Ikhlas',ar:'الإخلاص',juz:30,v:4},
+  {num:113,name:'Al-Falaq',ar:'الفلق',juz:30,v:5},
+  {num:114,name:'An-Nas',ar:'الناس',juz:30,v:6},
 ];
 const TAJWEED=[
   {name:'Izhar',ar:'إظهار',cat:'Noon & Meem',desc:'When noon sakinah or tanween is followed by one of 6 throat letters (أ ه ع ح غ خ), the noon is pronounced clearly with no nasalisation.',ex:'مِنْ عِلْمٍ — "min ilm"'},
@@ -469,7 +602,7 @@ const DEFAULT_RITUAL=["Log today's session","Review 10 words","Practise one sura
 // ── STATE ──
 let S={
   xp:0,streak:0,lastLog:null,ritual:[],ritualDate:null,
-  completedQuests:[],quranProgress:{},tajweedMastered:[],
+  completedQuests:[],quranProgress:{},tajweedMastered:[],quranAnnotations:{},
   words:[],sessions:[],resources:[],
   c:{
     name:'Scholar',
@@ -490,6 +623,7 @@ let pomSecs=0,pomRunning=false,pomMode='work',pomCycles=0,pomTimer=null;
 const POM_WORK=25*60,POM_SHORT=5*60,POM_LONG=15*60;
 let currentPage='dashboard';
 let fcDeck=[],fcIdx=0;
+let currentSurahNum=null,surahCache={},surahLoading=false;
 
 // ── AUTH ──
 function doLogin(){
@@ -532,6 +666,7 @@ async function loadAll(){
       if(sv.completedQuests)S.completedQuests=sv.completedQuests;
       if(sv.quranProgress)S.quranProgress=sv.quranProgress;
       if(sv.tajweedMastered)S.tajweedMastered=sv.tajweedMastered;
+      if(sv.quranAnnotations)S.quranAnnotations=sv.quranAnnotations;
       if(sv.c){
         S.c={...S.c,...sv.c};
         if(sv.c.quests)S.c.quests=sv.c.quests;
@@ -574,6 +709,7 @@ async function save(){
     completedQuests:S.completedQuests,
     quranProgress:S.quranProgress,
     tajweedMastered:S.tajweedMastered,
+    quranAnnotations:S.quranAnnotations,
     c:S.c,
   };
   try{await sb.from('sanctum_state').upsert({key:'main',value:JSON.stringify(payload)},{onConflict:'key'});}
@@ -611,6 +747,7 @@ function renderPage(page){
     quests:renderQuestsPage,
     vocab:renderVocabPage,
     flashcards:renderFlashcardsPage,
+    quranread:renderQuranReaderPage,
     quran:renderQuranPage,
     tajweed:renderTajweedPage,
     sessions:renderSessionsPage,
@@ -1154,7 +1291,122 @@ async function toggleSurah(num,field){
   if(!S.quranProgress[num])S.quranProgress[num]={};
   const wasOn=S.quranProgress[num][field];S.quranProgress[num][field]=!wasOn;
   if(!wasOn){const xm={canRead:20,canRecite:25,understand:30};const x=xm[field];S.xp+=x;todayXP+=x;snd('xp');xpPop('+'+x+' XP',window.innerWidth/2,200);toast('+'+x+' XP!');}
-  await save();go('quran');
+  await save();go(currentPage==='quranread'?'quranread':'quran');
+}
+
+// ── QURAN READER ──
+function renderQuranReaderPage(el){
+  el.innerHTML='<div class="qr-layout"><div class="qr-side" id="qrSide"></div><div class="qr-main" id="qrMain"></div></div>';
+  updateReaderSidebar();
+  updateReaderMain();
+}
+function updateReaderSidebar(){
+  const side=document.getElementById('qrSide');if(!side)return;
+  side.innerHTML=SURAHS.map(s=>{
+    const on=s.num===currentSurahNum;
+    const read=S.quranProgress[s.num]?.canRead;
+    return `<div class="qr-side-item ${on?'on':''}" onclick="selectSurah(${s.num})">
+      <div class="qr-side-num">${s.num}</div>
+      <div class="qr-side-name">${read?'✓ ':''}${s.name}</div>
+      <div class="qr-side-ar">${s.ar}</div>
+    </div>`;
+  }).join('');
+}
+function updateReaderMain(){
+  const main=document.getElementById('qrMain');if(!main)return;
+  if(!currentSurahNum){main.innerHTML='<div class="qr-empty">Select a surah from the list to begin reading ✦</div>';return;}
+  const s=SURAHS.find(x=>x.num===currentSurahNum);
+  const p=S.quranProgress[currentSurahNum]||{};
+  const cached=surahCache[currentSurahNum];
+  let body;
+  if(!cached){
+    body=surahLoading
+      ?'<div class="qr-empty">Loading surah text… ✦</div>'
+      :`<div class="qr-empty">Could not load this surah.<br><span style="cursor:pointer;color:var(--gold2)" onclick="selectSurah(${currentSurahNum})">Try again</span></div>`;
+  } else {
+    const ann=S.quranAnnotations[currentSurahNum]||{};
+    body=cached.ar.map((a,i)=>{
+      const en=cached.en[i]?.text||'';
+      const an=ann[a.numberInSurah]||{};
+      const hl=an.color?'hl-'+an.color:'';
+      const dot=(c)=>`<div class="ayah-dot c-${c} ${an.color===c?'active':''}" title="${c}" onclick="setAyahColor(${currentSurahNum},${a.numberInSurah},'${c}')"></div>`;
+      return `<div class="ayah-block ${hl}">
+        <div class="ayah-top">
+          <div class="ayah-num">${a.numberInSurah}</div>
+          <div class="ayah-ar">${a.text}</div>
+          <div class="ayah-tools">
+            ${dot('yellow')}${dot('green')}${dot('red')}
+            <button class="ayah-notebtn" onclick="openAyahNote(${currentSurahNum},${a.numberInSurah})" title="Note">📝</button>
+          </div>
+        </div>
+        <div class="ayah-en">${en}</div>
+        ${an.note?`<div class="ayah-note">📝 ${an.note.replace(/</g,'&lt;')}</div>`:''}
+      </div>`;
+    }).join('');
+  }
+  main.innerHTML=`
+    <div class="qr-head">
+      <div>
+        <div class="qr-title">${s.num}. ${s.name}</div>
+        <div class="qr-title-ar">${s.ar} · ${s.v} verses · Juz ${s.juz}</div>
+      </div>
+      <div class="qr-checks">
+        <div class="schk" onclick="toggleSurah(${s.num},'canRead')"><div class="schk-box ${p.canRead?'on':''}">✓</div><div class="schk-lbl">Read</div></div>
+        <div class="schk" onclick="toggleSurah(${s.num},'canRecite')"><div class="schk-box ${p.canRecite?'on':''}">✓</div><div class="schk-lbl">Memory</div></div>
+        <div class="schk" onclick="toggleSurah(${s.num},'understand')"><div class="schk-box ${p.understand?'on':''}">✓</div><div class="schk-lbl">Meaning</div></div>
+      </div>
+    </div>
+    <p style="font-size:0.72em;color:var(--muted);margin-bottom:14px;font-style:italic">Click a dot to highlight an ayah yellow, green or red. Click 📝 to add a note.</p>
+    ${body}`;
+}
+function selectSurah(num){
+  currentSurahNum=num;
+  updateReaderSidebar();
+  updateReaderMain();
+  if(!surahCache[num]&&!surahLoading){
+    surahLoading=true;
+    updateReaderMain();
+    fetch(`https://api.alquran.cloud/v1/surah/${num}/editions/quran-uthmani,en.sahih`)
+      .then(r=>r.json())
+      .then(data=>{
+        surahLoading=false;
+        if(data&&data.data&&data.data.length===2){
+          surahCache[num]={ar:data.data[0].ayahs,en:data.data[1].ayahs};
+        }
+        if(currentSurahNum===num)updateReaderMain();
+      })
+      .catch(()=>{surahLoading=false;if(currentSurahNum===num)updateReaderMain();});
+  }
+}
+function setAyahColor(num,ayahNum,color){
+  if(!S.quranAnnotations[num])S.quranAnnotations[num]={};
+  if(!S.quranAnnotations[num][ayahNum])S.quranAnnotations[num][ayahNum]={color:null,note:''};
+  const cur=S.quranAnnotations[num][ayahNum].color;
+  S.quranAnnotations[num][ayahNum].color=(cur===color)?null:color;
+  snd('click');
+  save();
+  updateReaderMain();
+}
+function openAyahNote(num,ayahNum){
+  const cur=S.quranAnnotations?.[num]?.[ayahNum]?.note||'';
+  openModal('ayahNote',`
+    <div class="modal-title">📝 Note — Surah ${num}, Ayah ${ayahNum}</div>
+    <label class="mlabel">Your note</label>
+    <textarea id="ayahNoteInput" class="minput" rows="4" placeholder="Write a note about this ayah...">${cur.replace(/</g,'&lt;')}</textarea>
+    <div class="mbtns">
+      <button class="btn ghost" onclick="closeModal()">Cancel</button>
+      <button class="btn" onclick="saveAyahNote(${num},${ayahNum})">Save Note ✓</button>
+    </div>`);
+}
+async function saveAyahNote(num,ayahNum){
+  const v=document.getElementById('ayahNoteInput')?.value?.trim()||'';
+  if(!S.quranAnnotations[num])S.quranAnnotations[num]={};
+  if(!S.quranAnnotations[num][ayahNum])S.quranAnnotations[num][ayahNum]={color:null,note:''};
+  S.quranAnnotations[num][ayahNum].note=v;
+  await save();
+  closeModal();
+  updateReaderMain();
+  toast('📝 Note saved');
 }
 
 // ── TAJWEED ──
