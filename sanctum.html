@@ -79,16 +79,35 @@ html,body{height:100%;background:var(--deep);color:var(--text);font-family:'Crim
 .co-body b{color:var(--gold)}
 .arrow{color:var(--gold2)}
 
-/* DASHBOARD */
-.dash-cols{display:grid;grid-template-columns:260px 1fr;gap:18px;align-items:start}
-.dash-l{display:flex;flex-direction:column;gap:12px}
-.dash-r{display:flex;flex-direction:column;gap:18px}
-.dash-block{position:relative}
-.dash-block[draggable="true"]{cursor:grab}
-.dash-block[draggable="true"]:hover{outline:1px dashed var(--border2);outline-offset:4px}
-.dash-block.dragging{opacity:0.35}
-.drag-handle{position:absolute;top:6px;right:8px;color:var(--muted);cursor:grab;font-size:15px;z-index:2;padding:2px 5px;line-height:1;user-select:none}
-.drag-handle:hover{color:var(--gold)}
+/* DASHBOARD CANVAS */
+.dash-canvas{position:relative;width:100%}
+.canvas-block{position:absolute;overflow:auto}
+.canvas-block .block-inner{height:100%;overflow:auto}
+.canvas-block .block-inner::-webkit-scrollbar{width:4px}
+.canvas-block .block-inner::-webkit-scrollbar-thumb{background:var(--border2)}
+body.edit .canvas-block{outline:1px dashed var(--border2);outline-offset:3px}
+.block-handle{position:absolute;top:-2px;left:50%;transform:translateX(-50%);background:var(--panel3);border:1px solid var(--border2);color:var(--muted);cursor:grab;font-size:13px;z-index:3;padding:1px 8px;line-height:1.4;user-select:none;border-radius:0 0 4px 4px}
+.block-handle:hover{color:var(--gold);border-color:var(--gold2)}
+.block-del{position:absolute;top:-2px;right:-2px;background:var(--panel3);border:1px solid var(--border2);color:var(--dim);cursor:pointer;font-size:11px;z-index:3;padding:2px 6px;line-height:1}
+.block-del:hover{color:#c05050;border-color:#7c2a2a}
+.block-resize{position:absolute;bottom:-2px;right:-2px;background:var(--panel3);border:1px solid var(--border2);color:var(--muted);cursor:nwse-resize;font-size:11px;z-index:3;padding:1px 5px;line-height:1;user-select:none;border-radius:4px 0 0 0}
+.block-resize:hover{color:var(--gold);border-color:var(--gold2)}
+.block-menu{display:grid;grid-template-columns:1fr 1fr;gap:8px;max-height:50vh;overflow-y:auto}
+.block-menu-item{background:var(--panel2);border:1px solid var(--border2);color:var(--text);padding:10px 12px;border-radius:2px;cursor:pointer;font-family:'Crimson Text',serif;font-size:0.9em;text-align:left;transition:all 0.15s}
+.block-menu-item:hover{border-color:var(--gold2);color:var(--gold)}
+.sticky-note{height:100%;background:var(--panel3);border:1px solid var(--border);border-radius:2px;padding:14px;cursor:default}
+body.edit .sticky-note{cursor:pointer}
+body.edit .sticky-note:hover{border-color:var(--gold2)}
+.sticky-title{font-family:'Cinzel',serif;color:var(--gold);font-size:0.8em;letter-spacing:1px;margin-bottom:8px}
+.sticky-body{font-size:0.85em;color:var(--text);line-height:1.6;white-space:pre-wrap}
+.plain-image-block{height:100%;cursor:default;display:flex;align-items:center;justify-content:center;background:var(--panel3);border:1px solid var(--border)}
+body.edit .plain-image-block{cursor:pointer}
+body.edit .plain-image-block:hover{border-color:var(--gold2)}
+.plain-image-block img{width:100%;height:100%;object-fit:cover}
+.embed-block{position:relative;height:100%;background:var(--panel3);border:1px solid var(--border);border-radius:2px;overflow:hidden}
+.embed-block iframe{width:100%;height:100%;border:none}
+.embed-edit{position:absolute;bottom:6px;right:6px;background:var(--panel2);border:1px solid var(--border2);color:var(--muted);font-size:0.65em;padding:4px 8px;border-radius:2px;cursor:pointer;z-index:2}
+.embed-edit:hover{color:var(--gold);border-color:var(--gold2)}
 .portrait-wrap{width:150px;margin:0 auto 12px;display:block}
 .portrait-img{width:150px;height:180px;object-fit:cover;border:3px solid var(--gold2);box-shadow:0 0 0 1px var(--dim),0 8px 28px rgba(0,0,0,0.6);display:block;cursor:pointer}
 .p-name{text-align:center;font-family:'Cinzel',serif;font-size:0.75em;letter-spacing:3px;color:var(--gold);text-transform:uppercase;margin-top:6px;cursor:pointer}
@@ -376,7 +395,7 @@ body.edit [data-editable]:hover,[data-edit-img].edit-active:hover,[data-edit-cov
 /* GUIDE */
 .guide-wrap{max-width:660px}
 
-@media(max-width:860px){.dash-cols{grid-template-columns:1fr}.lang-grid{grid-template-columns:repeat(5,1fr)}}
+@media(max-width:860px){.lang-grid{grid-template-columns:repeat(5,1fr)}}
 @media(max-width:600px){.sidebar{width:56px}.sb-title,.nav-a span:last-child,.nav-sec,.sb-leave{display:none}.nav-a{justify-content:center;padding:11px}.pi{padding:16px 14px 40px}.lang-grid{grid-template-columns:repeat(3,1fr)}}
 </style>
 </head>
@@ -624,6 +643,58 @@ const DEFAULT_QUESTS=[
   {ico:'🌟',name:'Streak Keeper II',desc:'Study 30 days in a row',xp:200,type:'Challenge',status:'locked'},
 ];
 const DEFAULT_RITUAL=["Log today's session","Review 10 words","Practise one surah","Add XP for today","Check active quests"];
+const CANVAS_UNIT=1000;
+const BLOCK_DEFAULT_SIZE={
+  portrait:{w:260,h:410},week:{w:260,h:190},ritual:{w:260,h:230},ladder:{w:260,h:290},
+  frame:{w:260,h:260},today:{w:460,h:190},langmap:{w:460,h:290},quests:{w:460,h:250},
+  xpinfo:{w:460,h:360},clock:{w:260,h:280},text:{w:220,h:180},image:{w:220,h:200},embed:{w:280,h:200},
+};
+const BLOCK_MENU=[
+  {type:'text',label:'📝 Sticky Note'},
+  {type:'image',label:'🖼️ Picture (plain)'},
+  {type:'frame',label:'🖼️ Picture (framed)'},
+  {type:'embed',label:'🌐 Embed (Spotify, YouTube…)'},
+  {type:'clock',label:'🕐 Clock'},
+  {type:'portrait',label:'👤 Profile Card'},
+  {type:'week',label:'🔥 This Week'},
+  {type:'ritual',label:'✦ Daily Ritual'},
+  {type:'ladder',label:'🏆 Rank Ladder'},
+  {type:'today',label:'⚡ Today Summary'},
+  {type:'langmap',label:'🗺️ Language Map'},
+  {type:'quests',label:'⚔️ Active Quests'},
+  {type:'xpinfo',label:'📖 XP Guide'},
+];
+const DEFAULT_DASHBOARD_BLOCKS=[
+  {id:'d_portrait',type:'portrait',x:20,y:20,w:260,h:410},
+  {id:'d_week',type:'week',x:20,y:450,w:260,h:190},
+  {id:'d_ritual',type:'ritual',x:20,y:660,w:260,h:230},
+  {id:'d_ladder',type:'ladder',x:20,y:910,w:260,h:290},
+  {id:'d_frame',type:'frame',x:20,y:1220,w:260,h:260,url:'https://images.unsplash.com/photo-1524578271613-d550eacf6090?w=600&q=80'},
+  {id:'d_today',type:'today',x:300,y:20,w:460,h:190},
+  {id:'d_langmap',type:'langmap',x:300,y:230,w:460,h:290},
+  {id:'d_quests',type:'quests',x:300,y:540,w:460,h:250},
+  {id:'d_xpinfo',type:'xpinfo',x:300,y:810,w:460,h:360},
+  {id:'d_clock',type:'clock',x:300,y:1190,w:460,h:280},
+];
+function migrateLegacyDashboardBlocks(sv){
+  if(!sv.dashLeftOrder&&!sv.dashRightOrder)return DEFAULT_DASHBOARD_BLOCKS.map(b=>({...b}));
+  const blocks=[];
+  let leftY=20;
+  (sv.dashLeftOrder||['portrait','week','ritual','ladder','frame']).forEach(type=>{
+    const sz=BLOCK_DEFAULT_SIZE[type]||{w:260,h:200};
+    const b={id:'blk_'+type+'_'+Math.random().toString(36).slice(2,8),type,x:20,y:leftY,w:sz.w,h:sz.h};
+    if(type==='frame')b.url=sv.frameImg||DEFAULT_DASHBOARD_BLOCKS.find(d=>d.type==='frame').url;
+    blocks.push(b);
+    leftY+=sz.h+20;
+  });
+  let rightY=20;
+  (sv.dashRightOrder||['today','langmap','quests','xpinfo','clock']).forEach(type=>{
+    const sz=BLOCK_DEFAULT_SIZE[type]||{w:460,h:200};
+    blocks.push({id:'blk_'+type+'_'+Math.random().toString(36).slice(2,8),type,x:300,y:rightY,w:sz.w,h:sz.h});
+    rightY+=sz.h+20;
+  });
+  return blocks;
+}
 
 // ── CALENDAR / STREAK ──
 function dkey(d){return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');}
@@ -668,14 +739,12 @@ let S={
     vocabCover:'https://images.unsplash.com/photo-1524578271613-d550eacf6090?w=1200&q=80',
     quranCover:'https://images.unsplash.com/photo-1564769662533-4f00a87b4056?w=1200&q=80',
     loginBg:'https://images.unsplash.com/photo-1481627834876-b7833e8f5570?w=1200&q=80',
-    frameImg:'https://images.unsplash.com/photo-1524578271613-d550eacf6090?w=600&q=80',
     title:'The Polyglot Sanctum',
     sub:'A private realm of language & learning',
     quests:DEFAULT_QUESTS.map(q=>({...q})),
     ritual:[...DEFAULT_RITUAL],
     languages:DEFAULT_LANGUAGES.map(l=>({...l})),
-    dashLeftOrder:['portrait','week','ritual','ladder','frame'],
-    dashRightOrder:['today','langmap','quests','xpinfo','clock'],
+    dashboardBlocks:DEFAULT_DASHBOARD_BLOCKS.map(b=>({...b})),
   }
 };
 let editMode=false,todayXP=0;
@@ -733,8 +802,9 @@ async function loadAll(){
         S.c={...S.c,...sv.c};
         if(sv.c.quests)S.c.quests=sv.c.quests;
         if(sv.c.ritual)S.c.ritual=sv.c.ritual;
-        if(!S.c.dashLeftOrder.includes('frame'))S.c.dashLeftOrder.push('frame');
-        if(!S.c.dashRightOrder.includes('clock'))S.c.dashRightOrder.push('clock');
+        if(!sv.c.dashboardBlocks||!sv.c.dashboardBlocks.length){
+          S.c.dashboardBlocks=migrateLegacyDashboardBlocks(sv.c);
+        }
       }
     }
   }catch(e){console.log('state load:',e);}
@@ -837,6 +907,7 @@ function xpPop(txt,x,y){const p=document.createElement('div');p.className='xp-po
 function toast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');clearTimeout(t._t);t._t=setTimeout(()=>t.classList.remove('show'),3200);}
 
 // ── DASHBOARD ──
+let DASH_CTX={};
 function renderDashboard(el){
   const rank=getRank(S.xp),next=getNext(S.xp);
   const pct=next?Math.min(100,((S.xp-rank.xp)/(next.xp-rank.xp))*100):100;
@@ -888,64 +959,96 @@ function renderDashboard(el){
     </div>`;
   }).join('')+(editMode?`<div class="lang-item lang-add" onclick="openAddLanguage()"><div class="lf">➕</div><div class="ln">Add</div></div>`:'');
 
-  const leftBlocks={
-    portrait:`<div class="co" style="text-align:center;padding-bottom:16px">
+  DASH_CTX={rank,next,pct,mastered,todayStr,surahRead,sdots,ritual,ladder,qprev,langG};
+
+  const blocksHtml=S.c.dashboardBlocks.map(b=>renderCanvasBlock(b)).join('');
+
+  el.innerHTML=`
+    <div id="dashCover" class="cover" style="background:linear-gradient(rgba(0,0,0,0.1),rgba(15,13,10,1)),url('${S.c.dashCover}') center/cover"></div>
+    <div class="pi">
+      <div class="ph">
+        <div><div class="pt">🌙 ${S.c.title}</div><div class="ps">${today}</div><div class="dash-clock" id="dashClock"></div></div>
+        <div style="display:flex;gap:8px">
+          ${editMode?'<button class="btn sm ghost" onclick="openAddBlockMenu()">+ Add Block</button>':''}
+          <button class="btn sm" onclick="openAddXP()">+ Add XP</button>
+        </div>
+      </div>
+      ${editMode?'<p style="font-size:0.72em;color:var(--muted);margin-bottom:10px;font-style:italic">✦ Drag any block by its ⠿ handle, or resize it from the ◢ corner. Arrange it however you like, like a corkboard.</p>':''}
+      <div class="dash-canvas" id="dashCanvas">${blocksHtml}</div>
+    </div>`;
+
+  if(editMode){
+    const dc=el.querySelector('#dashCover');
+    if(dc){dc.style.cursor='pointer';dc.title='Click to change cover';dc.onclick=()=>openImgPicker('dashCover');}
+  }
+  updateClock();
+  layoutCanvas();
+}
+
+function renderCanvasBlock(b){
+  const left=(b.x/CANVAS_UNIT*100),top=(b.y/CANVAS_UNIT*100);
+  const w=(b.w/CANVAS_UNIT*100),h=(b.h/CANVAS_UNIT*100);
+  return `<div class="canvas-block" data-id="${b.id}" style="left:${left}%;top:${top}%;width:${w}%;height:${h}%">
+    ${editMode?`<div class="block-handle" title="Drag to move" onmousedown="canvasPointerDown(event,'${b.id}','move')">⠿</div>
+    <button class="block-del" title="Remove block" onclick="deleteBlock('${b.id}')">✕</button>
+    <div class="block-resize" title="Drag to resize" onmousedown="canvasPointerDown(event,'${b.id}','resize')">◢</div>`:''}
+    <div class="block-inner">${renderBlockContent(b)}</div>
+  </div>`;
+}
+
+function renderBlockContent(b){
+  const c=DASH_CTX;
+  switch(b.type){
+    case 'portrait': return `<div class="co" style="text-align:center;padding-bottom:16px;height:100%">
       <img class="portrait-img" src="${S.c.portraitUrl}" alt="" onclick="editMode&&openImgPicker('portraitUrl')">
       <div class="p-name" onclick="editMode&&openEditPop(event,'name',S.c.name,v=>{S.c.name=v;save();go('dashboard');})">${S.c.name}</div>
-      <div class="p-rank">${rank.label}</div>
-      <div class="p-rankn">Rank ${rank.n}</div>
-      <div class="xp-labels"><span>${S.xp.toLocaleString()} XP</span><span>${next?next.xp.toLocaleString()+' XP':'MAX'}</span></div>
-      <div class="xp-bg"><div class="xp-fill" style="width:${pct}%"></div></div>
-      <div class="xp-next">Next: ${next?next.label:'Maximum Rank'}</div>
+      <div class="p-rank">${c.rank.label}</div>
+      <div class="p-rankn">Rank ${c.rank.n}</div>
+      <div class="xp-labels"><span>${S.xp.toLocaleString()} XP</span><span>${c.next?c.next.xp.toLocaleString()+' XP':'MAX'}</span></div>
+      <div class="xp-bg"><div class="xp-fill" style="width:${c.pct}%"></div></div>
+      <div class="xp-next">Next: ${c.next?c.next.label:'Maximum Rank'}</div>
       <div class="stats-row">
         <div class="sbox"><span class="sv">${S.xp.toLocaleString()}</span><span class="sl">XP</span></div>
         <div class="sbox"><span class="sv">${S.streak}</span><span class="sl">Streak 🔥</span></div>
-        <div class="sbox"><span class="sv">${mastered}</span><span class="sl">Mastered</span></div>
+        <div class="sbox"><span class="sv">${c.mastered}</span><span class="sl">Mastered</span></div>
       </div>
-    </div>`,
-    week:`<div class="co">
+    </div>`;
+    case 'week': return `<div class="co">
       <span class="co-icon">🔥</span>
       <div class="co-title">This Week</div>
-      <div class="sdots">${sdots}</div>
+      <div class="sdots">${c.sdots}</div>
       <button class="btn ghost" style="margin-top:12px;width:100%;font-size:0.62em;padding:8px" onclick="logToday()">Log Today's Study</button>
-    </div>`,
-    ritual:`<div class="co">
+    </div>`;
+    case 'ritual': return `<div class="co">
       <span class="co-icon">✦</span>
       <div class="co-title">Daily Ritual</div>
-      <div id="ritualContainer">${ritual}</div>
-    </div>`,
-    ladder:`<div class="co">
+      <div id="ritualContainer">${c.ritual}</div>
+    </div>`;
+    case 'ladder': return `<div class="co">
       <span class="co-icon">🏆</span>
       <div class="co-title">Rank Ladder</div>
-      ${ladder}
-    </div>`,
-    frame:`<div class="frame-block">
-      <div class="frame-ornate" onclick="editMode&&openImgPicker('frameImg')">
-        <img src="${S.c.frameImg}" alt="">
-      </div>
-    </div>`,
-  };
-  const rightBlocks={
-    today:`<div class="co">
+      ${c.ladder}
+    </div>`;
+    case 'today': return `<div class="co">
       <div class="co-body">
-        <b>⚡ Today is ${todayStr}</b><br>
+        <b>⚡ Today is ${c.todayStr}</b><br>
         <span class="arrow">↳</span> You have earned <b>${todayXP} XP</b> today<br>
-        <span class="arrow">✦</span> Current rank: <b>${rank.label}</b><br>
-        <span class="arrow">✦</span> Words mastered: <b>${mastered}</b><br>
-        <span class="arrow">✦</span> Surahs can read: <b>${surahRead}</b>
+        <span class="arrow">✦</span> Current rank: <b>${c.rank.label}</b><br>
+        <span class="arrow">✦</span> Words mastered: <b>${c.mastered}</b><br>
+        <span class="arrow">✦</span> Surahs can read: <b>${c.surahRead}</b>
       </div>
-    </div>`,
-    langmap:`<div>
+    </div>`;
+    case 'langmap': return `<div>
       <div class="sh">🗺️ Language Map</div>
-      <div class="lang-grid">${langG}</div>
+      <div class="lang-grid">${c.langG}</div>
       <p style="font-size:0.7em;color:var(--muted);margin-top:7px;font-style:italic;text-align:center">🔒 Click a locked language to see the XP needed</p>
-    </div>`,
-    quests:`<div>
+    </div>`;
+    case 'quests': return `<div>
       <div class="sh">⚔️ Active Quests</div>
-      ${qprev}
+      ${c.qprev}
       <a class="see-all" onclick="go('quests')">View all quests →</a>
-    </div>`,
-    xpinfo:`<div>
+    </div>`;
+    case 'xpinfo': return `<div>
       <div class="sh">⚡ How XP Works</div>
       <div class="co">
         <div class="co-body">
@@ -961,8 +1064,8 @@ function renderDashboard(el){
           7-day streak <span class="arrow">→</span> <b>+50 XP bonus</b>
         </div>
       </div>
-    </div>`,
-    clock:`<div class="co" style="text-align:center">
+    </div>`;
+    case 'clock': return `<div class="co" style="text-align:center;height:100%">
       <div class="clock-face" id="analogClock">
         <svg viewBox="0 0 200 200">
           ${[...Array(12)].map((_,i)=>`<line class="clock-tick" x1="100" y1="10" x2="100" y2="22" transform="rotate(${i*30} 100 100)"/>`).join('')}
@@ -973,58 +1076,166 @@ function renderDashboard(el){
         </svg>
         <div class="clock-digital" id="clockDigitalText"></div>
       </div>
-    </div>`,
-  };
-  const leftHtml=S.c.dashLeftOrder.map((id,idx)=>wrapBlock('left',idx,leftBlocks[id])).join('');
-  const rightHtml=S.c.dashRightOrder.map((id,idx)=>wrapBlock('right',idx,rightBlocks[id])).join('');
-
-  el.innerHTML=`
-    <div id="dashCover" class="cover" style="background:linear-gradient(rgba(0,0,0,0.1),rgba(15,13,10,1)),url('${S.c.dashCover}') center/cover"></div>
-    <div class="pi">
-      <div class="ph">
-        <div><div class="pt">🌙 ${S.c.title}</div><div class="ps">${today}</div><div class="dash-clock" id="dashClock"></div></div>
-        <button class="btn sm" onclick="openAddXP()">+ Add XP</button>
-      </div>
-      ${editMode?'<p style="font-size:0.72em;color:var(--muted);margin-bottom:10px;font-style:italic">✦ Drag the ⠿ handle on any block to rearrange this page.</p>':''}
-      <div class="dash-cols">
-        <div class="dash-l">${leftHtml}</div>
-        <div class="dash-r">${rightHtml}</div>
+    </div>`;
+    case 'frame': return `<div class="frame-block" style="height:100%">
+      <div class="frame-ornate" onclick="editMode&&openBlockImgPicker('${b.id}')">
+        <img src="${b.url||''}" alt="">
       </div>
     </div>`;
-
-  if(editMode){
-    const dc=el.querySelector('#dashCover');
-    if(dc){dc.style.cursor='pointer';dc.title='Click to change cover';dc.onclick=()=>openImgPicker('dashCover');}
+    case 'image': return `<div class="plain-image-block" onclick="editMode&&openBlockImgPicker('${b.id}')">
+      ${b.url?`<img src="${b.url}" alt="">`:'<div class="qr-empty">Click ✏️ Edit, then this block, to set a picture</div>'}
+    </div>`;
+    case 'text': return `<div class="sticky-note" onclick="editMode&&openTextBlockEditor('${b.id}')">
+      <div class="sticky-title">${b.title||'Note'}</div>
+      <div class="sticky-body">${(b.content||(editMode?'Click to edit…':'')).replace(/\n/g,'<br>')}</div>
+    </div>`;
+    case 'embed': return `<div class="embed-block">
+      ${b.embedUrl?`<iframe src="${b.embedUrl}" frameborder="0" allow="autoplay; encrypted-media" allowfullscreen></iframe>`:'<div class="qr-empty">Click "Set URL" to embed Spotify, YouTube, etc.</div>'}
+      ${editMode?`<button class="embed-edit" onclick="event.stopPropagation();openEmbedBlockEditor('${b.id}')">✏️ Set URL</button>`:''}
+    </div>`;
+    default: return '';
   }
-  updateClock();
 }
-function wrapBlock(col,idx,html){
-  return `<div class="dash-block" data-col="${col}" data-idx="${idx}" draggable="${!!editMode}"
-    ondragstart="dragBlockStart(event)" ondragover="dragBlockOver(event)" ondrop="dragBlockDrop(event)" ondragend="dragBlockEnd(event)">
-    ${editMode?'<div class="drag-handle" title="Drag to reorder">⠿</div>':''}
-    ${html||''}
-  </div>`;
+
+function layoutCanvas(){
+  const canvas=document.getElementById('dashCanvas');
+  if(!canvas)return;
+  const rect=canvas.getBoundingClientRect();
+  if(rect.width<=0)return;
+  const maxY=Math.max(300,...S.c.dashboardBlocks.map(b=>b.y+b.h));
+  const pxPerUnit=rect.width/CANVAS_UNIT;
+  canvas.style.height=Math.round(maxY*pxPerUnit+40)+'px';
 }
-let dragBlockInfo=null;
-function dragBlockStart(e){
-  const t=e.currentTarget;
-  dragBlockInfo={col:t.dataset.col,idx:parseInt(t.dataset.idx)};
-  e.dataTransfer.effectAllowed='move';
-  t.classList.add('dragging');
+window.addEventListener('resize',()=>{if(currentPage==='dashboard')layoutCanvas();});
+
+let canvasDrag=null;
+function canvasPointerDown(e,id,mode){
+  if(!editMode)return;
+  e.preventDefault();e.stopPropagation();
+  const block=S.c.dashboardBlocks.find(b=>b.id===id);
+  if(!block)return;
+  const canvas=document.getElementById('dashCanvas');
+  const rect=canvas.getBoundingClientRect();
+  canvasDrag={id,mode,startX:e.clientX,startY:e.clientY,origX:block.x,origY:block.y,origW:block.w,origH:block.h,pxPerUnit:rect.width/CANVAS_UNIT};
+  document.addEventListener('mousemove',canvasPointerMove);
+  document.addEventListener('mouseup',canvasPointerUp);
 }
-function dragBlockOver(e){e.preventDefault();e.dataTransfer.dropEffect='move';}
-async function dragBlockDrop(e){
-  e.preventDefault();
-  const t=e.currentTarget,col=t.dataset.col,idx=parseInt(t.dataset.idx);
-  if(!dragBlockInfo||dragBlockInfo.col!==col||dragBlockInfo.idx===idx)return;
-  const key=col==='left'?'dashLeftOrder':'dashRightOrder';
-  const arr=S.c[key];
-  const [moved]=arr.splice(dragBlockInfo.idx,1);
-  arr.splice(idx,0,moved);
-  dragBlockInfo=null;
+function canvasPointerMove(e){
+  if(!canvasDrag)return;
+  const block=S.c.dashboardBlocks.find(b=>b.id===canvasDrag.id);
+  if(!block)return;
+  const dxUnits=(e.clientX-canvasDrag.startX)/canvasDrag.pxPerUnit;
+  const dyUnits=(e.clientY-canvasDrag.startY)/canvasDrag.pxPerUnit;
+  if(canvasDrag.mode==='move'){
+    block.x=Math.max(0,Math.round(canvasDrag.origX+dxUnits));
+    block.y=Math.max(0,Math.round(canvasDrag.origY+dyUnits));
+  } else {
+    block.w=Math.max(120,Math.round(canvasDrag.origW+dxUnits));
+    block.h=Math.max(90,Math.round(canvasDrag.origH+dyUnits));
+  }
+  const blockEl=document.querySelector(`.canvas-block[data-id="${canvasDrag.id}"]`);
+  if(blockEl){
+    blockEl.style.left=(block.x/CANVAS_UNIT*100)+'%';
+    blockEl.style.top=(block.y/CANVAS_UNIT*100)+'%';
+    blockEl.style.width=(block.w/CANVAS_UNIT*100)+'%';
+    blockEl.style.height=(block.h/CANVAS_UNIT*100)+'%';
+  }
+  layoutCanvas();
+}
+async function canvasPointerUp(){
+  document.removeEventListener('mousemove',canvasPointerMove);
+  document.removeEventListener('mouseup',canvasPointerUp);
+  if(canvasDrag){canvasDrag=null;await save();}
+}
+async function deleteBlock(id){
+  S.c.dashboardBlocks=S.c.dashboardBlocks.filter(b=>b.id!==id);
   await save();go('dashboard');
 }
-function dragBlockEnd(e){e.currentTarget.classList.remove('dragging');dragBlockInfo=null;}
+function openAddBlockMenu(){
+  openModal('addBlock',`
+    <div class="modal-title">➕ Add Block</div>
+    <div class="block-menu">
+      ${BLOCK_MENU.map((bt,i)=>`<button class="block-menu-item" onclick="addBlock(${i})">${bt.label}</button>`).join('')}
+    </div>
+    <div class="mbtns"><button class="btn ghost" onclick="closeModal()">Close</button></div>`);
+}
+async function addBlock(i){
+  const bt=BLOCK_MENU[i];
+  const sz=BLOCK_DEFAULT_SIZE[bt.type]||{w:260,h:200};
+  const id='blk_'+Date.now()+'_'+Math.floor(Math.random()*1000);
+  const maxY=S.c.dashboardBlocks.length?Math.max(...S.c.dashboardBlocks.map(b=>b.y+b.h)):0;
+  const nb={id,type:bt.type,x:20,y:maxY+20,w:sz.w,h:sz.h};
+  if(bt.type==='frame'||bt.type==='image')nb.url='';
+  if(bt.type==='text'){nb.title='Note';nb.content='';}
+  if(bt.type==='embed')nb.embedUrl='';
+  S.c.dashboardBlocks.push(nb);
+  await save();closeModal();go('dashboard');
+}
+function openBlockImgPicker(id){
+  const block=S.c.dashboardBlocks.find(b=>b.id===id);
+  if(!block)return;
+  openModal('imgPick',`
+    <div class="modal-title">🖼️ Change Image</div>
+    <label class="mlabel">Paste any image URL</label>
+    <input id="imgUrl" class="minput" placeholder="https://..." value="${block.url||''}" oninput="prevImg()">
+    <p style="font-size:0.72em;color:var(--muted);font-style:italic;margin-top:4px">Right-click any image online (Unsplash, Pinterest, Google Images…) → Copy image address, then paste it above.</p>
+    <label class="mlabel">Or upload a photo from your device</label>
+    <input id="imgFile" type="file" accept="image/*" class="minput" style="padding:7px" onchange="handleImgFile(event)">
+    <div id="imgFileStatus" style="font-size:0.7em;color:var(--gold2);margin-top:4px"></div>
+    <div style="margin:10px 0 4px;font-size:0.65em;color:var(--muted);letter-spacing:1px;text-transform:uppercase">Preview</div>
+    <img id="imgPrev" src="${block.url||''}" style="width:100%;max-height:150px;object-fit:cover;border:1px solid var(--border2);border-radius:2px;${block.url?'':'display:none'};margin-bottom:8px" onerror="this.style.display='none'">
+    <div class="mbtns">
+      <button class="btn ghost" onclick="closeModal()">Cancel</button>
+      <button class="btn" onclick="saveBlockImg('${id}')">Set Image ✓</button>
+    </div>`);
+}
+async function saveBlockImg(id){
+  const u=document.getElementById('imgUrl')?.value?.trim();
+  if(!u){toast('Please enter a URL');return;}
+  const block=S.c.dashboardBlocks.find(b=>b.id===id);
+  if(block)block.url=u;
+  await save();closeModal();go('dashboard');toast('✦ Image updated!');
+}
+function openTextBlockEditor(id){
+  const block=S.c.dashboardBlocks.find(b=>b.id===id);
+  if(!block)return;
+  openModal('textBlock',`
+    <div class="modal-title">📝 Sticky Note</div>
+    <label class="mlabel">Title</label>
+    <input id="stTitle" class="minput" value="${(block.title||'').replace(/"/g,'&quot;')}" placeholder="Note title">
+    <label class="mlabel">Content</label>
+    <textarea id="stContent" class="minput" rows="6" placeholder="Write anything...">${block.content||''}</textarea>
+    <div class="mbtns">
+      <button class="btn ghost" onclick="closeModal()">Cancel</button>
+      <button class="btn" onclick="saveTextBlock('${id}')">Save ✓</button>
+    </div>`);
+}
+async function saveTextBlock(id){
+  const block=S.c.dashboardBlocks.find(b=>b.id===id);
+  if(!block)return;
+  block.title=document.getElementById('stTitle').value.trim()||'Note';
+  block.content=document.getElementById('stContent').value;
+  await save();closeModal();go('dashboard');
+}
+function openEmbedBlockEditor(id){
+  const block=S.c.dashboardBlocks.find(b=>b.id===id);
+  if(!block)return;
+  openModal('embedBlock',`
+    <div class="modal-title">🌐 Embed</div>
+    <label class="mlabel">Embed URL</label>
+    <input id="embUrl" class="minput" value="${block.embedUrl||''}" placeholder="https://open.spotify.com/embed/playlist/...">
+    <p style="font-size:0.72em;color:var(--muted);font-style:italic;margin-top:6px">Works with Spotify embed links, YouTube embed links, or any site that allows embedding.</p>
+    <div class="mbtns">
+      <button class="btn ghost" onclick="closeModal()">Cancel</button>
+      <button class="btn" onclick="saveEmbedBlock('${id}')">Save ✓</button>
+    </div>`);
+}
+async function saveEmbedBlock(id){
+  const block=S.c.dashboardBlocks.find(b=>b.id===id);
+  if(!block)return;
+  block.embedUrl=document.getElementById('embUrl').value.trim();
+  await save();closeModal();go('dashboard');
+}
 
 async function toggleRitual(i){
   if(S.ritual.includes(i))S.ritual=S.ritual.filter(x=>x!==i);
