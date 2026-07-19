@@ -42,9 +42,9 @@
     </section>
 
     <!-- Featured word -->
-    <section class="col-12">
+    <section class="col-12" id="featured-word-section">
       <div class="card" style="border-color:rgba(243,189,119,0.2);display:flex;gap:32px;align-items:center;flex-wrap:wrap">
-        <div style="flex:1;min-width:240px">
+        <div style="flex:1;min-width:240px" id="featured-word-body">
           <span class="label-sm text-secondary-c" style="letter-spacing:.2em;text-transform:uppercase">Featured Word of the Day</span>
           <h2 class="display-lg text-primary-c mt-1" id="fw-arabic" style="font-size:44px">—</h2>
           <h3 class="headline-md mt-1" id="fw-translit">—</h3>
@@ -154,13 +154,19 @@ function addLanguageFromHub() {
 }
 
 // Featured word of the day (rotates daily)
-const dayIdx = Math.floor(Date.now() / 86400000) % s.vocab.length;
-const fw = s.vocab[dayIdx];
-if (fw) {
+if (s.vocab.length) {
+  const dayIdx = Math.floor(Date.now() / 86400000) % s.vocab.length;
+  const fw = s.vocab[dayIdx];
   document.getElementById('fw-arabic').textContent = fw.arabic;
   document.getElementById('fw-translit').textContent = fw.translit;
   document.getElementById('fw-meaning').textContent = fw.meaning;
   document.getElementById('fw-example').textContent = fw.example;
+} else {
+  document.getElementById('featured-word-body').innerHTML = `
+    <span class="label-sm text-secondary-c" style="letter-spacing:.2em;text-transform:uppercase">Featured Word of the Day</span>
+    <h3 class="headline-md mt-2">Your vocabulary bank is empty</h3>
+    <p class="text-muted body-md mt-1">Add your first word and it'll start showing up here.</p>
+    <a href="vocabulary.html" class="btn btn-outline mt-2">Add a Word</a>`;
 }
 
 // Vocabulary preview

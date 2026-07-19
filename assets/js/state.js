@@ -28,15 +28,7 @@ function defaultState() {
       { code: 'ja', name: 'Japanese', icon: 'translate', unlocked: false, xpRequired: 2000, progress: 0 },
       { code: 'fr', name: 'French', icon: 'translate', unlocked: false, xpRequired: 2500, progress: 0 },
     ],
-    vocab: [
-      { id: 'w1', arabic: 'بِسْمِ', translit: 'Bismi', meaning: 'In the name of', example: '"بسم الله — In the name of Allah"', lang: 'Quranic Arabic', mastery: 20, createdAt: Date.now() },
-      { id: 'w2', arabic: 'الله', translit: 'Allahi', meaning: 'Allah / God', example: '"In the name of Allah"', lang: 'Quranic Arabic', mastery: 40, createdAt: Date.now() },
-      { id: 'w3', arabic: 'الرَّحْمَنِ', translit: 'Ar-Rahman', meaning: 'The Most Gracious', example: '"First verse of Al-Fatiha"', lang: 'Quranic Arabic', mastery: 30, createdAt: Date.now() },
-      { id: 'w4', arabic: 'الْقَلْبُ', translit: 'Al-Qalb', meaning: 'The Heart / The Center', example: '"Verily, in the remembrance of Allah do hearts find rest." — Ar-Ra\'d 13:28', lang: 'Quranic Arabic', mastery: 15, createdAt: Date.now() },
-      { id: 'w5', arabic: 'نُور', translit: 'Nur', meaning: 'Light', example: '"Allah is the Light of the heavens and the earth"', lang: 'Quranic Arabic', mastery: 25, createdAt: Date.now() },
-      { id: 'w6', arabic: 'سَلَام', translit: 'Salam', meaning: 'Peace', example: '"Greeting of peace"', lang: 'Arabic', mastery: 60, createdAt: Date.now() },
-      { id: 'w7', arabic: 'رُوح', translit: 'Ruh', meaning: 'Spirit / Soul', example: '"The soul or spirit"', lang: 'Quranic Arabic', mastery: 10, createdAt: Date.now() },
-    ],
+    vocab: [],
     sessions: [],
     quests: [
       { id: 'q1', title: 'Review 10 words', current: 0, target: 10, xp: 25 },
@@ -53,15 +45,8 @@ function defaultState() {
     ritualDate: null,
     wordsReviewedToday: 0,
     quranProgress: { surahsCompleted: [], versesRead: 0, lastSurah: 18, lastAyah: 1 },
-    savedVerses: [
-      { surah: 18, ayah: 10, label: 'Ashabul Kahf' },
-      { surah: 18, ayah: 23, label: 'The Will of Allah' },
-    ],
-    resources: [
-      { id: 'res1', title: 'Quran.com', url: 'https://quran.com', note: 'Full mushaf with tafsir and audio recitations', lang: 'General' },
-      { id: 'res2', title: 'Corpus Quran', url: 'https://corpus.quran.com', note: 'Word-by-word grammar and morphology', lang: 'Quranic Arabic' },
-      { id: 'res3', title: 'Al-Dirassa', url: '', note: 'Quranic Arabic course structure reference', lang: 'Quranic Arabic' },
-    ],
+    savedVerses: [],
+    resources: [],
   };
 }
 
