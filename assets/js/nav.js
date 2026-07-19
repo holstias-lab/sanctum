@@ -17,6 +17,12 @@ const NAV_ITEMS_2 = [
   { key: 'guide', label: 'Guide', icon: 'explore', href: 'guide.html' },
 ];
 
+function langIconHtml(l, size) {
+  size = size || 20;
+  if (l.flag) return `<span style="font-size:${size}px;line-height:1">${l.flag}</span>`;
+  return `<span class="material-symbols-outlined" style="font-size:${size}px">${l.icon || 'translate'}</span>`;
+}
+
 function renderSidebar(activeKey) {
   const s = Sanctum.state;
   const navHtml = items => items.map(i => `
@@ -28,12 +34,12 @@ function renderSidebar(activeKey) {
   const langHtml = s.languages.map(l => {
     if (l.unlocked) {
       return `<a class="lang-item unlocked" href="index.html?lang=${l.code}">
-        <div class="left"><span class="material-symbols-outlined" style="font-size:20px;color:var(--sage-glow)">${l.icon}</span><span>${l.name}</span></div>
+        <div class="left">${langIconHtml(l)}<span>${l.name}</span></div>
         <div class="dot"></div>
       </a>`;
     }
     return `<a class="lang-item locked" href="#" onclick="Sanctum.toast('${l.name} unlocks at ${l.xpRequired} XP'); return false;">
-      <div class="left"><span class="material-symbols-outlined" style="font-size:20px">${l.icon}</span><span>${l.name}</span></div>
+      <div class="left">${langIconHtml(l)}<span>${l.name}</span></div>
       <span class="material-symbols-outlined lock">lock</span>
     </a>`;
   }).join('') + `<a class="lang-item" href="#" onclick="promptAddLanguage(); return false;" style="color:var(--primary)">
@@ -137,6 +143,11 @@ document.addEventListener('DOMContentLoaded', async () => {
     await Sanctum.cloudPull();
     sessionStorage.setItem('sanctum_synced', '1');
     location.reload();
+    return;
+  }
+
+  if (!Sanctum.state.profile.onboarded) {
+    location.href = 'onboarding.html';
     return;
   }
 

@@ -31,9 +31,11 @@
     <div class="fc-scene">
       <div class="fc-card" id="fc-card" onclick="flip()">
         <div class="fc-face fc-front">
+          <img id="card-image" style="display:none;width:120px;height:120px;object-fit:cover;border-radius:16px;margin-bottom:4px">
           <span class="label-sm text-muted" style="letter-spacing:.2em">TAP TO REVEAL</span>
           <div class="display-lg text-primary-c" id="card-arabic" style="font-size:56px">—</div>
           <p class="text-muted body-lg" id="card-lang"></p>
+          <button class="icon-btn" id="card-speak-front" style="background:var(--surface-nested-high);border-radius:50%" onclick="event.stopPropagation(); speakCurrent()"><span class="material-symbols-outlined">volume_up</span></button>
         </div>
         <div class="fc-face fc-back">
           <h3 class="headline-md" id="card-meaning">—</h3>
@@ -56,6 +58,7 @@
 <script src="assets/js/auth.js"></script>
 <script src="assets/js/state.js"></script>
 <script src="assets/js/nav.js"></script>
+<script src="assets/js/speech.js"></script>
 <script>
 const s = Sanctum.state;
 let deck = [...s.vocab];
@@ -88,8 +91,16 @@ function render() {
   document.getElementById('card-meaning').textContent = w.meaning;
   document.getElementById('card-translit').textContent = w.translit;
   document.getElementById('card-example').textContent = w.example || '';
+  const img = document.getElementById('card-image');
+  if (w.image) { img.src = w.image; img.style.display = 'block'; } else { img.style.display = 'none'; }
   flipped = false;
   document.getElementById('fc-card').classList.remove('flipped');
+}
+
+function speakCurrent() {
+  if (!deck.length) return;
+  const w = deck[idx];
+  speakText(w.arabic, w.lang);
 }
 
 function flip() {

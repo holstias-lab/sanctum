@@ -18,15 +18,35 @@ function defaultState() {
       streak: 0,
       lastActiveDate: null,
       theme: 'sage',
+      onboarded: false,
     },
     languages: [
-      { code: 'ar', name: 'Arabic', icon: 'language', unlocked: true, xpRequired: 0, progress: 0.15 },
-      { code: 'qar', name: 'Quranic Arabic', icon: 'auto_stories', unlocked: true, xpRequired: 0, progress: 0.1 },
-      { code: 'ru', name: 'Russian', icon: 'translate', unlocked: false, xpRequired: 500, progress: 0 },
-      { code: 'tw', name: 'Twi', icon: 'translate', unlocked: false, xpRequired: 1000, progress: 0 },
-      { code: 'zh', name: 'Mandarin', icon: 'translate', unlocked: false, xpRequired: 1500, progress: 0 },
-      { code: 'ja', name: 'Japanese', icon: 'translate', unlocked: false, xpRequired: 2000, progress: 0 },
-      { code: 'fr', name: 'French', icon: 'translate', unlocked: false, xpRequired: 2500, progress: 0 },
+      { code: 'qar', name: 'Quranic Arabic', icon: 'auto_stories', flag: '📖', unlocked: true, core: true, xpRequired: 0, progress: 0 },
+      { code: 'ar', name: 'Arabic', flag: '🇸🇦', unlocked: false, xpRequired: 0, progress: 0 },
+      { code: 'es', name: 'Spanish', flag: '🇪🇸', unlocked: false, xpRequired: 300, progress: 0 },
+      { code: 'fr', name: 'French', flag: '🇫🇷', unlocked: false, xpRequired: 600, progress: 0 },
+      { code: 'de', name: 'German', flag: '🇩🇪', unlocked: false, xpRequired: 900, progress: 0 },
+      { code: 'it', name: 'Italian', flag: '🇮🇹', unlocked: false, xpRequired: 1200, progress: 0 },
+      { code: 'pt', name: 'Portuguese', flag: '🇵🇹', unlocked: false, xpRequired: 1500, progress: 0 },
+      { code: 'ru', name: 'Russian', flag: '🇷🇺', unlocked: false, xpRequired: 1800, progress: 0 },
+      { code: 'zh', name: 'Mandarin', flag: '🇨🇳', unlocked: false, xpRequired: 2100, progress: 0 },
+      { code: 'ja', name: 'Japanese', flag: '🇯🇵', unlocked: false, xpRequired: 2400, progress: 0 },
+      { code: 'ko', name: 'Korean', flag: '🇰🇷', unlocked: false, xpRequired: 2700, progress: 0 },
+      { code: 'hi', name: 'Hindi', flag: '🇮🇳', unlocked: false, xpRequired: 3000, progress: 0 },
+      { code: 'tr', name: 'Turkish', flag: '🇹🇷', unlocked: false, xpRequired: 3300, progress: 0 },
+      { code: 'vi', name: 'Vietnamese', flag: '🇻🇳', unlocked: false, xpRequired: 3600, progress: 0 },
+      { code: 'th', name: 'Thai', flag: '🇹🇭', unlocked: false, xpRequired: 3900, progress: 0 },
+      { code: 'id', name: 'Indonesian', flag: '🇮🇩', unlocked: false, xpRequired: 4200, progress: 0 },
+      { code: 'nl', name: 'Dutch', flag: '🇳🇱', unlocked: false, xpRequired: 4500, progress: 0 },
+      { code: 'sv', name: 'Swedish', flag: '🇸🇪', unlocked: false, xpRequired: 4800, progress: 0 },
+      { code: 'pl', name: 'Polish', flag: '🇵🇱', unlocked: false, xpRequired: 5100, progress: 0 },
+      { code: 'el', name: 'Greek', flag: '🇬🇷', unlocked: false, xpRequired: 5400, progress: 0 },
+      { code: 'he', name: 'Hebrew', flag: '🇮🇱', unlocked: false, xpRequired: 5700, progress: 0 },
+      { code: 'sw', name: 'Swahili', flag: '🇰🇪', unlocked: false, xpRequired: 6000, progress: 0 },
+      { code: 'tw', name: 'Twi', flag: '🇬🇭', unlocked: false, xpRequired: 6300, progress: 0 },
+      { code: 'ur', name: 'Urdu', flag: '🇵🇰', unlocked: false, xpRequired: 6600, progress: 0 },
+      { code: 'fa', name: 'Persian', flag: '🇮🇷', unlocked: false, xpRequired: 6900, progress: 0 },
+      { code: 'bn', name: 'Bengali', flag: '🇧🇩', unlocked: false, xpRequired: 7200, progress: 0 },
     ],
     vocab: [],
     sessions: [],
@@ -61,6 +81,16 @@ function migrateState(s) {
   s.resources = (s.resources || []).map(r => r.lang ? r : { ...r, lang: 'General' });
   if (typeof s.wordsReviewedToday !== 'number') s.wordsReviewedToday = 0;
   if (!s.profile.theme) s.profile.theme = 'sage';
+  // Existing accounts predate the onboarding flow — don't force them through it.
+  if (typeof s.profile.onboarded !== 'boolean') s.profile.onboarded = true;
+  // Merge any newly-added catalog languages in without touching what the account already has.
+  const existingCodes = new Set(s.languages.map(l => l.code));
+  defaultState().languages.forEach(cl => {
+    if (!existingCodes.has(cl.code)) s.languages.push(cl);
+  });
+  // Quranic Arabic is core Quran-study access — always unlocked regardless of history.
+  const qar = s.languages.find(l => l.code === 'qar');
+  if (qar) qar.unlocked = true;
   return s;
 }
 
@@ -245,6 +275,14 @@ const Sanctum = (function () {
     return lang;
   }
 
+  function chooseStarterLanguage(code) {
+    const lang = state.languages.find(l => l.code === code);
+    if (lang) { lang.unlocked = true; lang.xpRequired = 0; }
+    state.profile.onboarded = true;
+    persist();
+    return lang;
+  }
+
   function removeLanguage(code) {
     state.languages = state.languages.filter(l => l.code !== code || !l.custom);
     persist();
@@ -298,7 +336,7 @@ const Sanctum = (function () {
     toggleRitual, ritualProgress, currentRank, nextRank, level,
     bumpStreak, toast, todayStr, RANKS,
     reviewWord, logFlashcardLap, claimQuest, setTheme,
-    addLanguage, removeLanguage,
+    addLanguage, removeLanguage, chooseStarterLanguage,
     cloudPull, cloudPushDebounced,
   };
 })();

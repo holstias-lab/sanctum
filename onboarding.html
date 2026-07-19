@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Nhoma — Welcome</title>
+<script>(function(){try{var s=JSON.parse(localStorage.getItem('sanctum_state_v1')||'{}');document.documentElement.setAttribute('data-theme',(s.profile&&s.profile.theme)||'sage');}catch(e){}})();</script>
+<link rel="stylesheet" href="assets/css/sanctum.css">
+<style>
+body{padding:40px 20px;display:flex;justify-content:center}
+.wrap{width:100%;max-width:900px}
+.lang-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:12px;margin-top:24px}
+.lang-pick{background:var(--surface-card);border:2px solid rgba(141,147,135,.15);border-radius:var(--radius-nested);padding:20px;display:flex;flex-direction:column;align-items:center;gap:8px;cursor:pointer;transition:border-color .15s,transform .15s}
+.lang-pick:hover{border-color:var(--primary);transform:translateY(-2px)}
+.lang-pick .flag{font-size:32px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div style="text-align:center;margin-bottom:8px">
+    <h1 class="display-lg" style="font-size:34px;color:var(--sage-glow)">Welcome to Nhoma</h1>
+    <p class="text-muted body-lg mt-2">Which language do you want to start learning?</p>
+  </div>
+  <div class="card mt-3" style="background:rgba(183,220,162,.06);border-color:rgba(183,220,162,.2)">
+    <div class="flex items-center gap-2">
+      <span style="font-size:24px">📖</span>
+      <div>
+        <p class="body-md" style="font-weight:700">Quranic Arabic is always included</p>
+        <p class="text-muted label-sm">Everyone gets full access to the Quran Reader, Tajweed, and Quranic vocabulary from day one — no need to pick it below.</p>
+      </div>
+    </div>
+  </div>
+  <input id="lang-search" class="auth-input" style="margin-top:24px;width:100%;padding:12px 16px;border-radius:var(--radius-full);border:1px solid rgba(141,147,135,.3);background:var(--surface-nested-low);color:var(--on-surface);font-size:14px" placeholder="Search languages...">
+  <div class="lang-grid" id="lang-grid"></div>
+  <p class="text-muted body-md mt-3" style="text-align:center">Don't see it? You can add any language by name later from the sidebar.</p>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="assets/js/supabase-client.js"></script>
+<script src="assets/js/auth.js"></script>
+<script src="assets/js/state.js"></script>
+<script>
+(async () => {
+  const session = await requireAuth();
+  if (!session) return;
+  if (Sanctum.state.profile.onboarded) { location.href = 'index.html'; return; }
+  render();
+})();
+
+function render(filter) {
+  const q = (filter || '').toLowerCase();
+  const options = Sanctum.state.languages.filter(l => !l.core && (!q || l.name.toLowerCase().includes(q)));
+  document.getElementById('lang-grid').innerHTML = options.map(l => `
+    <div class="lang-pick" onclick="pick('${l.code}')">
+      <span class="flag">${l.flag || '🌐'}</span>
+      <span class="body-md" style="font-weight:700;text-align:center">${l.name}</span>
+    </div>`).join('') || '<p class="text-muted body-md">No matches.</p>';
+}
+
+function pick(code) {
+  const lang = Sanctum.chooseStarterLanguage(code);
+  Sanctum.toast(lang ? lang.name + ' selected!' : 'Saved');
+  setTimeout(() => { location.href = 'index.html'; }, 400);
+}
+
+document.getElementById('lang-search').addEventListener('input', (e) => render(e.target.value));
+</script>
+</body>
+</html>

@@ -12,7 +12,7 @@
   <header class="page-header">
     <div>
       <h2 class="headline-lg">Settings</h2>
-      <p class="body-md text-muted">Your profile and data live only in this browser.</p>
+      <p class="body-md text-muted">Your profile and progress are synced to your account.</p>
     </div>
   </header>
 
@@ -20,13 +20,23 @@
     <section class="col-6">
       <div class="card mb-2">
         <div class="card-header"><h3 style="font-size:20px">Profile</h3></div>
+        <div class="flex items-center gap-2 mb-3">
+          <div class="avatar-ring" style="width:80px;height:80px;flex-shrink:0">
+            <img id="settings-avatar" src="" alt="Avatar">
+          </div>
+          <div>
+            <button class="btn btn-outline btn-sm" onclick="document.getElementById('avatar-input').click()">Change Photo</button>
+            <input type="file" id="avatar-input" accept="image/*" style="display:none">
+            <p class="label-sm text-muted mt-1">JPG or PNG, resized automatically</p>
+          </div>
+        </div>
         <label class="label-sm text-muted">Display name</label>
         <input id="in-name" style="width:100%;padding:10px;margin:6px 0 16px;border-radius:8px;border:1px solid rgba(141,147,135,.3);background:var(--surface-nested-low);color:var(--on-surface)">
         <button class="btn btn-primary" onclick="saveName()">Save</button>
       </div>
       <div class="card">
         <div class="card-header"><h3 style="font-size:20px">Data</h3></div>
-        <p class="text-muted body-md mb-2">Your XP, vocabulary, sessions, and Quran progress are stored in this browser's local storage. Nothing is sent to a server.</p>
+        <p class="text-muted body-md mb-2">Your XP, vocabulary, sessions, and Quran progress are synced to your account and cached in this browser for speed.</p>
         <div class="flex gap-1">
           <button class="btn btn-outline" onclick="exportData()">Export backup</button>
           <button class="btn" style="color:var(--tertiary);border:2px solid rgba(255,195,185,.4)" onclick="confirmReset()">Reset all progress</button>
@@ -50,6 +60,32 @@
 <script>
 const s = Sanctum.state;
 document.getElementById('in-name').value = s.profile.name;
+document.getElementById('settings-avatar').src = s.profile.avatar;
+
+document.getElementById('avatar-input').addEventListener('change', (e) => {
+  const file = e.target.files[0];
+  if (!file) return;
+  const img = new Image();
+  const reader = new FileReader();
+  reader.onload = (ev) => { img.src = ev.target.result; };
+  img.onload = () => {
+    const size = 240;
+    const canvas = document.createElement('canvas');
+    canvas.width = size; canvas.height = size;
+    const ctx = canvas.getContext('2d');
+    const scale = Math.max(size / img.width, size / img.height);
+    const w = img.width * scale, h = img.height * scale;
+    ctx.drawImage(img, (size - w) / 2, (size - h) / 2, w, h);
+    const dataUrl = canvas.toDataURL('image/jpeg', 0.85);
+    s.profile.avatar = dataUrl;
+    Sanctum.persist();
+    document.getElementById('settings-avatar').src = dataUrl;
+    Sanctum.toast('Profile picture updated');
+  };
+  reader.readAsDataURL(file);
+  e.target.value = '';
+});
+
 function saveName() {
   s.profile.name = document.getElementById('in-name').value.trim() || 'Scholar';
   Sanctum.persist();
