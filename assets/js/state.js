@@ -127,6 +127,11 @@ const Sanctum = (function () {
       const { data, error } = await sbClient.from('sanctum_data').select('data').eq('user_id', session.user.id).maybeSingle();
       if (error) return;
       if (!data) {
+        // Brand-new account: seed the cloud with a guaranteed-clean state,
+        // never with whatever happens to be cached locally (that could be
+        // leftover from a different account that used this same browser).
+        state = defaultState();
+        saveState(state);
         await sbClient.from('sanctum_data').upsert({ user_id: session.user.id, data: state, updated_at: new Date().toISOString() });
         return;
       }

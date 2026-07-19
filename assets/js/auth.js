@@ -35,6 +35,7 @@ async function signIn(email, password) {
 async function signOut() {
   await sbClient.auth.signOut();
   sessionStorage.removeItem('sanctum_synced');
+  localStorage.removeItem('sanctum_state_v1');
   location.href = 'login.html';
 }
 
