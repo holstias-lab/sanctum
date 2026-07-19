@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Nhoma — Flashcards</title>
+<script>(function(){try{var s=JSON.parse(localStorage.getItem('sanctum_state_v1')||'{}');document.documentElement.setAttribute('data-theme',(s.profile&&s.profile.theme)||'sage');}catch(e){}})();</script>
+<link rel="stylesheet" href="assets/css/sanctum.css">
+<style>
+.fc-scene{perspective:1200px}
+.fc-card{width:100%;height:320px;position:relative;transform-style:preserve-3d;transition:transform .5s;cursor:pointer}
+.fc-card.flipped{transform:rotateY(180deg)}
+.fc-face{position:absolute;inset:0;backface-visibility:hidden;border-radius:var(--radius-card);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;padding:24px;text-align:center;background:var(--surface-card);border:1px solid rgba(141,147,135,0.15);box-shadow:0 20px 40px rgba(0,0,0,.2)}
+.fc-back{transform:rotateY(180deg)}
+</style>
+</head>
+<body data-page="flashcards">
+<main class="main">
+  <header class="page-header">
+    <div>
+      <h2 class="headline-lg">Flashcards</h2>
+      <p class="body-md text-muted" id="fc-sub"></p>
+    </div>
+    <div class="page-header-actions">
+      <button class="btn btn-outline" onclick="shuffleDeck()"><span class="material-symbols-outlined" style="font-size:16px">shuffle</span> Shuffle</button>
+    </div>
+  </header>
+
+  <div style="max-width:560px;margin:0 auto">
+    <div class="progress-track mb-3"><div class="progress-fill" id="deck-progress" style="width:0%"></div></div>
+    <div class="fc-scene">
+      <div class="fc-card" id="fc-card" onclick="flip()">
+        <div class="fc-face fc-front">
+          <span class="label-sm text-muted" style="letter-spacing:.2em">TAP TO REVEAL</span>
+          <div class="display-lg text-primary-c" id="card-arabic" style="font-size:56px">—</div>
+          <p class="text-muted body-lg" id="card-lang"></p>
+        </div>
+        <div class="fc-face fc-back">
+          <h3 class="headline-md" id="card-meaning">—</h3>
+          <p class="text-muted body-lg" style="font-style:italic" id="card-translit"></p>
+          <p class="text-muted body-md" id="card-example" style="max-width:400px"></p>
+        </div>
+      </div>
+    </div>
+    <div class="flex justify-between gap-1 mt-3" id="rate-buttons">
+      <button class="btn" style="flex:1;justify-content:center;background:rgba(255,180,171,0.15);color:var(--tertiary)" onclick="rate(0)">Again</button>
+      <button class="btn" style="flex:1;justify-content:center;background:rgba(243,189,119,0.15);color:var(--secondary)" onclick="rate(50)">Good</button>
+      <button class="btn" style="flex:1;justify-content:center;background:rgba(183,220,162,0.15);color:var(--primary)" onclick="rate(100)">Easy</button>
+    </div>
+    <p class="text-muted body-md mt-2" style="text-align:center" id="empty-msg"></p>
+  </div>
+</main>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="assets/js/supabase-client.js"></script>
+<script src="assets/js/auth.js"></script>
+<script src="assets/js/state.js"></script>
+<script src="assets/js/nav.js"></script>
+<script>
+const s = Sanctum.state;
+let deck = [...s.vocab];
+let idx = 0;
+let flipped = false;
+
+function shuffleDeck() {
+  for (let i = deck.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [deck[i], deck[j]] = [deck[j], deck[i]];
+  }
+  idx = 0;
+  render();
+}
+
+function render() {
+  document.getElementById('fc-sub').textContent = deck.length ? `Card ${idx + 1} of ${deck.length}` : 'Add words in the Vocabulary Bank to build your deck';
+  document.getElementById('deck-progress').style.width = deck.length ? `${(idx / deck.length) * 100}%` : '0%';
+  document.getElementById('rate-buttons').style.display = deck.length ? 'flex' : 'none';
+  if (!deck.length) {
+    document.getElementById('fc-card').style.display = 'none';
+    document.getElementById('empty-msg').innerHTML = `No words yet. <a href="vocabulary.html" class="text-primary-c">Add some →</a>`;
+    return;
+  }
+  document.getElementById('fc-card').style.display = 'block';
+  document.getElementById('empty-msg').textContent = '';
+  const w = deck[idx];
+  document.getElementById('card-arabic').textContent = w.arabic;
+  document.getElementById('card-lang').textContent = w.lang;
+  document.getElementById('card-meaning').textContent = w.meaning;
+  document.getElementById('card-translit').textContent = w.translit;
+  document.getElementById('card-example').textContent = w.example || '';
+  flipped = false;
+  document.getElementById('fc-card').classList.remove('flipped');
+}
+
+function flip() {
+  flipped = !flipped;
+  document.getElementById('fc-card').classList.toggle('flipped', flipped);
+}
+
+function rate(masteryDelta) {
+  if (!deck.length) return;
+  const w = deck[idx];
+  Sanctum.reviewWord(w.id, masteryDelta);
+  idx = (idx + 1) % deck.length;
+  if (idx === 0) {
+    Sanctum.logFlashcardLap(deck.length);
+    Sanctum.toast('Deck complete — session logged!');
+  }
+  render();
+}
+
+render();
+</script>
+</body>
+</html>

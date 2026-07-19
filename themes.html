@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Nhoma — Themes</title>
+<script>(function(){try{var s=JSON.parse(localStorage.getItem('sanctum_state_v1')||'{}');document.documentElement.setAttribute('data-theme',(s.profile&&s.profile.theme)||'sage');}catch(e){}})();</script>
+<link rel="stylesheet" href="assets/css/sanctum.css">
+<style>
+.theme-card{background:var(--surface-card);border:1px solid rgba(141,147,135,0.12);border-radius:var(--radius-card);overflow:hidden;transition:transform .3s,box-shadow .3s}
+.theme-card:hover{transform:translateY(-4px);box-shadow:0 20px 40px rgba(0,0,0,.3)}
+.theme-swatch{height:110px;display:flex}
+.theme-swatch div{flex:1}
+.active-pill{display:flex;align-items:center;gap:6px;padding:4px 12px;border-radius:var(--radius-full);background:rgba(183,220,162,.12);border:1px solid rgba(183,220,162,.3)}
+.active-dot{width:8px;height:8px;border-radius:50%;background:var(--primary);box-shadow:0 0 8px var(--primary)}
+</style>
+</head>
+<body data-page="themes">
+<main class="main">
+  <header class="page-header">
+    <div>
+      <h2 class="headline-lg">Choose Your Sanctuary</h2>
+      <p class="body-md text-muted">Select an aesthetic that suits your current study mood.</p>
+    </div>
+  </header>
+
+  <div id="theme-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:var(--gutter)"></div>
+
+  <div class="mt-4" style="text-align:center;padding:24px 0;border-top:1px solid rgba(141,147,135,0.1)">
+    <p class="text-muted body-md" style="font-style:italic">"The mind is not a vessel to be filled, but a fire to be kindled." — Plutarch</p>
+  </div>
+</main>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="assets/js/supabase-client.js"></script>
+<script src="assets/js/auth.js"></script>
+<script src="assets/js/state.js"></script>
+<script src="assets/js/nav.js"></script>
+<script>
+const THEMES = [
+  { id: 'sage', name: 'Sage Grove', tagline: 'Organic tranquility for natural philosophers.', colors: ['#b7dca2', '#7a9d68', '#11140f'] },
+  { id: 'amber', name: 'Amber Study', tagline: 'The warmth of a private library.', colors: ['#dcaa5c', '#e0ae5a', '#17130d'] },
+  { id: 'midnight', name: 'Midnight Library', tagline: 'Cool shadows and moonlit focus.', colors: ['#a8b8e8', '#c7cbd1', '#0c0e17'] },
+  { id: 'burgundy', name: 'Burgundy Archive', tagline: 'Regal focus and velvet nights.', colors: ['#d9938e', '#c9a66b', '#150a0a'] },
+  { id: 'evergreen', name: 'Evergreen Forest', tagline: 'Dense woods and copper rain.', colors: ['#96b881', '#c97a46', '#10140e'] },
+];
+
+const s = Sanctum.state;
+let previewing = null;
+
+function render() {
+  const active = previewing || s.profile.theme || 'sage';
+  document.getElementById('theme-grid').innerHTML = THEMES.map(t => {
+    const isApplied = s.profile.theme === t.id && !previewing;
+    const isPreviewing = previewing === t.id;
+    return `
+    <div class="theme-card">
+      <div class="theme-swatch">${t.colors.map(c => `<div style="background:${c}"></div>`).join('')}</div>
+      <div class="p-card-padding" style="padding:24px">
+        <div class="flex justify-between items-start mb-2">
+          <h3 class="headline-md" style="font-size:20px">${t.name}</h3>
+          ${s.profile.theme === t.id ? `<div class="active-pill"><div class="active-dot"></div><span class="label-sm text-primary-c">ACTIVE</span></div>` : ''}
+        </div>
+        <p class="text-muted body-md mb-3" style="font-style:italic">${t.tagline}</p>
+        <div class="flex gap-1">
+          <button class="btn btn-outline btn-sm" onclick="previewTheme('${t.id}')">${isPreviewing ? 'Previewing…' : 'Preview'}</button>
+          <button class="btn btn-sm ${isApplied ? 'btn-ghost' : 'btn-primary'}" ${isApplied ? 'disabled' : ''} onclick="applyTheme('${t.id}')">${isApplied ? 'Already Applied' : 'Apply Theme'}</button>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function previewTheme(id) {
+  previewing = id;
+  document.documentElement.setAttribute('data-theme', id);
+  render();
+}
+
+function applyTheme(id) {
+  previewing = null;
+  Sanctum.setTheme(id);
+  Sanctum.toast('Theme applied');
+  render();
+}
+
+document.documentElement.setAttribute('data-theme', s.profile.theme || 'sage');
+render();
+</script>
+</body>
+</html>

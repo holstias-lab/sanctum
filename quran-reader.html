@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Nhoma — Quran Reader</title>
+<script>(function(){try{var s=JSON.parse(localStorage.getItem('sanctum_state_v1')||'{}');document.documentElement.setAttribute('data-theme',(s.profile&&s.profile.theme)||'sage');}catch(e){}})();</script>
+<link rel="stylesheet" href="assets/css/sanctum.css">
+<style>
+.ayah-block{padding:20px 0;border-bottom:1px solid rgba(141,147,135,0.1)}
+.ayah-arabic{font-family:'Fraunces',serif;font-size:30px;line-height:1.9;direction:rtl;text-align:right;color:var(--on-surface)}
+.ayah-num{display:inline-flex;align-items:center;justify-content:center;width:26px;height:26px;border-radius:50%;background:var(--surface-nested-high);color:var(--on-surface-variant);font-size:12px;margin-inline-start:8px}
+.ayah-translation{color:var(--on-surface-variant);font-style:italic;margin-top:10px}
+.ayah-block.playing{background:rgba(183,220,162,0.06);border-radius:16px;box-shadow:inset 0 0 0 1px rgba(183,220,162,0.25)}
+</style>
+</head>
+<body data-page="quran">
+<main class="main">
+  <header class="page-header">
+    <div>
+      <h2 class="headline-lg" id="surah-title">Al-Kahf</h2>
+      <p class="body-md text-muted" id="surah-sub">THE CAVE • SURAH 18</p>
+    </div>
+    <div class="page-header-actions">
+      <div class="search-box"><span class="material-symbols-outlined text-primary-c" style="font-size:18px">search</span><input id="verse-search" placeholder="Search verses..."></div>
+    </div>
+  </header>
+
+  <div class="grid">
+    <section class="col-3">
+      <div class="card mb-2">
+        <div class="flex justify-between items-center mb-1"><h4 class="label-md">Daily Devotion</h4><span class="label-sm text-primary-c" id="devotion-pct">0%</span></div>
+        <div class="progress-track"><div class="progress-fill" id="devotion-bar" style="width:0%"></div></div>
+      </div>
+      <div class="card mb-2">
+        <div class="card-header"><span class="material-symbols-outlined">menu_book</span><h3 style="font-size:18px">Surah Selection</h3></div>
+        <div class="stack no-scrollbar" id="surah-list" style="max-height:320px;overflow-y:auto"></div>
+      </div>
+      <div class="card">
+        <div class="card-header"><span class="material-symbols-outlined">bookmark</span><h3 style="font-size:18px">Saved Verses</h3></div>
+        <div class="stack" id="saved-verses"></div>
+      </div>
+    </section>
+
+    <section class="col-6">
+      <div class="card">
+        <div class="flex justify-between items-center mb-3">
+          <div class="flex gap-1">
+            <button class="btn btn-outline btn-sm" id="play-audio-btn"><span class="material-symbols-outlined" id="play-audio-icon" style="font-size:16px">play_circle</span><span id="play-audio-label">Play Audio</span></button>
+            <button class="btn btn-ghost btn-sm" id="stop-audio-btn" style="display:none"><span class="material-symbols-outlined" style="font-size:16px">stop_circle</span> Stop</button>
+            <button class="btn btn-ghost btn-sm" id="toggle-translation-btn">English (Sahih)</button>
+          </div>
+          <div class="flex gap-1">
+            <button class="icon-btn" onclick="changeFont(2)"><span class="material-symbols-outlined">text_increase</span></button>
+            <button class="icon-btn" onclick="changeFont(-2)"><span class="material-symbols-outlined">text_decrease</span></button>
+          </div>
+        </div>
+        <div id="ayah-container"><p class="text-muted">Loading verses…</p></div>
+        <div class="flex justify-between mt-3">
+          <button class="btn btn-ghost" id="prev-page"><span class="material-symbols-outlined">arrow_back</span> Previous</button>
+          <button class="btn btn-ghost" id="next-page">Next <span class="material-symbols-outlined">arrow_forward</span></button>
+        </div>
+      </div>
+    </section>
+
+    <section class="col-3">
+      <div class="card mb-2">
+        <div class="card-header"><span class="material-symbols-outlined">bolt</span><h3 style="font-size:18px">Reading Flow</h3></div>
+        <div class="display-lg text-secondary-c" style="font-size:40px" id="words-read">0</div>
+        <p class="label-sm text-muted" style="text-transform:uppercase;letter-spacing:.1em">Words read this surah</p>
+      </div>
+      <div class="card mb-2">
+        <div class="card-header"><span class="material-symbols-outlined">tips_and_updates</span><h3 style="font-size:18px">Daily Insight</h3></div>
+        <p class="body-md text-muted" style="font-style:italic">"The Qur'an was sent down as a guidance for mankind and as clear evidence for guidance and judgment."</p>
+      </div>
+      <div class="card" style="text-align:center">
+        <div class="display-lg text-primary-c" id="level-pct" style="font-size:32px">0%</div>
+        <p class="label-sm text-muted">LEVEL <span id="level-num">1</span> PROGRESS</p>
+      </div>
+    </section>
+  </div>
+</main>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="assets/js/supabase-client.js"></script>
+<script src="assets/js/auth.js"></script>
+<script src="assets/js/state.js"></script>
+<script src="assets/js/nav.js"></script>
+<script src="assets/js/quran.js"></script>
+<script>
+const s = Sanctum.state;
+const params = new URLSearchParams(location.search);
+let currentSurahNum = parseInt(params.get('surah')) || s.quranProgress.lastSurah || 18;
+let showTranslation = true;
+let fontSize = 30;
+
+let audioQueue = [];
+let audioPos = 0;
+let currentAudio = null;
+
+function clearHighlight() {
+  document.querySelectorAll('.ayah-block.playing').forEach(el => el.classList.remove('playing'));
+}
+function highlightAyah(number) {
+  clearHighlight();
+  const el = document.getElementById('ayah-block-' + number);
+  if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  if (el) el.classList.add('playing');
+}
+function setAudioButton(playing) {
+  document.getElementById('play-audio-icon').textContent = playing ? 'pause_circle' : 'play_circle';
+  document.getElementById('play-audio-label').textContent = playing ? 'Pause Audio' : 'Play Audio';
+  document.getElementById('stop-audio-btn').style.display = currentAudio ? 'inline-flex' : 'none';
+}
+function stopAudio() {
+  if (currentAudio) { currentAudio.pause(); currentAudio.src = ''; currentAudio = null; }
+  audioQueue = [];
+  audioPos = 0;
+  clearHighlight();
+  setAudioButton(false);
+}
+function playAyahAt(pos) {
+  if (pos >= audioQueue.length) { stopAudio(); return; }
+  audioPos = pos;
+  const a = audioQueue[pos];
+  currentAudio = new Audio(`https://cdn.islamic.network/quran/audio/128/ar.alafasy/${a.globalNumber}.mp3`);
+  highlightAyah(a.number);
+  currentAudio.addEventListener('ended', () => playAyahAt(audioPos + 1));
+  currentAudio.play().then(() => setAudioButton(true)).catch(() => { Sanctum.toast('Audio unavailable right now'); stopAudio(); });
+}
+function toggleAudio(ayahs) {
+  if (currentAudio) {
+    if (currentAudio.paused) {
+      currentAudio.play();
+      setAudioButton(true);
+    } else {
+      currentAudio.pause();
+      setAudioButton(false);
+    }
+    return;
+  }
+  audioQueue = ayahs;
+  playAyahAt(0);
+}
+document.getElementById('stop-audio-btn').addEventListener('click', stopAudio);
+
+document.getElementById('level-num').textContent = Sanctum.level();
+document.getElementById('level-pct').textContent = Math.round((s.profile.totalXp % 1000) / 10) + '%';
+
+function renderSavedVerses() {
+  document.getElementById('saved-verses').innerHTML = s.savedVerses.map(v => `
+    <a href="quran-reader.html?surah=${v.surah}" class="flex items-center gap-1" style="padding:8px 0">
+      <span style="width:8px;height:8px;border-radius:50%;background:var(--secondary);flex-shrink:0"></span>
+      <div><p class="body-md" style="font-weight:700">${v.surah}:${v.ayah} — ${v.label}</p></div>
+    </a>`).join('') || '<p class="text-muted body-md">No saved verses yet.</p>';
+}
+renderSavedVerses();
+
+async function renderSurahList() {
+  const list = await getSurahList();
+  const wrap = document.getElementById('surah-list');
+  wrap.innerHTML = list.map(sur => `
+    <a href="quran-reader.html?surah=${sur.number}" class="nested flex justify-between items-center" style="padding:10px 14px;${sur.number === currentSurahNum ? 'background:var(--surface-nested-high);border:1px solid rgba(183,220,162,.3)' : ''}">
+      <div><span class="label-sm text-muted">${String(sur.number).padStart(3,'0')}</span><p class="body-md">${sur.englishName}</p></div>
+    </a>`).join('');
+}
+renderSurahList();
+
+async function loadSurah(num) {
+  stopAudio();
+  currentSurahNum = num;
+  s.quranProgress.lastSurah = num;
+  Sanctum.persist();
+  document.getElementById('ayah-container').innerHTML = '<p class="text-muted">Loading verses…</p>';
+  try {
+    const surah = await getSurah(num);
+    document.getElementById('surah-title').textContent = surah.englishName;
+    document.getElementById('surah-sub').textContent = `${surah.englishNameTranslation.toUpperCase()} • SURAH ${surah.number}`;
+    renderAyahs(surah.ayahs);
+    const words = surah.ayahs.reduce((acc, a) => acc + a.arabic.split(' ').length, 0);
+    document.getElementById('words-read').textContent = words;
+    document.getElementById('devotion-pct').textContent = '100%';
+    document.getElementById('devotion-bar').style.width = '100%';
+    if (!s.quranProgress.surahsCompleted.includes(num)) {
+      s.quranProgress.surahsCompleted.push(num);
+      s.quranProgress.versesRead += surah.ayahs.length;
+      Sanctum.persist();
+      Sanctum.addXP(30);
+    }
+    document.getElementById('play-audio-btn').onclick = () => toggleAudio(surah.ayahs);
+  } catch (e) {
+    document.getElementById('ayah-container').innerHTML = '<p class="text-muted">Could not load this surah — check your connection.</p>';
+  }
+}
+
+function renderAyahs(ayahs) {
+  document.getElementById('ayah-container').innerHTML = ayahs.map(a => `
+    <div class="ayah-block" id="ayah-block-${a.number}">
+      <p class="ayah-arabic" style="font-size:${fontSize}px">${a.arabic}<span class="ayah-num">${a.number}</span></p>
+      ${showTranslation ? `<p class="ayah-translation">${a.translation}</p>` : ''}
+    </div>`).join('');
+}
+
+document.getElementById('toggle-translation-btn').addEventListener('click', () => {
+  showTranslation = !showTranslation;
+  loadSurah(currentSurahNum);
+});
+function changeFont(delta) {
+  fontSize = Math.max(18, Math.min(48, fontSize + delta));
+  loadSurah(currentSurahNum);
+}
+document.getElementById('prev-page').addEventListener('click', () => { if (currentSurahNum > 1) loadSurah(currentSurahNum - 1); });
+document.getElementById('next-page').addEventListener('click', () => { if (currentSurahNum < 114) loadSurah(currentSurahNum + 1); });
+
+loadSurah(currentSurahNum);
+</script>
+</body>
+</html>

@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Nhoma — Guide</title>
+<script>(function(){try{var s=JSON.parse(localStorage.getItem('sanctum_state_v1')||'{}');document.documentElement.setAttribute('data-theme',(s.profile&&s.profile.theme)||'sage');}catch(e){}})();</script>
+<link rel="stylesheet" href="assets/css/sanctum.css">
+</head>
+<body data-page="guide">
+<main class="main">
+  <header class="page-header">
+    <div>
+      <h2 class="headline-lg">Guide</h2>
+      <p class="body-md text-muted">How to make the most of your Nhoma.</p>
+    </div>
+  </header>
+
+  <div class="grid">
+    <section class="col-6">
+      <div class="card mb-2">
+        <div class="card-header"><span class="material-symbols-outlined">dashboard</span><h3 style="font-size:20px">Language Hub</h3></div>
+        <p class="text-muted body-md">Your home base. Track the languages you're learning, review your Featured Word of the Day, and complete your Daily Ritual to build streaks and climb the Rank Ladder.</p>
+      </div>
+      <div class="card mb-2">
+        <div class="card-header"><span class="material-symbols-outlined">timer</span><h3 style="font-size:20px">Focus Timer</h3></div>
+        <p class="text-muted body-md">A 25-minute Pomodoro timer for deep study. Completing a focus phase earns +25 XP and logs a session automatically.</p>
+      </div>
+      <div class="card">
+        <div class="card-header"><span class="material-symbols-outlined">menu_book</span><h3 style="font-size:20px">Vocabulary & Flashcards</h3></div>
+        <p class="text-muted body-md">Add words to your Vocabulary Bank, then drill them in Flashcards. Rating a card as "Good" or "Easy" raises its mastery score.</p>
+      </div>
+    </section>
+    <section class="col-6">
+      <div class="card mb-2">
+        <div class="card-header"><span class="material-symbols-outlined">auto_stories</span><h3 style="font-size:20px">Quran Reader</h3></div>
+        <p class="text-muted body-md">Read any of the 114 surahs with Arabic text and an English translation, pulled live from the Al Quran Cloud API. Finishing a surah for the first time earns +30 XP.</p>
+      </div>
+      <div class="card mb-2">
+        <div class="card-header"><span class="material-symbols-outlined">spellcheck</span><h3 style="font-size:20px">Tajweed</h3></div>
+        <p class="text-muted body-md">Reference the core rules of recitation and mark each one as practiced to earn XP.</p>
+      </div>
+      <div class="card">
+        <div class="card-header"><span class="material-symbols-outlined">bolt</span><h3 style="font-size:20px">XP & Ranks</h3></div>
+        <p class="text-muted body-md">XP accumulates from focus sessions, mastering words, quests, and Quran reading. Ranks unlock at 500, 1,500, and 3,500 XP. Everything is saved locally in your browser.</p>
+      </div>
+    </section>
+  </div>
+</main>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="assets/js/supabase-client.js"></script>
+<script src="assets/js/auth.js"></script>
+<script src="assets/js/state.js"></script>
+<script src="assets/js/nav.js"></script>
+</body>
+</html>

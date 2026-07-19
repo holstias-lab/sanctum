@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Nhoma — Quran Progress</title>
+<script>(function(){try{var s=JSON.parse(localStorage.getItem('sanctum_state_v1')||'{}');document.documentElement.setAttribute('data-theme',(s.profile&&s.profile.theme)||'sage');}catch(e){}})();</script>
+<link rel="stylesheet" href="assets/css/sanctum.css">
+</head>
+<body data-page="quranprogress">
+<main class="main">
+  <header class="page-header">
+    <div>
+      <h2 class="headline-lg">Quran Progress</h2>
+      <p class="body-md text-muted">Track your journey through the mushaf, surah by surah.</p>
+    </div>
+  </header>
+
+  <div class="grid mb-3">
+    <section class="col-3"><div class="card stat-tile"><div class="num" id="stat-surahs">0</div><div class="lbl">Surahs Read</div></div></section>
+    <section class="col-3"><div class="card stat-tile"><div class="num" id="stat-verses">0</div><div class="lbl">Verses Read</div></div></section>
+    <section class="col-3"><div class="card stat-tile"><div class="num" id="stat-pct">0%</div><div class="lbl">Of the Quran</div></div></section>
+    <section class="col-3"><div class="card stat-tile"><div class="num" id="stat-streak">0</div><div class="lbl">Day Streak</div></div></section>
+  </div>
+
+  <div class="card mb-3">
+    <div class="card-header"><span class="material-symbols-outlined">trending_up</span><h3>Overall Completion</h3></div>
+    <div class="progress-track" style="height:14px"><div class="progress-fill" id="overall-bar" style="width:0%"></div></div>
+    <p class="text-muted body-md mt-1" id="overall-label"></p>
+  </div>
+
+  <div class="card">
+    <div class="card-header"><span class="material-symbols-outlined">grid_view</span><h3>Surah Map</h3></div>
+    <div id="surah-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(48px,1fr));gap:8px"></div>
+  </div>
+</main>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="assets/js/supabase-client.js"></script>
+<script src="assets/js/auth.js"></script>
+<script src="assets/js/state.js"></script>
+<script src="assets/js/nav.js"></script>
+<script src="assets/js/quran.js"></script>
+<script>
+const s = Sanctum.state;
+const TOTAL_AYAHS = 6236;
+
+document.getElementById('stat-surahs').textContent = s.quranProgress.surahsCompleted.length;
+document.getElementById('stat-verses').textContent = s.quranProgress.versesRead;
+const pct = Math.min(100, Math.round((s.quranProgress.versesRead / TOTAL_AYAHS) * 100));
+document.getElementById('stat-pct').textContent = pct + '%';
+document.getElementById('stat-streak').textContent = s.profile.streak;
+document.getElementById('overall-bar').style.width = pct + '%';
+document.getElementById('overall-label').textContent = `${s.quranProgress.versesRead} of ${TOTAL_AYAHS} verses read`;
+
+async function renderGrid() {
+  const list = await getSurahList();
+  document.getElementById('surah-grid').innerHTML = list.map(sur => {
+    const done = s.quranProgress.surahsCompleted.includes(sur.number);
+    return `<a href="quran-reader.html?surah=${sur.number}" title="${sur.englishName}"
+      style="aspect-ratio:1;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;
+      background:${done ? 'var(--primary)' : 'var(--surface-nested-low)'};color:${done ? 'var(--on-primary)' : 'var(--on-surface-variant)'}">
+      ${sur.number}</a>`;
+  }).join('');
+}
+renderGrid();
+</script>
+</body>
+</html>

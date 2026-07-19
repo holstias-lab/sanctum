@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Nhoma — Quests</title>
+<script>(function(){try{var s=JSON.parse(localStorage.getItem('sanctum_state_v1')||'{}');document.documentElement.setAttribute('data-theme',(s.profile&&s.profile.theme)||'sage');}catch(e){}})();</script>
+<link rel="stylesheet" href="assets/css/sanctum.css">
+</head>
+<body data-page="quests">
+<main class="main">
+  <header class="page-header">
+    <div>
+      <h2 class="headline-lg">Quests</h2>
+      <p class="body-md text-muted">Daily goals that keep your streak alive.</p>
+    </div>
+    <div class="page-header-actions">
+      <div class="streak-pill"><span class="material-symbols-outlined fill" style="font-size:16px">local_fire_department</span><span id="streak-count">0 Days</span></div>
+    </div>
+  </header>
+
+  <div class="grid">
+    <section class="col-8">
+      <div class="card">
+        <div class="card-header"><span class="material-symbols-outlined fill" style="color:var(--secondary)">military_tech</span><h3>Today's Quests</h3></div>
+        <div class="stack" id="quest-list"></div>
+      </div>
+    </section>
+    <section class="col-4">
+      <div class="card">
+        <div class="card-header"><span class="material-symbols-outlined" style="color:var(--secondary)">flare</span><h3>Daily Ritual</h3></div>
+        <div class="stack" id="ritual-list"></div>
+        <div class="mt-3" style="border-top:1px solid rgba(141,147,135,0.2);padding-top:16px">
+          <div class="flex justify-between items-center mb-1"><span class="label-md text-muted">Daily Progress</span><span class="label-sm text-primary-c" id="ritual-pct">0%</span></div>
+          <div class="progress-track"><div class="progress-fill" id="ritual-bar" style="width:0%"></div></div>
+        </div>
+      </div>
+    </section>
+  </div>
+</main>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="assets/js/supabase-client.js"></script>
+<script src="assets/js/auth.js"></script>
+<script src="assets/js/state.js"></script>
+<script src="assets/js/nav.js"></script>
+<script>
+const s = Sanctum.state;
+document.getElementById('streak-count').textContent = s.profile.streak + ' Days';
+
+function renderQuests() {
+  document.getElementById('quest-list').innerHTML = s.quests.map(q => {
+    const complete = q.current >= q.target;
+    const claimedToday = q.claimedDate === Sanctum.todayStr();
+    const pct = Math.min(100, Math.round((q.current / q.target) * 100));
+    return `<div class="nested" style="padding:16px">
+      <div class="flex justify-between mb-1">
+        <span class="body-md" style="font-weight:700">${q.title}</span>
+        <span class="label-sm text-muted">${q.current} / ${q.target}</span>
+      </div>
+      <div class="progress-track mb-2"><div class="progress-fill${complete ? '' : ' amber'}" style="width:${pct}%"></div></div>
+      <div class="flex justify-between items-center">
+        <span class="label-sm text-secondary-c">+${q.xp} XP</span>
+        ${complete
+          ? (claimedToday ? `<span class="badge badge-primary">Claimed</span>` : `<button class="btn btn-primary btn-sm" onclick="claimQuest('${q.id}')">Claim</button>`)
+          : `<span class="label-sm text-muted">In progress</span>`}
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function claimQuest(id) {
+  Sanctum.claimQuest(id);
+  renderQuests();
+}
+
+function renderRitual() {
+  const list = document.getElementById('ritual-list');
+  list.innerHTML = s.ritual.map(r => `
+    <label class="check-row${r.done ? ' done' : ''}">
+      <input type="checkbox" ${r.done ? 'checked' : ''} onchange="Sanctum.toggleRitual('${r.id}'); renderRitual();">
+      <span class="body-md">${r.label}</span>
+    </label>`).join('');
+  const pct = Math.round(Sanctum.ritualProgress() * 100);
+  document.getElementById('ritual-pct').textContent = pct + '%';
+  document.getElementById('ritual-bar').style.width = pct + '%';
+}
+
+renderQuests();
+renderRitual();
+</script>
+</body>
+</html>

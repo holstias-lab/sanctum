@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Nhoma — Sessions</title>
+<script>(function(){try{var s=JSON.parse(localStorage.getItem('sanctum_state_v1')||'{}');document.documentElement.setAttribute('data-theme',(s.profile&&s.profile.theme)||'sage');}catch(e){}})();</script>
+<link rel="stylesheet" href="assets/css/sanctum.css">
+</head>
+<body data-page="sessions">
+<main class="main">
+  <header class="page-header">
+    <div>
+      <h2 class="headline-lg">Sessions</h2>
+      <p class="body-md text-muted" id="sessions-sub"></p>
+    </div>
+    <div class="page-header-actions">
+      <button class="btn btn-primary" onclick="document.getElementById('log-form').classList.toggle('open')">+ Log Session</button>
+    </div>
+  </header>
+
+  <div class="card mb-3" id="log-form" style="display:none">
+    <div class="grid" style="gap:16px">
+      <div class="col-4"><label class="label-sm text-muted">Title</label><input id="in-title" style="width:100%;padding:10px;margin-top:4px;border-radius:8px;border:1px solid rgba(141,147,135,.3);background:var(--surface-nested-low);color:var(--on-surface)" placeholder="Vocabulary review"></div>
+      <div class="col-3"><label class="label-sm text-muted">Language</label><input id="in-lang" style="width:100%;padding:10px;margin-top:4px;border-radius:8px;border:1px solid rgba(141,147,135,.3);background:var(--surface-nested-low);color:var(--on-surface)" placeholder="Arabic"></div>
+      <div class="col-2"><label class="label-sm text-muted">Minutes</label><input id="in-min" type="number" value="25" style="width:100%;padding:10px;margin-top:4px;border-radius:8px;border:1px solid rgba(141,147,135,.3);background:var(--surface-nested-low);color:var(--on-surface)"></div>
+      <div class="col-3"><label class="label-sm text-muted">XP earned</label><input id="in-xp" type="number" value="25" style="width:100%;padding:10px;margin-top:4px;border-radius:8px;border:1px solid rgba(141,147,135,.3);background:var(--surface-nested-low);color:var(--on-surface)"></div>
+    </div>
+    <div class="flex gap-1 mt-2"><button class="btn btn-primary" onclick="addSession()">Save</button><button class="btn btn-ghost" onclick="document.getElementById('log-form').classList.remove('open')">Cancel</button></div>
+  </div>
+
+  <div class="card">
+    <div class="stack" id="session-list"></div>
+  </div>
+</main>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="assets/js/supabase-client.js"></script>
+<script src="assets/js/auth.js"></script>
+<script src="assets/js/state.js"></script>
+<script src="assets/js/nav.js"></script>
+<script>
+const s = Sanctum.state;
+function render() {
+  document.getElementById('sessions-sub').textContent = `${s.sessions.length} sessions logged`;
+  document.getElementById('session-list').innerHTML = s.sessions.length ? s.sessions.map(sess => `
+    <div class="nested flex justify-between items-center" style="padding:16px">
+      <div>
+        <p class="body-md" style="font-weight:700">${sess.title}</p>
+        <p class="label-sm text-muted mt-1">${sess.language || ''} • ${new Date(sess.createdAt).toLocaleString([], {dateStyle:'medium', timeStyle:'short'})} • ${sess.durationMin} min</p>
+      </div>
+      <span class="text-primary-c label-sm" style="font-weight:700">+${sess.xp} XP</span>
+    </div>`).join('') : `<p class="text-muted body-md">No sessions logged yet — start a Focus Timer or log one manually.</p>`;
+}
+
+function addSession() {
+  const title = document.getElementById('in-title').value.trim() || 'Study session';
+  const language = document.getElementById('in-lang').value.trim();
+  const durationMin = parseInt(document.getElementById('in-min').value) || 25;
+  const xp = parseInt(document.getElementById('in-xp').value) || 25;
+  Sanctum.logSession({ title, language, durationMin, type: 'manual', xp });
+  Sanctum.addXP(xp);
+  document.getElementById('log-form').classList.remove('open');
+  render();
+}
+
+render();
+</script>
+<style>#log-form.open{display:block !important}</style>
+</body>
+</html>

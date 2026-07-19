@@ -2,11 +2,212 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta http-equiv="refresh" content="0; url=sanctum.html">
-<title>The Polyglot Sanctum</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Nhoma — Language Hub</title>
+<script>(function(){try{var s=JSON.parse(localStorage.getItem('sanctum_state_v1')||'{}');document.documentElement.setAttribute('data-theme',(s.profile&&s.profile.theme)||'sage');}catch(e){}})();</script>
+<link rel="stylesheet" href="assets/css/sanctum.css">
 </head>
-<body>
-<script>location.replace('sanctum.html');</script>
-<p><a href="sanctum.html">Enter the Sanctum</a></p>
+<body data-page="home">
+<main class="main">
+  <header class="page-header">
+    <div class="page-header-left">
+      <div class="avatar-ring">
+        <img id="hdr-avatar" src="" alt="Avatar">
+        <div class="avatar-badge"><span class="material-symbols-outlined fill">local_fire_department</span></div>
+      </div>
+      <div>
+        <h2 class="headline-lg">Language Hub</h2>
+        <p class="body-md text-muted">Your sanctuary for linguistic mastery and growth.</p>
+      </div>
+    </div>
+    <div class="page-header-actions">
+      <button class="icon-btn"><span class="material-symbols-outlined">notifications</span><span class="icon-dot"></span></button>
+      <div class="search-box">
+        <span class="material-symbols-outlined text-primary-c" style="font-size:18px">search</span>
+        <input type="text" placeholder="Search resources...">
+      </div>
+    </div>
+  </header>
+
+  <div class="grid">
+    <!-- Language Map -->
+    <section class="col-12">
+      <div class="card">
+        <div class="card-header"><span class="material-symbols-outlined">map</span><h3>Language Map</h3></div>
+        <div id="language-map" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:12px"></div>
+        <p class="text-muted body-md mt-2" style="text-align:center;display:flex;justify-content:center;align-items:center;gap:8px">
+          <span class="material-symbols-outlined" style="font-size:16px">lock_open</span> Click a locked language to see the XP needed
+        </p>
+      </div>
+    </section>
+
+    <!-- Featured word -->
+    <section class="col-12">
+      <div class="card" style="border-color:rgba(243,189,119,0.2);display:flex;gap:32px;align-items:center;flex-wrap:wrap">
+        <div style="flex:1;min-width:240px">
+          <span class="label-sm text-secondary-c" style="letter-spacing:.2em;text-transform:uppercase">Featured Word of the Day</span>
+          <h2 class="display-lg text-primary-c mt-1" id="fw-arabic" style="font-size:44px">—</h2>
+          <h3 class="headline-md mt-1" id="fw-translit">—</h3>
+          <p class="text-muted body-md" style="font-style:italic" id="fw-meaning">—</p>
+          <p class="text-muted body-md mt-2" id="fw-example" style="max-width:420px"></p>
+        </div>
+        <div style="width:140px;height:140px;display:flex;align-items:center;justify-content:center;position:relative">
+          <div style="position:absolute;inset:0;border:2px solid rgba(243,189,119,0.2);transform:rotate(45deg);border-radius:16px"></div>
+          <span class="material-symbols-outlined fill text-secondary-c" style="font-size:56px">auto_awesome</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- Vocabulary bank preview -->
+    <section class="col-12">
+      <div class="flex justify-between items-center mb-2" style="padding:0 4px">
+        <div>
+          <h3 class="headline-md flex items-center gap-1"><span class="material-symbols-outlined">menu_book</span> Vocabulary Bank</h3>
+          <p class="text-muted body-md" id="vocab-count"></p>
+        </div>
+        <a href="vocabulary.html" class="btn btn-outline">+ Add Word</a>
+      </div>
+      <div class="word-row" id="vocab-preview"></div>
+    </section>
+
+    <!-- Daily Ritual -->
+    <section class="col-4">
+      <div class="card" style="height:100%;display:flex;flex-direction:column">
+        <div class="card-header"><span class="material-symbols-outlined" style="color:var(--secondary)">flare</span><h3>Daily Ritual</h3></div>
+        <div class="stack" id="ritual-list" style="flex:1"></div>
+        <div class="mt-3" style="border-top:1px solid rgba(141,147,135,0.2);padding-top:16px">
+          <div class="flex justify-between items-center mb-1">
+            <span class="label-md text-muted">Daily Progress</span>
+            <span class="label-sm text-primary-c" id="ritual-pct">0%</span>
+          </div>
+          <div class="progress-track"><div class="progress-fill" id="ritual-bar" style="width:0%"></div></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Rank ladder + XP -->
+    <section class="col-8" style="display:grid;grid-template-columns:1fr 1fr;gap:var(--inner-gap)">
+      <div class="card">
+        <div class="card-header"><span class="material-symbols-outlined fill" style="color:var(--secondary)">military_tech</span><h3>Rank Ladder</h3></div>
+        <div class="stack" id="rank-ladder"></div>
+      </div>
+      <div class="card">
+        <div class="card-header"><span class="material-symbols-outlined">bolt</span><h3>How XP Works</h3></div>
+        <div class="stack" style="gap:2px">
+          <div class="flex justify-between" style="padding:6px 0;border-bottom:1px solid rgba(141,147,135,0.1)"><span class="text-muted body-md">Pomodoro (25 min)</span><span class="text-primary-c" style="font-weight:700">+25 XP</span></div>
+          <div class="flex justify-between" style="padding:6px 0;border-bottom:1px solid rgba(141,147,135,0.1)"><span class="text-muted body-md">Master a word</span><span class="text-primary-c" style="font-weight:700">+5 XP</span></div>
+          <div class="flex justify-between" style="padding:6px 0;border-bottom:1px solid rgba(141,147,135,0.1)"><span class="text-muted body-md">Understand Surah</span><span class="text-primary-c" style="font-weight:700">+30 XP</span></div>
+          <div class="flex justify-between" style="padding:6px 0"><span class="text-muted body-md">Quest complete</span><span class="text-primary-c" style="font-weight:700">+100 XP</span></div>
+          <div class="flex justify-between items-center mt-2" style="background:rgba(243,189,119,0.06);padding:10px 12px;border-radius:12px;border:1px solid rgba(243,189,119,0.2)">
+            <span class="flex items-center gap-1">7-day streak <span class="material-symbols-outlined fill text-secondary-c" style="font-size:16px">local_fire_department</span></span>
+            <span class="text-secondary-c" style="font-weight:700">+50 XP</span>
+          </div>
+        </div>
+      </div>
+    </section>
+  </div>
+</main>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="assets/js/supabase-client.js"></script>
+<script src="assets/js/auth.js"></script>
+<script src="assets/js/state.js"></script>
+<script src="assets/js/nav.js"></script>
+<script>
+const s = Sanctum.state;
+document.getElementById('hdr-avatar').src = s.profile.avatar;
+
+// Language map
+function renderLanguageMap() {
+  const mapEl = document.getElementById('language-map');
+  mapEl.innerHTML = s.languages.map(l => {
+    if (l.unlocked) {
+      return `<div class="nested" style="border:2px solid var(--primary);padding:20px;display:flex;flex-direction:column;align-items:center;gap:6px;cursor:pointer;transition:transform .15s" onmouseover="this.style.transform='scale(1.02)'" onmouseout="this.style.transform='scale(1)'">
+        <span class="material-symbols-outlined text-primary-c">${l.icon}</span>
+        <span class="label-md" style="font-weight:700">${l.name.toUpperCase()}</span>
+        <div style="width:6px;height:6px;border-radius:50%;background:var(--primary);box-shadow:0 0 8px var(--primary)"></div>
+      </div>`;
+    }
+    return `<div class="nested" style="background:var(--surface-nested-low);padding:20px;display:flex;flex-direction:column;align-items:center;gap:6px;opacity:.6;cursor:not-allowed"
+        onclick="Sanctum.toast('${l.name} unlocks at ${l.xpRequired} XP — you have ${s.profile.totalXp} XP')">
+        <span class="label-sm text-muted">${l.code.toUpperCase()}</span>
+        <span class="label-md text-muted">${l.name.toUpperCase()}</span>
+        <span class="material-symbols-outlined text-muted" style="font-size:18px">lock</span>
+      </div>`;
+  }).join('') + `<div class="nested" style="border:2px dashed rgba(141,147,135,.4);padding:20px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;cursor:pointer;color:var(--on-surface-variant)" onclick="addLanguageFromHub()">
+      <span class="material-symbols-outlined" style="font-size:22px">add</span>
+      <span class="label-md">Add Language</span>
+    </div>`;
+}
+renderLanguageMap();
+
+function addLanguageFromHub() {
+  const name = prompt('What language do you want to add?');
+  if (!name) return;
+  const lang = Sanctum.addLanguage(name);
+  if (lang) {
+    Sanctum.toast(name + ' added');
+    renderLanguageMap();
+    const sidebar = document.getElementById('sanctum-sidebar');
+    if (sidebar && typeof renderSidebar === 'function') sidebar.innerHTML = renderSidebar(sanctumActiveKey);
+  }
+}
+
+// Featured word of the day (rotates daily)
+const dayIdx = Math.floor(Date.now() / 86400000) % s.vocab.length;
+const fw = s.vocab[dayIdx];
+if (fw) {
+  document.getElementById('fw-arabic').textContent = fw.arabic;
+  document.getElementById('fw-translit').textContent = fw.translit;
+  document.getElementById('fw-meaning').textContent = fw.meaning;
+  document.getElementById('fw-example').textContent = fw.example;
+}
+
+// Vocabulary preview
+document.getElementById('vocab-count').textContent = `${s.vocab.length} words in your bank`;
+function renderVocabPreview() {
+  const wrap = document.getElementById('vocab-preview');
+  wrap.innerHTML = s.vocab.slice(0, 8).map(w => `
+    <div class="word-card">
+      <div class="flex justify-between items-start">
+        <span class="arabic" style="flex:1">${w.arabic}</span>
+        <span class="material-symbols-outlined" style="font-size:18px;color:var(--on-surface-variant);cursor:pointer" onclick="Sanctum.deleteWord('${w.id}'); location.reload()">close</span>
+      </div>
+      <div><h4>${w.meaning}</h4><p class="translit">${w.translit}</p></div>
+      <p class="example">${w.example}</p>
+      <div class="flex gap-1"><span class="badge badge-muted">${w.lang.toUpperCase()}</span></div>
+    </div>`).join('') + `<a href="vocabulary.html" class="word-card" style="align-items:center;justify-content:center;min-width:100px;color:var(--on-surface-variant)"><span class="material-symbols-outlined" style="font-size:32px">add</span></a>`;
+}
+renderVocabPreview();
+
+// Daily ritual
+function renderRitual() {
+  const list = document.getElementById('ritual-list');
+  list.innerHTML = s.ritual.map(r => `
+    <label class="check-row${r.done ? ' done' : ''}">
+      <input type="checkbox" ${r.done ? 'checked' : ''} onchange="Sanctum.toggleRitual('${r.id}'); renderRitual();">
+      <span class="body-md">${r.label}</span>
+    </label>`).join('');
+  const pct = Math.round(Sanctum.ritualProgress() * 100);
+  document.getElementById('ritual-pct').textContent = pct + '%';
+  document.getElementById('ritual-bar').style.width = pct + '%';
+}
+renderRitual();
+
+// Rank ladder
+const ladder = document.getElementById('rank-ladder');
+const curRank = Sanctum.currentRank();
+ladder.innerHTML = Sanctum.RANKS.filter((r,i)=>i>0).map(r => {
+  const active = r.name === curRank.name;
+  const reached = s.profile.totalXp >= r.xp;
+  return `<div class="flex justify-between items-center" style="padding:12px 16px;border-radius:16px;${active ? 'background:rgba(183,220,162,0.1);border:1px solid rgba(183,220,162,0.2)' : `opacity:${reached ? 1 : 0.5}`}">
+    <div class="flex items-center gap-1">
+      <span class="material-symbols-outlined fill" style="font-size:18px;color:${active||reached ? 'var(--primary)' : 'var(--on-surface-variant)'}">${active||reached ? 'fiber_manual_record' : 'radio_button_unchecked'}</span>
+      <span class="label-md" style="color:${active ? 'var(--primary)' : 'var(--on-surface)'}">${r.name}</span>
+    </div>
+    <span class="label-sm ${active ? 'text-primary-c' : 'text-muted'}">${active ? 'Active' : r.xp + ' XP'}</span>
+  </div>`;
+}).join('');
+</script>
 </body>
 </html>

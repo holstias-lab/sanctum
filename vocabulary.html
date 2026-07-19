@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Nhoma — Vocabulary</title>
+<script>(function(){try{var s=JSON.parse(localStorage.getItem('sanctum_state_v1')||'{}');document.documentElement.setAttribute('data-theme',(s.profile&&s.profile.theme)||'sage');}catch(e){}})();</script>
+<link rel="stylesheet" href="assets/css/sanctum.css">
+</head>
+<body data-page="vocab">
+<main class="main">
+  <header class="page-header">
+    <div>
+      <h2 class="headline-lg">Vocabulary Bank</h2>
+      <p class="body-md text-muted" id="vocab-sub"></p>
+    </div>
+    <div class="page-header-actions">
+      <select id="lang-filter" class="btn btn-outline" style="background:var(--surface-container);border-color:rgba(141,147,135,.3)"></select>
+      <button class="btn btn-primary" onclick="document.getElementById('add-form').classList.toggle('open')">+ Add Word</button>
+    </div>
+  </header>
+
+  <div class="card mb-3" id="add-form" style="display:none">
+    <div class="grid" style="gap:16px">
+      <div class="col-3"><label class="label-sm text-muted">Arabic</label><input id="in-arabic" class="nested" style="width:100%;padding:10px;border:1px solid rgba(141,147,135,.3);background:var(--surface-nested-low);color:var(--on-surface);margin-top:4px" placeholder="كَلِمَة"></div>
+      <div class="col-3"><label class="label-sm text-muted">Transliteration</label><input id="in-translit" class="nested" style="width:100%;padding:10px;border:1px solid rgba(141,147,135,.3);background:var(--surface-nested-low);color:var(--on-surface);margin-top:4px" placeholder="Kalima"></div>
+      <div class="col-3"><label class="label-sm text-muted">Meaning</label><input id="in-meaning" class="nested" style="width:100%;padding:10px;border:1px solid rgba(141,147,135,.3);background:var(--surface-nested-low);color:var(--on-surface);margin-top:4px" placeholder="Word"></div>
+      <div class="col-3"><label class="label-sm text-muted">Language</label>
+        <select id="in-lang" style="width:100%;padding:10px;border:1px solid rgba(141,147,135,.3);background:var(--surface-nested-low);color:var(--on-surface);margin-top:4px;border-radius:8px">
+          <option>Arabic</option><option>Quranic Arabic</option><option>Swedish</option><option>Twi</option><option>Mandarin</option><option>Japanese</option><option>French</option>
+        </select>
+      </div>
+      <div class="col-12"><label class="label-sm text-muted">Example / note</label><input id="in-example" style="width:100%;padding:10px;border:1px solid rgba(141,147,135,.3);background:var(--surface-nested-low);color:var(--on-surface);margin-top:4px;border-radius:8px" placeholder="Optional example sentence"></div>
+    </div>
+    <div class="flex gap-1 mt-2"><button class="btn btn-primary" onclick="addWord()">Save Word</button><button class="btn btn-ghost" onclick="document.getElementById('add-form').classList.remove('open')">Cancel</button></div>
+  </div>
+
+  <div id="vocab-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:var(--inner-gap)"></div>
+</main>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="assets/js/supabase-client.js"></script>
+<script src="assets/js/auth.js"></script>
+<script src="assets/js/state.js"></script>
+<script src="assets/js/nav.js"></script>
+<script>
+const s = Sanctum.state;
+let filterLang = 'all';
+
+function uniqueLangs() {
+  return Array.from(new Set(s.vocab.map(w => w.lang)));
+}
+function renderFilter() {
+  const sel = document.getElementById('lang-filter');
+  sel.innerHTML = `<option value="all">All languages</option>` + uniqueLangs().map(l => `<option value="${l}">${l}</option>`).join('');
+  sel.value = filterLang;
+}
+document.getElementById('lang-filter').addEventListener('change', e => { filterLang = e.target.value; renderGrid(); });
+
+function renderGrid() {
+  document.getElementById('vocab-sub').textContent = `${s.vocab.length} words saved`;
+  const grid = document.getElementById('vocab-grid');
+  const words = filterLang === 'all' ? s.vocab : s.vocab.filter(w => w.lang === filterLang);
+  grid.innerHTML = words.map(w => `
+    <div class="word-card">
+      <div class="flex justify-between items-start">
+        <span class="arabic" style="flex:1">${w.arabic}</span>
+        <span class="material-symbols-outlined" style="font-size:18px;color:var(--on-surface-variant);cursor:pointer" onclick="removeWord('${w.id}')">close</span>
+      </div>
+      <div><h4>${w.meaning}</h4><p class="translit">${w.translit}</p></div>
+      ${w.example ? `<p class="example">${w.example}</p>` : ''}
+      <div class="flex justify-between items-center">
+        <span class="badge badge-muted">${w.lang.toUpperCase()}</span>
+        <span class="label-sm text-muted">${w.mastery || 0}% mastered</span>
+      </div>
+      <input type="range" min="0" max="100" value="${w.mastery || 0}" oninput="Sanctum.setMastery('${w.id}', this.value); this.nextElementSibling && 0" onchange="renderGrid()" style="accent-color:var(--primary)">
+    </div>`).join('') || `<p class="text-muted body-md">No words yet for this language — add one above.</p>`;
+}
+
+function addWord() {
+  const arabic = document.getElementById('in-arabic').value.trim();
+  const translit = document.getElementById('in-translit').value.trim();
+  const meaning = document.getElementById('in-meaning').value.trim();
+  const lang = document.getElementById('in-lang').value;
+  const example = document.getElementById('in-example').value.trim();
+  if (!arabic || !meaning) { Sanctum.toast('Add at least a word and meaning'); return; }
+  Sanctum.addWord({ arabic, translit, meaning, lang, example });
+  const q = s.quests.find(q => q.id === 'q4');
+  if (q && q.current < q.target) { q.current++; Sanctum.persist(); }
+  Sanctum.addXP(5);
+  document.getElementById('add-form').classList.remove('open');
+  ['in-arabic','in-translit','in-meaning','in-example'].forEach(id => document.getElementById(id).value = '');
+  renderFilter();
+  renderGrid();
+}
+function removeWord(id) {
+  Sanctum.deleteWord(id);
+  renderFilter();
+  renderGrid();
+}
+
+renderFilter();
+renderGrid();
+</script>
+<style>#add-form.open{display:block !important}</style>
+</body>
+</html>

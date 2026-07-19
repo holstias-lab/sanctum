@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Nhoma — Settings</title>
+<script>(function(){try{var s=JSON.parse(localStorage.getItem('sanctum_state_v1')||'{}');document.documentElement.setAttribute('data-theme',(s.profile&&s.profile.theme)||'sage');}catch(e){}})();</script>
+<link rel="stylesheet" href="assets/css/sanctum.css">
+</head>
+<body data-page="settings">
+<main class="main">
+  <header class="page-header">
+    <div>
+      <h2 class="headline-lg">Settings</h2>
+      <p class="body-md text-muted">Your profile and data live only in this browser.</p>
+    </div>
+  </header>
+
+  <div class="grid">
+    <section class="col-6">
+      <div class="card mb-2">
+        <div class="card-header"><h3 style="font-size:20px">Profile</h3></div>
+        <label class="label-sm text-muted">Display name</label>
+        <input id="in-name" style="width:100%;padding:10px;margin:6px 0 16px;border-radius:8px;border:1px solid rgba(141,147,135,.3);background:var(--surface-nested-low);color:var(--on-surface)">
+        <button class="btn btn-primary" onclick="saveName()">Save</button>
+      </div>
+      <div class="card">
+        <div class="card-header"><h3 style="font-size:20px">Data</h3></div>
+        <p class="text-muted body-md mb-2">Your XP, vocabulary, sessions, and Quran progress are stored in this browser's local storage. Nothing is sent to a server.</p>
+        <div class="flex gap-1">
+          <button class="btn btn-outline" onclick="exportData()">Export backup</button>
+          <button class="btn" style="color:var(--tertiary);border:2px solid rgba(255,195,185,.4)" onclick="confirmReset()">Reset all progress</button>
+        </div>
+      </div>
+    </section>
+    <section class="col-6">
+      <div class="card">
+        <div class="card-header"><h3 style="font-size:20px">About Nhoma</h3></div>
+        <p class="text-muted body-md">A Dark Cozy-Academia study companion for language learning and Quranic Arabic — built around focus sessions, vocabulary, flashcards, and full Quran reading.</p>
+      </div>
+    </section>
+  </div>
+</main>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="assets/js/supabase-client.js"></script>
+<script src="assets/js/auth.js"></script>
+<script src="assets/js/state.js"></script>
+<script src="assets/js/nav.js"></script>
+<script>
+const s = Sanctum.state;
+document.getElementById('in-name').value = s.profile.name;
+function saveName() {
+  s.profile.name = document.getElementById('in-name').value.trim() || 'Scholar';
+  Sanctum.persist();
+  Sanctum.toast('Profile saved');
+}
+function exportData() {
+  const blob = new Blob([JSON.stringify(s, null, 2)], { type: 'application/json' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'sanctum-backup.json';
+  a.click();
+}
+function confirmReset() {
+  if (confirm('This clears all local XP, vocabulary, and progress. This cannot be undone. Continue?')) {
+    localStorage.removeItem('sanctum_state_v1');
+    location.href = 'index.html';
+  }
+}
+</script>
+</body>
+</html>

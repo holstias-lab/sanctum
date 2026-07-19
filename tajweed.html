@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Nhoma — Tajweed</title>
+<script>(function(){try{var s=JSON.parse(localStorage.getItem('sanctum_state_v1')||'{}');document.documentElement.setAttribute('data-theme',(s.profile&&s.profile.theme)||'sage');}catch(e){}})();</script>
+<link rel="stylesheet" href="assets/css/sanctum.css">
+</head>
+<body data-page="tajweed">
+<main class="main">
+  <header class="page-header">
+    <div>
+      <h2 class="headline-lg">Tajweed</h2>
+      <p class="body-md text-muted">The rules of beautiful, correct recitation.</p>
+    </div>
+  </header>
+  <div id="rule-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:var(--inner-gap)"></div>
+</main>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="assets/js/supabase-client.js"></script>
+<script src="assets/js/auth.js"></script>
+<script src="assets/js/state.js"></script>
+<script src="assets/js/nav.js"></script>
+<script>
+const RULES = [
+  { id:'t1', name:'Izhar (Clear pronunciation)', arabic:'إظهار', desc:'Noon Sakinah or Tanween is pronounced clearly without nasalization when followed by a throat letter (ء ه ع ح غ خ).' },
+  { id:'t2', name:'Idgham (Merging)', arabic:'إدغام', desc:'Noon Sakinah or Tanween merges into the following letter when followed by ي ن م و ل ر.' },
+  { id:'t3', name:'Iqlab (Conversion)', arabic:'إقلاب', desc:'Noon Sakinah or Tanween converts to a Meem sound when followed by the letter ب, with a light nasal hum.' },
+  { id:'t4', name:'Ikhfa (Concealment)', arabic:'إخفاء', desc:'Noon Sakinah or Tanween is partially concealed with nasalization before the remaining 15 letters.' },
+  { id:'t5', name:'Qalqalah (Echo)', arabic:'قلقلة', desc:'A slight bouncing echo on the letters ق ط ب ج د when they carry a sukoon.' },
+  { id:'t6', name:'Madd (Elongation)', arabic:'مدّ', desc:'Prolonging a vowel sound for 2, 4, or 6 counts depending on the type of madd letter and its cause.' },
+  { id:'t7', name:'Ghunnah (Nasalization)', arabic:'غنة', desc:'A nasal sound held for two counts on Noon and Meem when they carry a shaddah.' },
+  { id:'t8', name:'Meem Sakinah rules', arabic:'أحكام الميم', desc:'Ikhfa Shafawi, Idgham Shafawi, and Izhar Shafawi govern a still Meem based on the following letter.' },
+];
+
+const s = Sanctum.state;
+s.tajweedPracticed = s.tajweedPracticed || [];
+
+function render() {
+  document.getElementById('rule-grid').innerHTML = RULES.map(r => {
+    const practiced = s.tajweedPracticed.includes(r.id);
+    return `<div class="card">
+      <div class="flex justify-between items-start mb-1">
+        <h3 class="headline-md" style="font-size:20px">${r.name}</h3>
+        <span class="arabic" style="font-family:'Fraunces',serif;color:var(--primary);font-size:22px">${r.arabic}</span>
+      </div>
+      <p class="text-muted body-md mb-2">${r.desc}</p>
+      <label class="check-row${practiced ? ' done' : ''}" style="padding:8px 0">
+        <input type="checkbox" ${practiced ? 'checked' : ''} onchange="togglePracticed('${r.id}')">
+        <span class="body-md">Practiced this rule</span>
+      </label>
+    </div>`;
+  }).join('');
+}
+
+function togglePracticed(id) {
+  const i = s.tajweedPracticed.indexOf(id);
+  if (i >= 0) { s.tajweedPracticed.splice(i, 1); }
+  else { s.tajweedPracticed.push(id); Sanctum.addXP(10); }
+  Sanctum.persist();
+  render();
+}
+
+render();
+</script>
+</body>
+</html>

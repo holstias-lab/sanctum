@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Nhoma — Resources</title>
+<script>(function(){try{var s=JSON.parse(localStorage.getItem('sanctum_state_v1')||'{}');document.documentElement.setAttribute('data-theme',(s.profile&&s.profile.theme)||'sage');}catch(e){}})();</script>
+<link rel="stylesheet" href="assets/css/sanctum.css">
+<script src="https://cdn.jsdelivr.net/npm/mammoth@1.6.0/mammoth.browser.min.js"></script>
+<style>
+.lang-tabs{display:flex;gap:8px;overflow-x:auto;padding-bottom:4px}
+.lang-tab{flex-shrink:0;padding:10px 18px;border-radius:var(--radius-full);background:var(--surface-nested-low);color:var(--on-surface-variant);font-weight:600;font-size:14px;white-space:nowrap}
+.lang-tab.active{background:var(--primary);color:var(--on-primary)}
+.doc-row{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 16px}
+.doc-row .left{display:flex;align-items:center;gap:12px;min-width:0}
+.doc-row .icon-wrap{width:40px;height:40px;border-radius:12px;background:var(--surface-nested-high);display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.doc-row .name{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+#preview-panel{margin-top:16px}
+#preview-panel iframe{width:100%;height:70vh;border:none;border-radius:var(--radius-nested);background:#fff}
+#preview-panel .docx-render{background:#fff;color:#1a1a1a;padding:32px;border-radius:var(--radius-nested);max-height:70vh;overflow-y:auto;font-family:'Nunito Sans',sans-serif;line-height:1.6}
+.upload-drop{border:2px dashed rgba(141,147,135,.35);border-radius:var(--radius-nested);padding:24px;text-align:center;cursor:pointer;transition:border-color .15s,background .15s}
+.upload-drop:hover{border-color:var(--primary);background:rgba(183,220,162,.05)}
+</style>
+</head>
+<body data-page="resources">
+<main class="main">
+  <header class="page-header">
+    <div>
+      <h2 class="headline-lg">Resources</h2>
+      <p class="body-md text-muted">Links and your own documents, organized per language.</p>
+    </div>
+  </header>
+
+  <div class="lang-tabs mb-3" id="lang-tabs"></div>
+
+  <div class="grid">
+    <section class="col-6">
+      <div class="card mb-2">
+        <div class="card-header"><span class="material-symbols-outlined">link</span><h3 style="font-size:20px">Links</h3><span class="spacer"></span><button class="link" onclick="document.getElementById('link-form').classList.toggle('open')">+ Add</button></div>
+        <div class="mb-2" id="link-form" style="display:none">
+          <input id="in-title" placeholder="Title" style="width:100%;padding:8px;margin-bottom:6px;border-radius:8px;border:1px solid rgba(141,147,135,.3);background:var(--surface-nested-low);color:var(--on-surface)">
+          <input id="in-url" placeholder="https://" style="width:100%;padding:8px;margin-bottom:6px;border-radius:8px;border:1px solid rgba(141,147,135,.3);background:var(--surface-nested-low);color:var(--on-surface)">
+          <input id="in-note" placeholder="Note (optional)" style="width:100%;padding:8px;margin-bottom:8px;border-radius:8px;border:1px solid rgba(141,147,135,.3);background:var(--surface-nested-low);color:var(--on-surface)">
+          <button class="btn btn-primary btn-sm" onclick="addResource()">Save</button>
+        </div>
+        <div class="stack" id="link-list"></div>
+      </div>
+    </section>
+
+    <section class="col-6">
+      <div class="card mb-2">
+        <div class="card-header"><span class="material-symbols-outlined">folder</span><h3 style="font-size:20px">Documents</h3></div>
+        <label class="upload-drop" for="file-input">
+          <span class="material-symbols-outlined" style="font-size:28px;color:var(--primary)">upload_file</span>
+          <p class="body-md mt-1">Click to upload a PDF or Word document</p>
+          <p class="label-sm text-muted mt-1">Synced to your account</p>
+        </label>
+        <input type="file" id="file-input" accept=".pdf,.doc,.docx,.txt,.png,.jpg,.jpeg" style="display:none">
+        <div class="stack mt-2" id="doc-list"></div>
+      </div>
+      <div id="preview-panel"></div>
+    </section>
+  </div>
+</main>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="assets/js/supabase-client.js"></script>
+<script src="assets/js/auth.js"></script>
+<script src="assets/js/state.js"></script>
+<script src="assets/js/nav.js"></script>
+<script src="assets/js/files.js"></script>
+<script>
+const s = Sanctum.state;
+const TABS = ['General', ...s.languages.map(l => l.name)];
+let activeLang = TABS[1] || 'General';
+
+function renderTabs() {
+  document.getElementById('lang-tabs').innerHTML = TABS.map(t => `
+    <button class="lang-tab${t === activeLang ? ' active' : ''}" onclick="switchTab('${t}')">${t}</button>`).join('');
+}
+function switchTab(t) {
+  activeLang = t;
+  document.getElementById('preview-panel').innerHTML = '';
+  renderTabs();
+  renderLinks();
+  renderDocs();
+}
+
+function renderLinks() {
+  const items = s.resources.filter(r => r.lang === activeLang);
+  document.getElementById('link-list').innerHTML = items.map(r => `
+    <div class="nested" style="padding:14px">
+      <div class="flex justify-between items-start">
+        <div>
+          <p class="body-md" style="font-weight:700">${escapeHtml(r.title)}</p>
+          <p class="text-muted label-sm mt-1">${escapeHtml(r.note || '')}</p>
+        </div>
+        <span class="material-symbols-outlined" style="font-size:18px;color:var(--on-surface-variant);cursor:pointer" onclick="removeResource('${r.id}')">close</span>
+      </div>
+      ${r.url ? `<a href="${r.url}" target="_blank" rel="noopener" class="btn btn-outline btn-sm mt-2">Visit <span class="material-symbols-outlined" style="font-size:14px">open_in_new</span></a>` : ''}
+    </div>`).join('') || '<p class="text-muted body-md">No links yet for this language.</p>';
+}
+function addResource() {
+  const title = document.getElementById('in-title').value.trim();
+  const url = document.getElementById('in-url').value.trim();
+  const note = document.getElementById('in-note').value.trim();
+  if (!title) { Sanctum.toast('Give the resource a title'); return; }
+  s.resources.unshift({ id: 'res' + Date.now(), title, url, note, lang: activeLang });
+  Sanctum.persist();
+  ['in-title','in-url','in-note'].forEach(id => document.getElementById(id).value = '');
+  document.getElementById('link-form').classList.remove('open');
+  renderLinks();
+}
+function removeResource(id) {
+  s.resources = s.resources.filter(r => r.id !== id);
+  Sanctum.persist();
+  renderLinks();
+}
+
+function escapeHtml(str) {
+  return String(str).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+}
+
+function iconFor(type, name) {
+  if (type.includes('pdf')) return 'picture_as_pdf';
+  if (name.match(/\.docx?$/i)) return 'description';
+  if (type.startsWith('image/')) return 'image';
+  return 'draft';
+}
+
+let docCache = [];
+async function renderDocs() {
+  const wrap = document.getElementById('doc-list');
+  wrap.innerHTML = '<p class="text-muted body-md">Loading documents…</p>';
+  docCache = await listDocuments(activeLang);
+  wrap.innerHTML = docCache.length ? docCache.map(d => `
+    <div class="doc-row nested" data-path="${escapeHtml(d.path)}">
+      <div class="left">
+        <div class="icon-wrap"><span class="material-symbols-outlined">${iconFor(d.type, d.name)}</span></div>
+        <div>
+          <p class="body-md name" style="font-weight:600;max-width:220px">${escapeHtml(d.name)}</p>
+          <p class="label-sm text-muted">${fmtBytes(d.size)} • ${new Date(d.addedAt).toLocaleDateString()}</p>
+        </div>
+      </div>
+      <div class="flex gap-1">
+        <button class="btn btn-outline btn-sm doc-preview-btn">Preview</button>
+        <span class="material-symbols-outlined doc-delete-btn" style="cursor:pointer;color:var(--on-surface-variant)">delete</span>
+      </div>
+    </div>`).join('') : '<p class="text-muted body-md">No documents uploaded for this language yet.</p>';
+}
+
+document.getElementById('doc-list').addEventListener('click', (e) => {
+  const row = e.target.closest('.doc-row');
+  if (!row) return;
+  const path = row.dataset.path;
+  if (e.target.closest('.doc-preview-btn')) previewDoc(path);
+  else if (e.target.closest('.doc-delete-btn')) removeDoc(path);
+});
+
+document.getElementById('file-input').addEventListener('change', async (e) => {
+  const file = e.target.files[0];
+  if (!file) return;
+  try {
+    await addDocument(activeLang, file);
+    Sanctum.toast('Document uploaded');
+  } catch (err) {
+    Sanctum.toast('Upload failed — are you signed in?');
+  }
+  e.target.value = '';
+  renderDocs();
+});
+
+async function removeDoc(path) {
+  await deleteDocument(path);
+  document.getElementById('preview-panel').innerHTML = '';
+  renderDocs();
+}
+
+async function previewDoc(path) {
+  const panel = document.getElementById('preview-panel');
+  panel.innerHTML = `<div class="card"><p class="text-muted body-md">Loading preview…</p></div>`;
+  const doc = await getDocument(path);
+  if (!doc) { panel.innerHTML = `<div class="card"><p class="text-muted body-md">Could not load this document.</p></div>`; return; }
+  panel.innerHTML = `<div class="card"><div class="card-header"><h3 style="font-size:18px">${escapeHtml(doc.name)}</h3><span class="spacer"></span><span class="material-symbols-outlined" style="cursor:pointer" onclick="document.getElementById('preview-panel').innerHTML=''">close</span></div><div id="preview-body"><p class="text-muted body-md">Loading preview…</p></div></div>`;
+  const body = document.getElementById('preview-body');
+
+  if (doc.type === 'application/pdf' || doc.name.match(/\.pdf$/i)) {
+    const url = URL.createObjectURL(doc.blob);
+    body.innerHTML = `<iframe src="${url}"></iframe>`;
+  } else if (doc.name.match(/\.docx$/i)) {
+    try {
+      const arrayBuffer = await doc.blob.arrayBuffer();
+      const result = await mammoth.convertToHtml({ arrayBuffer });
+      body.innerHTML = `<div class="docx-render">${result.value}</div>`;
+    } catch (e) {
+      body.innerHTML = `<p class="text-muted body-md">Could not render this document. <a href="${URL.createObjectURL(doc.blob)}" download="${escapeHtml(doc.name)}" class="text-primary-c">Download instead</a></p>`;
+    }
+  } else if (doc.type.startsWith('image/')) {
+    const url = URL.createObjectURL(doc.blob);
+    body.innerHTML = `<img src="${url}" style="max-width:100%;border-radius:12px">`;
+  } else if (doc.name.match(/\.txt$/i)) {
+    const text = await doc.blob.text();
+    body.innerHTML = `<pre class="nested" style="padding:16px;white-space:pre-wrap;max-height:60vh;overflow-y:auto">${text.replace(/[<>&]/g, c => ({'<':'&lt;','>':'&gt;','&':'&amp;'}[c]))}</pre>`;
+  } else {
+    const url = URL.createObjectURL(doc.blob);
+    body.innerHTML = `<p class="text-muted body-md">Preview isn't supported for this file type (legacy .doc isn't renderable in-browser). <a href="${url}" download="${escapeHtml(doc.name)}" class="text-primary-c">Download it</a> instead.</p>`;
+  }
+}
+
+renderTabs();
+renderLinks();
+renderDocs();
+</script>
+<style>#link-form.open{display:block !important}</style>
+</body>
+</html>

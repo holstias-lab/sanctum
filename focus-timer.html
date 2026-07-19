@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Nhoma — Focus Timer</title>
+<script>(function(){try{var s=JSON.parse(localStorage.getItem('sanctum_state_v1')||'{}');document.documentElement.setAttribute('data-theme',(s.profile&&s.profile.theme)||'sage');}catch(e){}})();</script>
+<link rel="stylesheet" href="assets/css/sanctum.css">
+</head>
+<body data-page="focus">
+<main class="main">
+  <header class="page-header">
+    <div>
+      <h2 class="headline-lg">Focus Timer</h2>
+      <p class="body-md text-muted">The quiet hours are for the deepest work.</p>
+    </div>
+    <div class="page-header-actions">
+      <div class="streak-pill"><span class="material-symbols-outlined fill" style="font-size:16px">local_fire_department</span><span id="xp-pill">0 XP</span></div>
+    </div>
+  </header>
+
+  <div class="grid">
+    <section class="col-3">
+      <div class="card mb-2">
+        <div class="flex justify-between items-start mb-2">
+          <h3 class="headline-md" style="font-size:18px">Current Task</h3>
+          <span class="material-symbols-outlined text-muted">push_pin</span>
+        </div>
+        <div class="nested" style="padding:16px;margin-bottom:16px">
+          <p class="body-md" id="task-label">Reviewing vocabulary</p>
+          <div class="flex items-center gap-1 mt-2 text-secondary-c label-sm"><span class="material-symbols-outlined" style="font-size:16px">schedule</span> PRIORITY: <span id="task-priority">MEDIUM</span></div>
+        </div>
+        <button class="btn btn-outline" style="width:100%;justify-content:center" onclick="changeTask()">Change Task</button>
+      </div>
+      <div class="card">
+        <h4 class="label-md text-muted mb-2">Ambient Sounds</h4>
+        <div class="flex items-center justify-between mb-2">
+          <span class="body-md">Forest Rain</span>
+          <button class="icon-btn" id="ambient-toggle" style="padding:8px;background:var(--surface-nested-high);border-radius:50%"><span class="material-symbols-outlined" id="ambient-icon">play_arrow</span></button>
+        </div>
+        <div class="stack" style="gap:8px">
+          <div class="flex items-center gap-1"><span class="material-symbols-outlined text-muted" style="font-size:16px">water_drop</span><div class="progress-track"><div class="progress-fill" style="width:60%"></div></div></div>
+          <div class="flex items-center gap-1"><span class="material-symbols-outlined text-muted" style="font-size:16px">forest</span><div class="progress-track"><div class="progress-fill amber" style="width:40%"></div></div></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="col-6" style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:24px">
+      <div id="timer-ring" style="width:320px;height:320px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:conic-gradient(var(--primary) 0deg, var(--surface-nested-low) 0deg)">
+        <div style="width:288px;height:288px;border-radius:50%;background:var(--surface);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px">
+          <div class="display-lg" id="timer-display" style="font-size:64px">25:00</div>
+          <div class="label-sm" id="timer-phase" style="letter-spacing:.2em;color:var(--on-surface-variant)">FOCUS PHASE</div>
+          <div class="flex gap-2 mt-2">
+            <button class="icon-btn" id="play-btn" style="background:var(--primary);color:var(--on-primary);width:56px;height:56px;border-radius:50%;display:flex;align-items:center;justify-content:center">
+              <span class="material-symbols-outlined fill" id="play-icon" style="font-size:28px">play_arrow</span>
+            </button>
+            <button class="icon-btn" id="reset-btn" style="background:var(--surface-nested-high);width:56px;height:56px;border-radius:50%;display:flex;align-items:center;justify-content:center">
+              <span class="material-symbols-outlined">restart_alt</span>
+            </button>
+          </div>
+        </div>
+      </div>
+      <div class="flex gap-1" id="cycle-dots"></div>
+    </section>
+
+    <section class="col-3">
+      <div class="card mb-2">
+        <div class="card-header"><h3 style="font-size:18px">Recent Sessions</h3><span class="spacer"></span><span class="material-symbols-outlined text-muted">history</span></div>
+        <div class="stack no-scrollbar" id="recent-sessions" style="max-height:320px;overflow-y:auto"></div>
+        <a href="sessions.html" class="btn-ghost btn mt-2" style="width:100%;justify-content:center">View Full History <span class="material-symbols-outlined" style="font-size:16px">arrow_forward</span></a>
+      </div>
+      <div class="card" style="background:var(--surface-nested-low)">
+        <p style="font-family:'Fraunces',serif;font-style:italic;color:var(--on-surface-variant);font-size:16px">"Seek knowledge from the cradle to the grave."</p>
+        <p class="label-sm text-muted mt-2">— Traditional Wisdom</p>
+      </div>
+    </section>
+  </div>
+</main>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="assets/js/supabase-client.js"></script>
+<script src="assets/js/auth.js"></script>
+<script src="assets/js/state.js"></script>
+<script src="assets/js/nav.js"></script>
+<script>
+const s = Sanctum.state;
+document.getElementById('xp-pill').textContent = s.profile.totalXp.toLocaleString() + ' XP';
+
+const FOCUS_MIN = 25, BREAK_MIN = 5;
+let secondsLeft = FOCUS_MIN * 60;
+let totalSeconds = FOCUS_MIN * 60;
+let isBreak = false;
+let running = false;
+let timerId = null;
+let cyclesDone = 0;
+
+function fmt(sec) {
+  const m = Math.floor(sec / 60).toString().padStart(2, '0');
+  const s2 = (sec % 60).toString().padStart(2, '0');
+  return `${m}:${s2}`;
+}
+
+function renderTimer() {
+  document.getElementById('timer-display').textContent = fmt(secondsLeft);
+  document.getElementById('timer-phase').textContent = isBreak ? 'BREAK PHASE' : 'FOCUS PHASE';
+  const pct = 1 - secondsLeft / totalSeconds;
+  document.getElementById('timer-ring').style.background = `conic-gradient(${isBreak ? 'var(--secondary)' : 'var(--primary)'} ${pct * 360}deg, var(--surface-nested-low) 0deg)`;
+}
+
+function tick() {
+  if (secondsLeft > 0) {
+    secondsLeft--;
+    renderTimer();
+  } else {
+    completePhase();
+  }
+}
+
+function completePhase() {
+  pause();
+  if (!isBreak) {
+    cyclesDone++;
+    Sanctum.addXP(25);
+    Sanctum.logSession({ title: 'Pomodoro Session #' + cyclesDone, language: 'Arabic', durationMin: FOCUS_MIN, type: 'focus', xp: 25 });
+    const q = s.quests.find(q => q.id === 'q2');
+    if (q && q.current < q.target) { q.current++; Sanctum.persist(); }
+    renderRecent();
+    renderDots();
+    isBreak = true;
+    totalSeconds = BREAK_MIN * 60;
+  } else {
+    isBreak = false;
+    totalSeconds = FOCUS_MIN * 60;
+  }
+  secondsLeft = totalSeconds;
+  renderTimer();
+}
+
+function play() {
+  running = true;
+  document.getElementById('play-icon').textContent = 'pause';
+  timerId = setInterval(tick, 1000);
+}
+function pause() {
+  running = false;
+  document.getElementById('play-icon').textContent = 'play_arrow';
+  clearInterval(timerId);
+}
+document.getElementById('play-btn').addEventListener('click', () => running ? pause() : play());
+document.getElementById('reset-btn').addEventListener('click', () => {
+  pause();
+  isBreak = false;
+  totalSeconds = FOCUS_MIN * 60;
+  secondsLeft = totalSeconds;
+  renderTimer();
+});
+
+let ambientPlaying = false;
+document.getElementById('ambient-toggle').addEventListener('click', () => {
+  ambientPlaying = !ambientPlaying;
+  document.getElementById('ambient-icon').textContent = ambientPlaying ? 'pause' : 'play_arrow';
+});
+
+const TASKS = ['Reviewing vocabulary', 'Reading a page of Quran', 'Tajweed practice', 'Flashcard review', 'Writing new sentences'];
+function changeTask() {
+  const cur = document.getElementById('task-label').textContent;
+  let next = cur;
+  while (next === cur) next = TASKS[Math.floor(Math.random() * TASKS.length)];
+  document.getElementById('task-label').textContent = next;
+  document.getElementById('task-priority').textContent = ['LOW', 'MEDIUM', 'HIGH'][Math.floor(Math.random() * 3)];
+}
+
+function renderRecent() {
+  const wrap = document.getElementById('recent-sessions');
+  const items = s.sessions.slice(0, 5);
+  wrap.innerHTML = items.length ? items.map(sess => `
+    <div class="nested" style="padding:12px">
+      <div class="flex justify-between">
+        <span class="body-md" style="font-weight:700">${sess.title}</span>
+        <span class="text-primary-c label-sm">+${sess.xp} XP</span>
+      </div>
+      <p class="label-sm text-muted mt-1">${new Date(sess.createdAt).toLocaleString([], {weekday:'short', hour:'2-digit', minute:'2-digit'})} • ${sess.durationMin} min</p>
+    </div>`).join('') : `<p class="text-muted body-md">No sessions yet — start your first focus timer.</p>`;
+}
+function renderDots() {
+  const dots = document.getElementById('cycle-dots');
+  dots.innerHTML = Array.from({length: 4}).map((_, i) => `<div style="width:8px;height:8px;border-radius:50%;background:${i < cyclesDone % 4 ? 'var(--primary)' : 'var(--surface-nested-high)'}"></div>`).join('');
+}
+
+renderTimer();
+renderRecent();
+renderDots();
+</script>
+</body>
+</html>
