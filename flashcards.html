@@ -27,7 +27,6 @@
   </header>
 
   <div style="max-width:560px;margin:0 auto">
-    <div class="progress-track mb-3"><div class="progress-fill" id="deck-progress" style="width:0%"></div></div>
     <div class="fc-scene">
       <div class="fc-card" id="fc-card" onclick="flip()">
         <div class="fc-face fc-front">
@@ -89,7 +88,6 @@ function shuffleDeck() {
 
 function render() {
   document.getElementById('fc-sub').textContent = deck.length ? `Card ${idx + 1} of ${deck.length}` : 'Add words in the Vocabulary Bank to build your deck';
-  document.getElementById('deck-progress').style.width = deck.length ? `${(idx / deck.length) * 100}%` : '0%';
   document.getElementById('rate-buttons').style.display = deck.length ? 'flex' : 'none';
   document.getElementById('example-panel').style.display = 'none';
   if (!deck.length) {

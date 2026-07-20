@@ -41,7 +41,6 @@ function defaultState() {
       { code: 'sv', name: 'Swedish', flag: '🇸🇪', unlocked: false, xpRequired: 4800, progress: 0 },
       { code: 'pl', name: 'Polish', flag: '🇵🇱', unlocked: false, xpRequired: 5100, progress: 0 },
       { code: 'el', name: 'Greek', flag: '🇬🇷', unlocked: false, xpRequired: 5400, progress: 0 },
-      { code: 'he', name: 'Hebrew', flag: '🇮🇱', unlocked: false, xpRequired: 5700, progress: 0 },
       { code: 'sw', name: 'Swahili', flag: '🇰🇪', unlocked: false, xpRequired: 6000, progress: 0 },
       { code: 'tw', name: 'Twi', flag: '🇬🇭', unlocked: false, xpRequired: 6300, progress: 0 },
       { code: 'ur', name: 'Urdu', flag: '🇵🇰', unlocked: false, xpRequired: 6600, progress: 0 },
@@ -71,13 +70,7 @@ function defaultState() {
 }
 
 function migrateState(s) {
-  s.languages = (s.languages || []).map(l => {
-    if (l.code === 'sv' || l.name === 'Swedish') {
-      return { ...l, code: 'ru', name: 'Russian' };
-    }
-    return l;
-  });
-  s.vocab = (s.vocab || []).map(w => w.lang === 'Swedish' ? { ...w, lang: 'Russian' } : w);
+  s.languages = s.languages || [];
   s.resources = (s.resources || []).map(r => r.lang ? r : { ...r, lang: 'General' });
   if (typeof s.wordsReviewedToday !== 'number') s.wordsReviewedToday = 0;
   if (!s.profile.theme) s.profile.theme = 'sage';
@@ -88,6 +81,11 @@ function migrateState(s) {
   defaultState().languages.forEach(cl => {
     if (!existingCodes.has(cl.code)) s.languages.push(cl);
   });
+  s.languages = s.languages.filter(l => l.code !== 'he');
+  // De-dupe by code (defensive: an old migration rule used to be able to introduce
+  // duplicates here — keep the first occurrence of each code if any slipped through).
+  const seen = new Set();
+  s.languages = s.languages.filter(l => (seen.has(l.code) ? false : (seen.add(l.code), true)));
   // Quranic Arabic is core Quran-study access — always unlocked regardless of history.
   const qar = s.languages.find(l => l.code === 'qar');
   if (qar) qar.unlocked = true;

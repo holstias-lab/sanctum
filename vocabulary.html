@@ -29,14 +29,22 @@
         <select id="in-lang" style="width:100%;padding:10px;border:1px solid rgba(141,147,135,.3);background:var(--surface-nested-low);color:var(--on-surface);margin-top:4px;border-radius:8px"></select>
       </div>
       <div class="col-8"><label class="label-sm text-muted">Example / note</label><input id="in-example" style="width:100%;padding:10px;border:1px solid rgba(141,147,135,.3);background:var(--surface-nested-low);color:var(--on-surface);margin-top:4px;border-radius:8px" placeholder="Optional example sentence"></div>
-      <div class="col-4">
+      <div class="col-12">
         <label class="label-sm text-muted">Picture (optional)</label>
         <div class="flex items-center gap-1 mt-1">
-          <button type="button" class="btn btn-outline btn-sm" onclick="document.getElementById('in-image').click()">Choose Image</button>
-          <img id="in-image-preview" style="display:none;width:36px;height:36px;border-radius:8px;object-fit:cover">
-          <span id="in-image-name" class="label-sm text-muted"></span>
+          <input id="in-image-search" style="flex:1;padding:8px 12px;border-radius:8px;border:1px solid rgba(141,147,135,.3);background:var(--surface-nested-low);color:var(--on-surface)" placeholder="Search free photos, e.g. cat">
+          <button type="button" class="btn btn-outline btn-sm" onclick="searchPhotos()">Search Photos</button>
+          <span class="label-sm text-muted">or</span>
+          <button type="button" class="btn btn-outline btn-sm" onclick="document.getElementById('in-image').click()">Upload Your Own</button>
+          <input type="file" id="in-image" accept="image/*" style="display:none">
         </div>
-        <input type="file" id="in-image" accept="image/*" style="display:none">
+        <p class="label-sm text-muted mt-1">Photo search powered by <a href="https://openverse.org" target="_blank" rel="noopener" class="text-primary-c">Openverse</a> — free, openly-licensed images.</p>
+        <div id="photo-results" style="display:none;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:8px"></div>
+        <div class="flex items-center gap-1 mt-2" id="chosen-image-row" style="display:none">
+          <img id="in-image-preview" style="width:48px;height:48px;border-radius:8px;object-fit:cover">
+          <span class="label-sm text-muted" id="in-image-name"></span>
+          <span class="material-symbols-outlined" style="font-size:16px;cursor:pointer;color:var(--on-surface-variant)" onclick="clearChosenImage()">close</span>
+        </div>
       </div>
     </div>
     <div class="flex gap-1 mt-2"><button class="btn btn-primary" onclick="addWord()">Save Word</button><button class="btn btn-ghost" onclick="document.getElementById('add-form').classList.remove('open')">Cancel</button></div>
@@ -72,13 +80,42 @@ document.getElementById('in-image').addEventListener('change', (e) => {
     const scale = Math.max(size / img.width, size / img.height);
     const w = img.width * scale, h = img.height * scale;
     ctx.drawImage(img, (size - w) / 2, (size - h) / 2, w, h);
-    pendingImage = canvas.toDataURL('image/jpeg', 0.8);
-    document.getElementById('in-image-preview').src = pendingImage;
-    document.getElementById('in-image-preview').style.display = 'inline-block';
-    document.getElementById('in-image-name').textContent = file.name;
+    setChosenImage(canvas.toDataURL('image/jpeg', 0.8), file.name);
   };
   reader.readAsDataURL(file);
 });
+
+function setChosenImage(url, label) {
+  pendingImage = url;
+  document.getElementById('in-image-preview').src = url;
+  document.getElementById('chosen-image-row').style.display = 'flex';
+  document.getElementById('in-image-name').textContent = label;
+  document.getElementById('photo-results').style.display = 'none';
+}
+function clearChosenImage() {
+  pendingImage = null;
+  document.getElementById('chosen-image-row').style.display = 'none';
+  document.getElementById('in-image').value = '';
+}
+
+async function searchPhotos() {
+  let query = document.getElementById('in-image-search').value.trim();
+  if (!query) query = document.getElementById('in-meaning').value.trim();
+  if (!query) { Sanctum.toast('Type something to search for'); return; }
+  const grid = document.getElementById('photo-results');
+  grid.style.display = 'grid';
+  grid.innerHTML = '<p class="text-muted label-sm">Searching…</p>';
+  try {
+    const res = await fetch(`https://api.openverse.org/v1/images/?q=${encodeURIComponent(query)}&page_size=8`);
+    const data = await res.json();
+    const results = data.results || [];
+    if (!results.length) { grid.innerHTML = '<p class="text-muted label-sm">No results — try a different word.</p>'; return; }
+    grid.innerHTML = results.map(r => `
+      <img src="${r.thumbnail}" style="width:100%;height:64px;object-fit:cover;border-radius:8px;cursor:pointer;border:2px solid transparent" onmouseover="this.style.borderColor='var(--primary)'" onmouseout="this.style.borderColor='transparent'" onclick="setChosenImage('${r.thumbnail.replace(/'/g,"\\'")}', 'Photo via Openverse')" title="${escapeHtml(r.title || 'Untitled')}">`).join('');
+  } catch (e) {
+    grid.innerHTML = '<p class="text-muted label-sm">Search failed — check your connection and try again.</p>';
+  }
+}
 
 function uniqueLangs() {
   return Array.from(new Set(s.vocab.map(w => w.lang)));
@@ -130,10 +167,9 @@ function addWord() {
   if (q && q.current < q.target) { q.current++; Sanctum.persist(); }
   Sanctum.addXP(5);
   document.getElementById('add-form').classList.remove('open');
-  ['in-arabic','in-translit','in-meaning','in-example'].forEach(id => document.getElementById(id).value = '');
-  pendingImage = null;
-  document.getElementById('in-image-preview').style.display = 'none';
-  document.getElementById('in-image-name').textContent = '';
+  ['in-arabic','in-translit','in-meaning','in-example','in-image-search'].forEach(id => document.getElementById(id).value = '');
+  clearChosenImage();
+  document.getElementById('photo-results').style.display = 'none';
   renderFilter();
   renderGrid();
 }
