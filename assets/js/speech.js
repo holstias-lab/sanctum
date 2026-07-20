@@ -46,13 +46,14 @@ function loadEspeak() {
 
 function playPcmChunks(chunks, sampleRate) {
   if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  if (audioCtx.state === 'suspended') audioCtx.resume();
   let total = 0;
   chunks.forEach(c => total += c.length);
-  if (!total) return;
+  if (!total) throw new Error('eSpeak produced no audio samples');
   const merged = new Float32Array(total);
   let offset = 0;
   chunks.forEach(c => {
-    for (let i = 0; i < c.length; i++) merged[offset + i] = c[i] / 32768;
+    merged.set(c, offset);
     offset += c.length;
   });
   const buffer = audioCtx.createBuffer(1, total, sampleRate);
@@ -70,7 +71,7 @@ async function speakWithEspeak(text, voiceId) {
   await new Promise(resolve => {
     tts.synthesize(text, (wav) => {
       if (wav && wav.byteLength) {
-        chunks.push(new Int16Array(wav));
+        chunks.push(new Float32Array(wav));
       } else {
         resolve();
       }
@@ -80,11 +81,15 @@ async function speakWithEspeak(text, voiceId) {
 }
 
 function speakWithWebSpeech(text, langCode) {
-  if (!('speechSynthesis' in window)) return;
+  if (!('speechSynthesis' in window)) {
+    console.error('Sanctum speech: no TTS available (Web Speech API unsupported)');
+    return;
+  }
   window.speechSynthesis.cancel();
   const utter = new SpeechSynthesisUtterance(text);
   utter.lang = langCode;
   utter.rate = 0.9;
+  utter.onerror = (e) => console.error('Sanctum speech: Web Speech API failed', e.error);
   window.speechSynthesis.speak(utter);
 }
 
@@ -97,6 +102,7 @@ async function speakText(text, langName) {
       return;
     } catch (e) {
       // fall through to Web Speech API if eSpeak fails for any reason
+      console.error('Sanctum speech: eSpeak-ng failed, falling back to Web Speech API', e);
     }
   }
   const webSpeechLang = SPEECH_LANG_MAP[langName] || 'en-US';
