@@ -37,6 +37,27 @@ const SPEECH_LANG_MAP = {
 let espeakReadyPromise = null;
 let audioCtx = null;
 
+// Tracks whatever is currently making sound (an HTMLAudioElement for real
+// recordings/Piper, or an AudioBufferSourceNode for eSpeak) so a new play
+// request can stop it first. Without this, clicking the speaker icon
+// repeatedly stacks up overlapping copies of the same clip, which beats
+// against itself and comes out as a warped/"mooing" mess instead of
+// cutting the old one off.
+let currentPlayback = null;
+
+function stopCurrentPlayback() {
+  if (!currentPlayback) return;
+  try {
+    if (typeof currentPlayback.pause === 'function') {
+      currentPlayback.pause();
+      currentPlayback.currentTime = 0;
+    } else if (typeof currentPlayback.stop === 'function') {
+      currentPlayback.stop();
+    }
+  } catch (e) { /* already stopped/ended — fine */ }
+  currentPlayback = null;
+}
+
 function loadEspeak() {
   if (espeakReadyPromise) return espeakReadyPromise;
   espeakReadyPromise = new Promise((resolve, reject) => {
@@ -67,9 +88,12 @@ function playPcmChunks(chunks, sampleRate) {
   });
   const buffer = audioCtx.createBuffer(1, total, sampleRate);
   buffer.copyToChannel(merged, 0);
+  stopCurrentPlayback();
   const src = audioCtx.createBufferSource();
   src.buffer = buffer;
   src.connect(audioCtx.destination);
+  src.onended = () => { if (currentPlayback === src) currentPlayback = null; };
+  currentPlayback = src;
   src.start();
 }
 
@@ -124,6 +148,7 @@ function speakWithWebSpeech(text, langCode) {
     console.error('Sanctum speech: no TTS available (Web Speech API unsupported)');
     return;
   }
+  stopCurrentPlayback();
   window.speechSynthesis.cancel();
   const utter = new SpeechSynthesisUtterance(text);
   utter.lang = langCode;
@@ -163,9 +188,13 @@ async function speakText(text, langName) {
 function speakWord(word) {
   if (!word) return;
   if (word.audio) {
+    stopCurrentPlayback();
     const player = new Audio(word.audio);
+    player.onended = () => { if (currentPlayback === player) currentPlayback = null; };
+    currentPlayback = player;
     player.play().catch((e) => {
       console.error('Sanctum speech: real audio playback failed, falling back to TTS', e);
+      if (currentPlayback === player) currentPlayback = null;
       speakText(word.arabic, word.lang);
     });
     return;
