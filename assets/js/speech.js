@@ -4,11 +4,20 @@
    with broad language coverage — no API key, no signup, no per-request cost,
    and no dependency on which voices happen to be installed on the visitor's
    OS. It sounds synthetic/robotic rather than fluent, but it's consistent
-   and reliable everywhere, including for Arabic, which the OS-voice-based
-   Web Speech API often can't manage at all.
+   and reliable everywhere.
+   For languages where eSpeak-ng's formant synthesis is especially harsh
+   (Arabic, Mandarin), Piper — a neural TTS engine, also self-hosted, also
+   free/offline (assets/vendor/piper/) — is used instead for a much more
+   natural voice, at the cost of a large one-time per-language model
+   download (~60MB) that's cached by the browser after first use.
    Falls back to the browser's built-in Web Speech API for the couple of
    languages eSpeak-ng doesn't cover in our catalog (Thai, Twi) or any
    custom-added language it doesn't recognize. */
+
+const PIPER_VOICE_MAP = {
+  'Arabic': 'ar_JO-kareem-medium', 'Quranic Arabic': 'ar_JO-kareem-medium',
+  'Mandarin': 'zh_CN-huayan-medium',
+};
 
 const ESPEAK_VOICE_MAP = {
   'Arabic': 'sem/ar', 'Quranic Arabic': 'sem/ar',
@@ -80,6 +89,36 @@ async function speakWithEspeak(text, voiceId) {
   playPcmChunks(chunks, 22050);
 }
 
+let piperReadyPromise = null;
+const piperVoiceInstances = {};
+
+function loadScript(src) {
+  return new Promise((resolve, reject) => {
+    const script = document.createElement('script');
+    script.src = src;
+    script.onload = resolve;
+    script.onerror = () => reject(new Error(src + ' failed to load'));
+    document.head.appendChild(script);
+  });
+}
+
+function loadPiper() {
+  if (piperReadyPromise) return piperReadyPromise;
+  piperReadyPromise = (async () => {
+    await loadScript('assets/vendor/piper/ort.min.js');
+    await loadScript('assets/vendor/piper/piper-tts-proper.js');
+  })();
+  return piperReadyPromise;
+}
+
+async function speakWithPiper(text, voiceId) {
+  await loadPiper();
+  if (!piperVoiceInstances[voiceId]) {
+    piperVoiceInstances[voiceId] = new ProperPiperTTS(voiceId);
+  }
+  await piperVoiceInstances[voiceId].speak(text, 1.0);
+}
+
 function speakWithWebSpeech(text, langCode) {
   if (!('speechSynthesis' in window)) {
     console.error('Sanctum speech: no TTS available (Web Speech API unsupported)');
@@ -95,6 +134,16 @@ function speakWithWebSpeech(text, langCode) {
 
 async function speakText(text, langName) {
   if (!text) return;
+  const piperVoice = PIPER_VOICE_MAP[langName];
+  if (piperVoice) {
+    try {
+      await speakWithPiper(text, piperVoice);
+      return;
+    } catch (e) {
+      // fall through to eSpeak-ng if Piper fails to load/run for any reason
+      console.error('Sanctum speech: Piper failed, falling back to eSpeak-ng', e);
+    }
+  }
   const espeakVoice = ESPEAK_VOICE_MAP[langName];
   if (espeakVoice) {
     try {
