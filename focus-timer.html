@@ -6,6 +6,12 @@
 <title>Nhoma — Focus Timer</title>
 <script>(function(){try{var s=JSON.parse(localStorage.getItem('sanctum_state_v1')||'{}');document.documentElement.setAttribute('data-theme',(s.profile&&s.profile.theme)||'sage');}catch(e){}})();</script>
 <link rel="stylesheet" href="assets/css/sanctum.css">
+<style>
+.priority-pill{flex:1;padding:10px 8px;border-radius:var(--radius-lg);border:2px solid rgba(141,147,135,.25);background:var(--surface-nested-low);color:var(--on-surface-variant);text-align:center;font-size:12px;font-weight:700;transition:all .15s}
+.priority-pill.active{border-color:var(--primary);background:rgba(183,220,162,.12);color:var(--primary)}
+.suggestion-chip{padding:6px 12px;border-radius:var(--radius-full);background:var(--surface-nested-low);color:var(--on-surface-variant);font-size:12px;font-weight:600;border:1px solid transparent}
+.suggestion-chip:hover{border-color:var(--primary);color:var(--primary)}
+</style>
 </head>
 <body data-page="focus">
 <main class="main">
@@ -28,9 +34,17 @@
         </div>
         <div class="nested" style="padding:16px;margin-bottom:16px">
           <p class="body-md" id="task-label">Reviewing vocabulary</p>
-          <div class="flex items-center gap-1 mt-2 text-secondary-c label-sm"><span class="material-symbols-outlined" style="font-size:16px">schedule</span> PRIORITY: <span id="task-priority">MEDIUM</span></div>
+          <div class="flex items-center gap-1 mt-2 text-secondary-c label-sm"><span class="material-symbols-outlined" style="font-size:16px">bolt</span><span id="task-priority">MEDIUM</span>&nbsp;·&nbsp;<span id="task-xp-hint">+25 XP</span></div>
         </div>
-        <button class="btn btn-outline" style="width:100%;justify-content:center" onclick="changeTask()">Change Task</button>
+        <button class="btn btn-outline" style="width:100%;justify-content:center" onclick="togglePicker()">Change Task</button>
+
+        <div id="task-picker" style="display:none;margin-top:14px">
+          <input id="task-input" style="width:100%;padding:10px;border-radius:8px;border:1px solid rgba(141,147,135,.3);background:var(--surface-nested-low);color:var(--on-surface)" placeholder="What are you working on?">
+          <div class="flex gap-1 mt-2" style="flex-wrap:wrap" id="task-suggestions"></div>
+          <p class="label-sm text-muted mt-3" style="text-transform:uppercase;letter-spacing:.1em">Difficulty</p>
+          <div class="flex gap-1 mt-1" id="priority-pills"></div>
+          <button class="btn btn-primary mt-3" style="width:100%;justify-content:center" onclick="saveTask()">Set Task</button>
+        </div>
       </div>
       <div class="card">
         <h4 class="label-md text-muted mb-2">Ambient Sounds</h4>
@@ -120,8 +134,9 @@ function completePhase() {
   pause();
   if (!isBreak) {
     cyclesDone++;
-    Sanctum.addXP(25);
-    Sanctum.logSession({ title: 'Pomodoro Session #' + cyclesDone, language: 'Arabic', durationMin: FOCUS_MIN, type: 'focus', xp: 25 });
+    const xp = Sanctum.FOCUS_XP_BY_PRIORITY[s.focusTask.priority] || 25;
+    Sanctum.addXP(xp);
+    Sanctum.logSession({ title: s.focusTask.label + ' — Pomodoro #' + cyclesDone, language: 'Arabic', durationMin: FOCUS_MIN, type: 'focus', xp });
     const q = s.quests.find(q => q.id === 'q2');
     if (q && q.current < q.target) { q.current++; Sanctum.persist(); }
     renderRecent();
@@ -161,13 +176,49 @@ document.getElementById('ambient-toggle').addEventListener('click', () => {
   document.getElementById('ambient-icon').textContent = ambientPlaying ? 'pause' : 'play_arrow';
 });
 
-const TASKS = ['Reviewing vocabulary', 'Reading a page of Quran', 'Tajweed practice', 'Flashcard review', 'Writing new sentences'];
-function changeTask() {
-  const cur = document.getElementById('task-label').textContent;
-  let next = cur;
-  while (next === cur) next = TASKS[Math.floor(Math.random() * TASKS.length)];
-  document.getElementById('task-label').textContent = next;
-  document.getElementById('task-priority').textContent = ['LOW', 'MEDIUM', 'HIGH'][Math.floor(Math.random() * 3)];
+const TASK_SUGGESTIONS = ['Reviewing vocabulary', 'Reading a page of Quran', 'Tajweed practice', 'Flashcard review', 'Writing new sentences', 'Grammar drills'];
+let pendingPriority = s.focusTask.priority;
+
+function renderTask() {
+  document.getElementById('task-label').textContent = s.focusTask.label;
+  document.getElementById('task-priority').textContent = s.focusTask.priority;
+  document.getElementById('task-xp-hint').textContent = '+' + Sanctum.FOCUS_XP_BY_PRIORITY[s.focusTask.priority] + ' XP';
+}
+
+function renderSuggestions() {
+  document.getElementById('task-suggestions').innerHTML = TASK_SUGGESTIONS.map(t => `
+    <button type="button" class="suggestion-chip" onclick="document.getElementById('task-input').value='${t.replace(/'/g, "\\'")}'">${t}</button>`).join('');
+}
+
+function renderPriorityPills() {
+  document.getElementById('priority-pills').innerHTML = Object.keys(Sanctum.FOCUS_XP_BY_PRIORITY).map(p => `
+    <button type="button" class="priority-pill${p === pendingPriority ? ' active' : ''}" onclick="pickPriority('${p}')">${p}<br><span style="font-weight:400">+${Sanctum.FOCUS_XP_BY_PRIORITY[p]} XP</span></button>`).join('');
+}
+
+function pickPriority(p) {
+  pendingPriority = p;
+  renderPriorityPills();
+}
+
+function togglePicker() {
+  const picker = document.getElementById('task-picker');
+  const opening = picker.style.display === 'none';
+  picker.style.display = opening ? 'block' : 'none';
+  if (opening) {
+    document.getElementById('task-input').value = s.focusTask.label;
+    pendingPriority = s.focusTask.priority;
+    renderSuggestions();
+    renderPriorityPills();
+  }
+}
+
+function saveTask() {
+  const label = document.getElementById('task-input').value.trim();
+  if (!label) { Sanctum.toast('Give the task a name'); return; }
+  Sanctum.setFocusTask(label, pendingPriority);
+  renderTask();
+  document.getElementById('task-picker').style.display = 'none';
+  Sanctum.toast('Task set');
 }
 
 function renderRecent() {
@@ -190,6 +241,7 @@ function renderDots() {
 renderTimer();
 renderRecent();
 renderDots();
+renderTask();
 </script>
 </body>
 </html>

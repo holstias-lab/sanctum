@@ -61,6 +61,7 @@ function defaultState() {
       { id: 'r3', label: 'Practise one surah', done: false },
       { id: 'r4', label: 'Add XP for today', done: false },
     ],
+    focusTask: { label: 'Reviewing vocabulary', priority: 'MEDIUM' },
     ritualDate: null,
     wordsReviewedToday: 0,
     quranProgress: { surahsCompleted: [], versesRead: 0, lastSurah: 18, lastAyah: 1 },
@@ -73,6 +74,7 @@ function migrateState(s) {
   s.languages = s.languages || [];
   s.resources = (s.resources || []).map(r => r.lang ? r : { ...r, lang: 'General' });
   if (typeof s.wordsReviewedToday !== 'number') s.wordsReviewedToday = 0;
+  if (!s.focusTask) s.focusTask = { label: 'Reviewing vocabulary', priority: 'MEDIUM' };
   if (!s.profile.theme) s.profile.theme = 'sage';
   // Existing accounts predate the onboarding flow — don't force them through it.
   if (typeof s.profile.onboarded !== 'boolean') s.profile.onboarded = true;
@@ -301,6 +303,13 @@ const Sanctum = (function () {
     cloudPushNow();
   }
 
+  const FOCUS_XP_BY_PRIORITY = { LOW: 15, MEDIUM: 25, HIGH: 40 };
+  function setFocusTask(label, priority) {
+    state.focusTask = { label: label.trim() || 'Focused study', priority: priority || 'MEDIUM' };
+    persist();
+    return state.focusTask;
+  }
+
   function claimQuest(id) {
     const q = state.quests.find(q => q.id === id);
     if (!q) return;
@@ -344,6 +353,7 @@ const Sanctum = (function () {
     bumpStreak, toast, todayStr, RANKS,
     reviewWord, logFlashcardLap, claimQuest, setTheme,
     addLanguage, removeLanguage, chooseStarterLanguage,
+    setFocusTask, FOCUS_XP_BY_PRIORITY,
     cloudPull, cloudPushDebounced, cloudPushNow,
   };
 })();
