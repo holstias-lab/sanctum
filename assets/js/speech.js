@@ -77,12 +77,7 @@ async function speakWithEspeak(text, voiceId) {
       }
     });
   });
-  // This eSpeak-ng WASM build reports its rate as 22050 Hz but actually
-  // synthesizes at 11025 Hz — a known quirk of this exact worker/wasm
-  // build (confirmed against other projects vendoring the same binary).
-  // Declaring the true rate here is required for correct pitch/speed;
-  // Web Audio resamples the buffer to the output device's rate on playback.
-  playPcmChunks(chunks, 11025);
+  playPcmChunks(chunks, 22050);
 }
 
 function speakWithWebSpeech(text, langCode) {
