@@ -33,6 +33,10 @@ async function signIn(email, password) {
 }
 
 async function signOut() {
+  // Flush any pending local changes (e.g. a just-picked theme) to the cloud
+  // before the session is invalidated and local state is wiped — otherwise
+  // the debounced push can lose the race against navigation.
+  if (typeof Sanctum !== 'undefined') { await Sanctum.cloudPushNow(); }
   await sbClient.auth.signOut();
   sessionStorage.removeItem('sanctum_synced');
   localStorage.removeItem('sanctum_state_v1');

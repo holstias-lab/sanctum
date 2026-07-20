@@ -118,18 +118,26 @@ const Sanctum = (function () {
   function persist() { saveState(state); cloudPushDebounced(); }
 
   let pushTimer = null;
-  function cloudPushDebounced() {
+  async function doCloudPush() {
     if (typeof sbClient === 'undefined') return;
+    try {
+      const { data: { session } } = await sbClient.auth.getSession();
+      if (!session) return;
+      await sbClient.from('sanctum_data').upsert({
+        user_id: session.user.id, data: state, updated_at: new Date().toISOString(),
+      });
+    } catch (e) { /* offline or transient error — local copy is still safe */ }
+  }
+  function cloudPushDebounced() {
     clearTimeout(pushTimer);
-    pushTimer = setTimeout(async () => {
-      try {
-        const { data: { session } } = await sbClient.auth.getSession();
-        if (!session) return;
-        await sbClient.from('sanctum_data').upsert({
-          user_id: session.user.id, data: state, updated_at: new Date().toISOString(),
-        });
-      } catch (e) { /* offline or transient error — local copy is still safe */ }
-    }, 900);
+    pushTimer = setTimeout(doCloudPush, 900);
+  }
+  // Immediate, awaited push — use before anything that navigates away or clears
+  // local state (e.g. sign-out), since the debounced version can otherwise lose
+  // the last change if the page unloads before the timer fires.
+  async function cloudPushNow() {
+    clearTimeout(pushTimer);
+    await doCloudPush();
   }
 
   async function cloudPull() {
@@ -289,7 +297,8 @@ const Sanctum = (function () {
   function setTheme(theme) {
     state.profile.theme = theme;
     document.documentElement.setAttribute('data-theme', theme);
-    persist();
+    saveState(state);
+    cloudPushNow();
   }
 
   function claimQuest(id) {
@@ -335,6 +344,6 @@ const Sanctum = (function () {
     bumpStreak, toast, todayStr, RANKS,
     reviewWord, logFlashcardLap, claimQuest, setTheme,
     addLanguage, removeLanguage, chooseStarterLanguage,
-    cloudPull, cloudPushDebounced,
+    cloudPull, cloudPushDebounced, cloudPushNow,
   };
 })();

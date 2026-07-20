@@ -70,7 +70,7 @@ document.getElementById('p-level').textContent = 'Level ' + Sanctum.level();
 document.getElementById('p-streak').textContent = s.profile.streak + ' Day Streak';
 
 function renderRings() {
-  document.getElementById('lang-rings').innerHTML = s.languages.map(l => {
+  document.getElementById('lang-rings').innerHTML = s.languages.filter(l => l.unlocked).map(l => {
     const pct = Math.round((l.progress || 0) * 100);
     const color = pct >= 70 ? 'var(--primary)' : pct >= 30 ? 'var(--secondary)' : 'var(--tertiary)';
     return `<div style="text-align:center;position:relative">
