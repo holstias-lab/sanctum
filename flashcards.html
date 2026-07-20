@@ -40,10 +40,23 @@
         <div class="fc-face fc-back">
           <h3 class="headline-md" id="card-meaning">—</h3>
           <p class="text-muted body-lg" style="font-style:italic" id="card-translit"></p>
-          <p class="text-muted body-md" id="card-example" style="max-width:400px"></p>
+          <button class="icon-btn" style="background:var(--surface-nested-high);border-radius:50%" onclick="event.stopPropagation(); speakCurrent()"><span class="material-symbols-outlined">volume_up</span></button>
         </div>
       </div>
     </div>
+
+    <div class="flex justify-center mt-3">
+      <button class="btn btn-outline btn-sm" id="example-toggle-btn" onclick="toggleExample()">
+        <span class="material-symbols-outlined" style="font-size:16px">format_quote</span> Show Example
+      </button>
+    </div>
+    <div id="example-panel" class="card mt-2" style="display:none">
+      <div class="flex justify-between items-start gap-2">
+        <p class="body-md" id="example-text" style="font-style:italic"></p>
+        <span class="material-symbols-outlined" style="font-size:20px;color:var(--primary);cursor:pointer;flex-shrink:0" onclick="speakExample()" title="Play example sentence">volume_up</span>
+      </div>
+    </div>
+
     <div class="flex justify-between gap-1 mt-3" id="rate-buttons">
       <button class="btn" style="flex:1;justify-content:center;background:rgba(255,180,171,0.15);color:var(--tertiary)" onclick="rate(0)">Again</button>
       <button class="btn" style="flex:1;justify-content:center;background:rgba(243,189,119,0.15);color:var(--secondary)" onclick="rate(50)">Good</button>
@@ -78,8 +91,10 @@ function render() {
   document.getElementById('fc-sub').textContent = deck.length ? `Card ${idx + 1} of ${deck.length}` : 'Add words in the Vocabulary Bank to build your deck';
   document.getElementById('deck-progress').style.width = deck.length ? `${(idx / deck.length) * 100}%` : '0%';
   document.getElementById('rate-buttons').style.display = deck.length ? 'flex' : 'none';
+  document.getElementById('example-panel').style.display = 'none';
   if (!deck.length) {
     document.getElementById('fc-card').style.display = 'none';
+    document.getElementById('example-toggle-btn').style.display = 'none';
     document.getElementById('empty-msg').innerHTML = `No words yet. <a href="vocabulary.html" class="text-primary-c">Add some →</a>`;
     return;
   }
@@ -90,9 +105,21 @@ function render() {
   document.getElementById('card-lang').textContent = w.lang;
   document.getElementById('card-meaning').textContent = w.meaning;
   document.getElementById('card-translit').textContent = w.translit;
-  document.getElementById('card-example').textContent = w.example || '';
   const img = document.getElementById('card-image');
   if (w.image) { img.src = w.image; img.style.display = 'block'; } else { img.style.display = 'none'; }
+
+  const exampleBtn = document.getElementById('example-toggle-btn');
+  if (w.example) {
+    exampleBtn.style.display = 'inline-flex';
+    exampleBtn.disabled = false;
+    exampleBtn.style.opacity = 1;
+  } else {
+    exampleBtn.style.display = 'inline-flex';
+    exampleBtn.disabled = true;
+    exampleBtn.style.opacity = 0.4;
+  }
+  document.getElementById('example-text').textContent = w.example || 'No example added for this word yet.';
+
   flipped = false;
   document.getElementById('fc-card').classList.remove('flipped');
 }
@@ -101,6 +128,18 @@ function speakCurrent() {
   if (!deck.length) return;
   const w = deck[idx];
   speakText(w.arabic, w.lang);
+}
+
+function speakExample() {
+  if (!deck.length) return;
+  const w = deck[idx];
+  if (w.example) speakText(w.example, w.lang);
+}
+
+function toggleExample() {
+  if (!deck.length || !deck[idx].example) return;
+  const panel = document.getElementById('example-panel');
+  panel.style.display = panel.style.display === 'none' ? 'block' : 'none';
 }
 
 function flip() {
