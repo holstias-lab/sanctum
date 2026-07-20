@@ -32,7 +32,7 @@ function renderSidebar(activeKey) {
     </a>`).join('');
 
   const langHtml = s.languages.filter(l => l.unlocked).map(l => `
-    <a class="lang-item unlocked" href="index.html?lang=${l.code}">
+    <a class="lang-item unlocked" href="language.html?code=${l.code}">
       <div class="left">${langIconHtml(l)}<span>${l.name}</span></div>
       <div class="dot"></div>
     </a>`).join('') + `<a class="lang-item" href="#" onclick="promptAddLanguage(); return false;" style="color:var(--primary)">

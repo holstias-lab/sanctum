@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Nhoma — Language</title>
+<script>(function(){try{var s=JSON.parse(localStorage.getItem('sanctum_state_v1')||'{}');document.documentElement.setAttribute('data-theme',(s.profile&&s.profile.theme)||'sage');}catch(e){}})();</script>
+<link rel="stylesheet" href="assets/css/sanctum.css">
+<style>
+.hero{border-radius:var(--radius-card);padding:40px;background:linear-gradient(135deg,rgba(183,220,162,0.1),rgba(183,220,162,0.02));border:1px solid rgba(183,220,162,0.15);display:flex;align-items:center;gap:24px;flex-wrap:wrap}
+.hero .flag{font-size:56px}
+.ring{position:relative;width:110px;height:110px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+</style>
+</head>
+<body data-page="language">
+<main class="main">
+  <header class="page-header">
+    <div>
+      <a href="index.html" class="text-muted body-md">← Back to Language Hub</a>
+    </div>
+  </header>
+
+  <div id="locked-notice" class="card mb-3" style="display:none;border-color:rgba(255,180,171,.3)">
+    <p class="body-md">This language isn't unlocked yet. <a href="index.html" class="text-primary-c">Back to Language Hub</a></p>
+  </div>
+
+  <div id="hub-content">
+    <section class="hero mb-3">
+      <span class="flag" id="lang-flag">🌐</span>
+      <div style="flex:1;min-width:200px">
+        <h2 class="headline-lg" id="lang-name">Language</h2>
+        <p class="text-muted body-md" id="lang-status">Getting started</p>
+        <div class="flex gap-1 mt-2">
+          <button class="btn btn-primary" onclick="startLesson()">Start Lesson</button>
+          <button class="btn btn-outline" id="quiz-btn" onclick="startQuiz()">Take a Quiz</button>
+        </div>
+      </div>
+      <div class="ring" id="progress-ring" style="background:conic-gradient(var(--primary) 0deg, var(--surface-nested-low) 0deg)">
+        <div style="width:88px;height:88px;border-radius:50%;background:var(--surface);display:flex;align-items:center;justify-content:center;flex-direction:column">
+          <span class="headline-md" id="progress-pct" style="font-size:22px">0%</span>
+          <span class="label-sm text-muted">learned</span>
+        </div>
+      </div>
+    </section>
+
+    <div class="grid mb-3">
+      <section class="col-4"><div class="card stat-tile"><div class="num" id="stat-known">0</div><div class="lbl">Words Known</div></div></section>
+      <section class="col-4"><div class="card stat-tile"><div class="num" id="stat-mastered">0</div><div class="lbl">Words Mastered</div></div></section>
+      <section class="col-4"><div class="card stat-tile"><div class="num" id="stat-new">0</div><div class="lbl">New Words Ready</div></div></section>
+    </div>
+
+    <section class="mb-2">
+      <div class="flex justify-between items-end mb-2" style="padding:0 4px">
+        <h3 class="headline-md">Vocabulary in this Language</h3>
+        <a href="vocabulary.html" class="text-primary-c body-md">Manage all →</a>
+      </div>
+      <div class="word-row" id="vocab-preview"></div>
+    </section>
+  </div>
+</main>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="assets/js/supabase-client.js"></script>
+<script src="assets/js/auth.js"></script>
+<script src="assets/js/state.js"></script>
+<script src="assets/js/nav.js"></script>
+<script src="assets/js/speech.js"></script>
+<script src="assets/js/lessons.js"></script>
+<script>
+const s = Sanctum.state;
+const params = new URLSearchParams(location.search);
+const code = params.get('code');
+const lang = s.languages.find(l => l.code === code);
+
+if (!lang) {
+  document.getElementById('hub-content').style.display = 'none';
+  document.getElementById('locked-notice').style.display = 'block';
+  document.querySelector('#locked-notice p').innerHTML = 'Language not found. <a href="index.html" class="text-primary-c">Back to Language Hub</a>';
+} else if (!lang.unlocked) {
+  document.getElementById('hub-content').style.display = 'none';
+  document.getElementById('locked-notice').style.display = 'block';
+} else {
+  document.getElementById('lang-flag').textContent = lang.flag || '🌐';
+  document.getElementById('lang-name').textContent = lang.name;
+  document.title = 'Nhoma — ' + lang.name;
+
+  const wordsInLang = s.vocab.filter(w => w.lang === lang.name);
+  const pack = getLessonPack(lang.name);
+  const knownTexts = new Set(wordsInLang.map(w => w.arabic));
+  const newWords = pack.filter(p => !knownTexts.has(p.arabic));
+  const masteredCount = wordsInLang.filter(w => (w.mastery || 0) >= 80).length;
+  const pctLearned = pack.length ? Math.round(((pack.length - newWords.length) / pack.length) * 100) : (wordsInLang.length ? 100 : 0);
+
+  document.getElementById('lang-status').textContent = wordsInLang.length
+    ? `${wordsInLang.length} word${wordsInLang.length === 1 ? '' : 's'} learned so far`
+    : 'No words learned yet — start your first lesson';
+  document.getElementById('stat-known').textContent = wordsInLang.length;
+  document.getElementById('stat-mastered').textContent = masteredCount;
+  document.getElementById('stat-new').textContent = newWords.length;
+  document.getElementById('progress-pct').textContent = pctLearned + '%';
+  document.getElementById('progress-ring').style.background = `conic-gradient(var(--primary) ${pctLearned * 3.6}deg, var(--surface-nested-low) 0deg)`;
+
+  const quizBtn = document.getElementById('quiz-btn');
+  if (wordsInLang.length < 4) {
+    quizBtn.disabled = true;
+    quizBtn.style.opacity = 0.5;
+    quizBtn.title = 'Learn at least 4 words first';
+  }
+
+  const wrap = document.getElementById('vocab-preview');
+  wrap.innerHTML = wordsInLang.length ? wordsInLang.slice(0, 10).map(w => `
+    <div class="word-card">
+      ${w.image ? `<img src="${w.image}" style="width:100%;height:90px;object-fit:cover;border-radius:14px;margin-bottom:4px">` : ''}
+      <span class="arabic">${w.arabic}</span>
+      <div><h4>${w.meaning}</h4><p class="translit">${w.translit}</p></div>
+      <span class="label-sm text-muted">${w.mastery || 0}% mastered</span>
+    </div>`).join('') : '<p class="text-muted body-md">Nothing yet — start a lesson to learn your first words.</p>';
+
+  if (!newWords.length && !wordsInLang.length) {
+    document.getElementById('lang-status').textContent = 'No starter lesson available yet for this language — add words manually instead.';
+  }
+}
+
+function startLesson() {
+  if (!lang) return;
+  location.href = 'lesson.html?code=' + encodeURIComponent(lang.code);
+}
+function startQuiz() {
+  if (!lang) return;
+  const wordsInLang = s.vocab.filter(w => w.lang === lang.name);
+  if (wordsInLang.length < 4) { Sanctum.toast('Learn at least 4 words first'); return; }
+  location.href = 'quiz.html?code=' + encodeURIComponent(lang.code);
+}
+</script>
+</body>
+</html>

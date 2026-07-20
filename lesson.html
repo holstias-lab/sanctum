@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Nhoma — Lesson</title>
+<script>(function(){try{var s=JSON.parse(localStorage.getItem('sanctum_state_v1')||'{}');document.documentElement.setAttribute('data-theme',(s.profile&&s.profile.theme)||'sage');}catch(e){}})();</script>
+<link rel="stylesheet" href="assets/css/sanctum.css">
+<style>
+.dots{display:flex;gap:6px;justify-content:center}
+.dot{width:8px;height:8px;border-radius:50%;background:var(--surface-nested-high)}
+.dot.done{background:var(--primary)}
+.dot.current{background:var(--secondary)}
+.lesson-card{max-width:480px;margin:32px auto 0;background:var(--surface-card);border:1px solid rgba(141,147,135,0.15);border-radius:var(--radius-card);padding:40px;text-align:center;box-shadow:0 20px 40px rgba(0,0,0,.2)}
+</style>
+</head>
+<body data-page="lesson">
+<main class="main">
+  <header class="page-header">
+    <div>
+      <h2 class="headline-lg" id="lesson-title">Lesson</h2>
+      <p class="body-md text-muted" id="lesson-sub"></p>
+    </div>
+    <a href="index.html" class="icon-btn"><span class="material-symbols-outlined">close</span></a>
+  </header>
+
+  <div class="dots mb-2" id="dots"></div>
+
+  <div id="lesson-card" class="lesson-card">
+    <img id="word-image" style="display:none;width:140px;height:140px;object-fit:cover;border-radius:16px;margin:0 auto 16px">
+    <span class="label-sm text-muted" style="letter-spacing:.2em">NEW WORD</span>
+    <h1 class="display-lg text-primary-c mt-2" id="word-text" style="font-size:52px">—</h1>
+    <p class="text-muted body-lg mt-1" id="word-translit"></p>
+    <button class="icon-btn mt-2" style="background:var(--surface-nested-high);border-radius:50%" onclick="speakText(currentWord.arabic, lang.name)"><span class="material-symbols-outlined">volume_up</span></button>
+    <div class="nested mt-3" style="padding:16px" id="meaning-box">
+      <p class="label-sm text-muted" style="text-transform:uppercase;letter-spacing:.1em">Means</p>
+      <h3 class="headline-md mt-1" id="word-meaning">—</h3>
+    </div>
+    <button class="btn btn-primary mt-3" style="width:100%;justify-content:center" onclick="nextWord()" id="next-btn">Got it — Next Word</button>
+  </div>
+
+  <div id="complete-card" class="lesson-card" style="display:none">
+    <span class="material-symbols-outlined fill text-primary-c" style="font-size:56px">military_tech</span>
+    <h2 class="headline-lg mt-2">Lesson Complete!</h2>
+    <p class="text-muted body-md mt-2" id="complete-summary"></p>
+    <div class="flex gap-1 mt-3" style="justify-content:center">
+      <button class="btn btn-primary" id="complete-quiz-btn" onclick="goQuiz()">Take a Quiz</button>
+      <a href="language.html" id="complete-hub-link" class="btn btn-outline">Back to Language Hub</a>
+    </div>
+  </div>
+
+  <div id="empty-card" class="lesson-card" style="display:none">
+    <h2 class="headline-md">All caught up!</h2>
+    <p class="text-muted body-md mt-2">There's no starter lesson content left for this language right now — nice work. You can always add your own words manually.</p>
+    <div class="flex gap-1 mt-3" style="justify-content:center">
+      <a href="vocabulary.html" class="btn btn-primary">Add a Word</a>
+      <a href="index.html" class="btn btn-outline">Back to Language Hub</a>
+    </div>
+  </div>
+</main>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="assets/js/supabase-client.js"></script>
+<script src="assets/js/auth.js"></script>
+<script src="assets/js/state.js"></script>
+<script src="assets/js/nav.js"></script>
+<script src="assets/js/speech.js"></script>
+<script src="assets/js/lessons.js"></script>
+<script>
+const s = Sanctum.state;
+const params = new URLSearchParams(location.search);
+const code = params.get('code');
+const lang = s.languages.find(l => l.code === code);
+
+if (!lang || !lang.unlocked) {
+  document.body.innerHTML = '<main class="main"><p class="body-md">Language not available. <a href="index.html" class="text-primary-c">Back to Language Hub</a></p></main>';
+  throw new Error('stop');
+}
+
+document.getElementById('complete-hub-link').href = 'language.html?code=' + encodeURIComponent(lang.code);
+document.getElementById('lesson-title').textContent = lang.name + ' Lesson';
+
+const knownTexts = new Set(s.vocab.filter(w => w.lang === lang.name).map(w => w.arabic));
+const queue = getLessonPack(lang.name).filter(w => !knownTexts.has(w.arabic));
+let pos = 0;
+let xpEarned = 0;
+let currentWord = null;
+
+function renderDots() {
+  document.getElementById('dots').innerHTML = queue.map((_, i) => `
+    <div class="dot${i < pos ? ' done' : ''}${i === pos ? ' current' : ''}"></div>`).join('');
+}
+
+async function showWord() {
+  if (pos >= queue.length) { finishLesson(); return; }
+  currentWord = queue[pos];
+  document.getElementById('lesson-sub').textContent = `Word ${pos + 1} of ${queue.length}`;
+  document.getElementById('word-text').textContent = currentWord.arabic;
+  document.getElementById('word-translit').textContent = currentWord.translit;
+  document.getElementById('word-meaning').textContent = currentWord.meaning;
+  const img = document.getElementById('word-image');
+  img.style.display = 'none';
+  renderDots();
+
+  try {
+    const res = await fetch(`https://api.openverse.org/v1/images/?q=${encodeURIComponent(currentWord.meaning)}&page_size=1`);
+    const data = await res.json();
+    if (data.results && data.results[0] && currentWord === queue[pos]) {
+      img.src = data.results[0].thumbnail;
+      img.style.display = 'block';
+    }
+  } catch (e) { /* image is a nice-to-have, not essential */ }
+}
+
+function nextWord() {
+  if (!currentWord) return;
+  Sanctum.addWord({
+    arabic: currentWord.arabic, translit: currentWord.translit, meaning: currentWord.meaning,
+    lang: lang.name, example: '', image: document.getElementById('word-image').style.display === 'block' ? document.getElementById('word-image').src : null,
+  });
+  const q = s.quests.find(q => q.id === 'q4');
+  if (q && q.current < q.target) { q.current++; Sanctum.persist(); }
+  Sanctum.addXP(5, { silent: true });
+  xpEarned += 5;
+  pos++;
+  showWord();
+}
+
+function finishLesson() {
+  document.getElementById('lesson-card').style.display = 'none';
+  document.getElementById('dots').style.display = 'none';
+  document.getElementById('complete-card').style.display = 'block';
+  document.getElementById('complete-summary').textContent = `You learned ${queue.length} new word${queue.length === 1 ? '' : 's'} and earned +${xpEarned} XP.`;
+  const wordsNow = s.vocab.filter(w => w.lang === lang.name).length;
+  document.getElementById('complete-quiz-btn').style.display = wordsNow >= 4 ? 'inline-flex' : 'none';
+  Sanctum.toast(`Lesson complete — +${xpEarned} XP!`);
+}
+
+function goQuiz() {
+  location.href = 'quiz.html?code=' + encodeURIComponent(lang.code);
+}
+
+if (!queue.length) {
+  document.getElementById('lesson-card').style.display = 'none';
+  document.getElementById('dots').style.display = 'none';
+  document.getElementById('empty-card').style.display = 'block';
+} else {
+  showWord();
+}
+</script>
+</body>
+</html>

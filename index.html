@@ -123,11 +123,11 @@ function renderLanguageMap() {
   const mapEl = document.getElementById('language-map');
   mapEl.innerHTML = s.languages.map(l => {
     if (l.unlocked) {
-      return `<div class="nested" style="border:2px solid var(--primary);padding:20px;display:flex;flex-direction:column;align-items:center;gap:6px;cursor:pointer;transition:transform .15s" onmouseover="this.style.transform='scale(1.02)'" onmouseout="this.style.transform='scale(1)'">
+      return `<a href="language.html?code=${l.code}" class="nested" style="border:2px solid var(--primary);padding:20px;display:flex;flex-direction:column;align-items:center;gap:6px;cursor:pointer;transition:transform .15s;text-decoration:none" onmouseover="this.style.transform='scale(1.02)'" onmouseout="this.style.transform='scale(1)'">
         ${langIconHtml(l, 24)}
         <span class="label-md" style="font-weight:700">${l.name.toUpperCase()}</span>
         <div style="width:6px;height:6px;border-radius:50%;background:var(--primary);box-shadow:0 0 8px var(--primary)"></div>
-      </div>`;
+      </a>`;
     }
     return `<div class="nested" style="background:var(--surface-nested-low);padding:20px;display:flex;flex-direction:column;align-items:center;gap:6px;opacity:.6;cursor:not-allowed"
         onclick="Sanctum.toast('${l.name} unlocks at ${l.xpRequired} XP — you have ${s.profile.totalXp} XP')">

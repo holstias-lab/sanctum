@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Nhoma — Quiz</title>
+<script>(function(){try{var s=JSON.parse(localStorage.getItem('sanctum_state_v1')||'{}');document.documentElement.setAttribute('data-theme',(s.profile&&s.profile.theme)||'sage');}catch(e){}})();</script>
+<link rel="stylesheet" href="assets/css/sanctum.css">
+<style>
+.dots{display:flex;gap:6px;justify-content:center}
+.dot{width:8px;height:8px;border-radius:50%;background:var(--surface-nested-high)}
+.dot.done{background:var(--primary)}
+.dot.current{background:var(--secondary)}
+.quiz-card{max-width:480px;margin:32px auto 0;background:var(--surface-card);border:1px solid rgba(141,147,135,0.15);border-radius:var(--radius-card);padding:40px;text-align:center;box-shadow:0 20px 40px rgba(0,0,0,.2)}
+.option-btn{width:100%;text-align:left;padding:14px 18px;border-radius:var(--radius-lg);border:2px solid rgba(141,147,135,0.2);background:var(--surface-nested-low);color:var(--on-surface);font-size:15px;font-weight:600;transition:all .15s;margin-bottom:10px}
+.option-btn:hover:not(:disabled){border-color:var(--primary)}
+.option-btn.correct{border-color:var(--primary);background:rgba(183,220,162,0.15);color:var(--primary)}
+.option-btn.wrong{border-color:var(--tertiary);background:rgba(255,180,171,0.15);color:var(--tertiary)}
+.option-btn:disabled{cursor:default}
+</style>
+</head>
+<body data-page="quiz">
+<main class="main">
+  <header class="page-header">
+    <div>
+      <h2 class="headline-lg" id="quiz-title">Quiz</h2>
+      <p class="body-md text-muted" id="quiz-sub"></p>
+    </div>
+    <a href="index.html" class="icon-btn"><span class="material-symbols-outlined">close</span></a>
+  </header>
+
+  <div class="dots mb-2" id="dots"></div>
+
+  <div id="quiz-card" class="quiz-card">
+    <span class="label-sm text-muted" style="letter-spacing:.2em">WHAT DOES THIS MEAN?</span>
+    <h1 class="display-lg text-primary-c mt-2" id="q-word" style="font-size:48px">—</h1>
+    <p class="text-muted body-lg mt-1" id="q-translit"></p>
+    <button class="icon-btn mt-2" style="background:var(--surface-nested-high);border-radius:50%" onclick="speakText(current.arabic, lang.name)"><span class="material-symbols-outlined">volume_up</span></button>
+    <div class="mt-3" id="options"></div>
+    <button class="btn btn-primary mt-2" style="width:100%;justify-content:center;display:none" id="next-btn" onclick="nextQuestion()">Next</button>
+  </div>
+
+  <div id="complete-card" class="quiz-card" style="display:none">
+    <span class="material-symbols-outlined fill text-secondary-c" style="font-size:56px">emoji_events</span>
+    <h2 class="headline-lg mt-2">Quiz Complete!</h2>
+    <p class="text-muted body-md mt-2" id="complete-summary"></p>
+    <div class="flex gap-1 mt-3" style="justify-content:center">
+      <a href="language.html" id="hub-link" class="btn btn-primary">Back to Language Hub</a>
+      <a href="flashcards.html" class="btn btn-outline">Review with Flashcards</a>
+    </div>
+  </div>
+</main>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="assets/js/supabase-client.js"></script>
+<script src="assets/js/auth.js"></script>
+<script src="assets/js/state.js"></script>
+<script src="assets/js/nav.js"></script>
+<script src="assets/js/speech.js"></script>
+<script>
+const s = Sanctum.state;
+const params = new URLSearchParams(location.search);
+const code = params.get('code');
+const lang = s.languages.find(l => l.code === code);
+
+if (!lang || !lang.unlocked) {
+  document.body.innerHTML = '<main class="main"><p class="body-md">Language not available. <a href="index.html" class="text-primary-c">Back to Language Hub</a></p></main>';
+  throw new Error('stop');
+}
+
+document.getElementById('hub-link').href = 'language.html?code=' + encodeURIComponent(lang.code);
+document.getElementById('quiz-title').textContent = lang.name + ' Quiz';
+
+const pool = s.vocab.filter(w => w.lang === lang.name);
+if (pool.length < 4) {
+  document.body.innerHTML = `<main class="main"><p class="body-md">Learn at least 4 words in ${lang.name} first. <a href="language.html?code=${lang.code}" class="text-primary-c">Back to Language Hub</a></p></main>`;
+  throw new Error('stop');
+}
+
+function shuffle(arr) {
+  const a = [...arr];
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
+const questions = shuffle(pool).slice(0, Math.min(8, pool.length));
+let qi = 0;
+let current = null;
+let correctCount = 0;
+let answered = false;
+
+function renderDots() {
+  document.getElementById('dots').innerHTML = questions.map((_, i) => `
+    <div class="dot${i < qi ? ' done' : ''}${i === qi ? ' current' : ''}"></div>`).join('');
+}
+
+function showQuestion() {
+  if (qi >= questions.length) { finishQuiz(); return; }
+  current = questions[qi];
+  answered = false;
+  document.getElementById('quiz-sub').textContent = `Question ${qi + 1} of ${questions.length}`;
+  document.getElementById('q-word').textContent = current.arabic;
+  document.getElementById('q-translit').textContent = current.translit;
+  document.getElementById('next-btn').style.display = 'none';
+  renderDots();
+
+  const distractorPool = pool.filter(w => w.id !== current.id);
+  const distractors = shuffle(distractorPool).slice(0, 3).map(w => w.meaning);
+  const options = shuffle([current.meaning, ...distractors]);
+
+  document.getElementById('options').innerHTML = options.map(opt => `
+    <button class="option-btn" onclick="chooseAnswer(this, '${opt.replace(/'/g, "\\'")}')">${opt}</button>`).join('');
+}
+
+function chooseAnswer(btn, chosen) {
+  if (answered) return;
+  answered = true;
+  const isCorrect = chosen === current.meaning;
+  document.querySelectorAll('.option-btn').forEach(b => {
+    b.disabled = true;
+    if (b.textContent === current.meaning) b.classList.add('correct');
+    else if (b === btn && !isCorrect) b.classList.add('wrong');
+  });
+  if (isCorrect) {
+    correctCount++;
+    Sanctum.reviewWord(current.id, 100);
+    Sanctum.addXP(3, { silent: true });
+  } else {
+    Sanctum.reviewWord(current.id, 0);
+  }
+  document.getElementById('next-btn').style.display = 'inline-flex';
+}
+
+function nextQuestion() {
+  qi++;
+  showQuestion();
+}
+
+function finishQuiz() {
+  document.getElementById('quiz-card').style.display = 'none';
+  document.getElementById('dots').style.display = 'none';
+  document.getElementById('complete-card').style.display = 'block';
+  const xp = correctCount * 3;
+  document.getElementById('complete-summary').textContent = `${correctCount} of ${questions.length} correct — +${xp} XP earned.`;
+  Sanctum.toast(`Quiz complete — ${correctCount}/${questions.length} correct!`);
+}
+
+showQuestion();
+</script>
+</body>
+</html>
