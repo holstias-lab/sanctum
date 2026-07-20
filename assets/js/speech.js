@@ -34,6 +34,11 @@ const SPEECH_LANG_MAP = {
   'Thai': 'th-TH', 'Twi': 'ak-GH',
 };
 
+// Bump this whenever a vendored engine file (Piper/eSpeak-ng loader
+// scripts) changes, so browsers that already cached the old, broken
+// version fetch the fix instead of silently keeping the stale one.
+const ENGINE_ASSET_VERSION = '2026-07-20-1';
+
 let espeakReadyPromise = null;
 let audioCtx = null;
 
@@ -62,10 +67,10 @@ function loadEspeak() {
   if (espeakReadyPromise) return espeakReadyPromise;
   espeakReadyPromise = new Promise((resolve, reject) => {
     const script = document.createElement('script');
-    script.src = 'assets/vendor/espeakng/espeakng.min.js';
+    script.src = 'assets/vendor/espeakng/espeakng.min.js?v=' + ENGINE_ASSET_VERSION;
     script.onload = () => {
       try {
-        const tts = new eSpeakNG('assets/vendor/espeakng/espeakng.worker.js', () => resolve(tts));
+        const tts = new eSpeakNG('assets/vendor/espeakng/espeakng.worker.js?v=' + ENGINE_ASSET_VERSION, () => resolve(tts));
       } catch (e) { reject(e); }
     };
     script.onerror = () => reject(new Error('espeakng failed to load'));
@@ -114,7 +119,6 @@ async function speakWithEspeak(text, voiceId) {
 }
 
 let piperReadyPromise = null;
-const piperVoiceInstances = {};
 
 function loadScript(src) {
   return new Promise((resolve, reject) => {
@@ -129,18 +133,24 @@ function loadScript(src) {
 function loadPiper() {
   if (piperReadyPromise) return piperReadyPromise;
   piperReadyPromise = (async () => {
-    await loadScript('assets/vendor/piper/ort.min.js');
-    await loadScript('assets/vendor/piper/piper-tts-proper.js');
+    await loadScript('assets/vendor/piper/ort.min.js?v=' + ENGINE_ASSET_VERSION);
+    await loadScript('assets/vendor/piper/piper-tts-proper.js?v=' + ENGINE_ASSET_VERSION);
   })();
   return piperReadyPromise;
 }
 
+// A ProperPiperTTS instance's ONNX session reliably corrupts itself on a
+// second synthesis call (confirmed: recreating just the session doesn't
+// fix it, only a wholly fresh instance does — the fault is somewhere
+// else in the instance's WASM-backed state, not just the session object).
+// So build a brand-new instance per call instead of caching one per voice.
+// The ~800ms cost is model-session setup only; the ~60MB model bytes
+// themselves are served from the browser's HTTP cache after the first
+// real fetch, so this isn't a repeated download.
 async function speakWithPiper(text, voiceId) {
   await loadPiper();
-  if (!piperVoiceInstances[voiceId]) {
-    piperVoiceInstances[voiceId] = new ProperPiperTTS(voiceId);
-  }
-  await piperVoiceInstances[voiceId].speak(text, 1.0);
+  const instance = new ProperPiperTTS(voiceId);
+  await instance.speak(text, 1.0);
 }
 
 function speakWithWebSpeech(text, langCode) {

@@ -93,7 +93,7 @@
         ort.env.wasm.numThreads = 1;
         ort.env.wasm.simd = true;
         ort.env.wasm.wasmPaths = this.baseUrl + '/';
-        
+
         // Create ONNX session
         const sessionOptions = {
           executionProviders: ['wasm'],
@@ -104,7 +104,14 @@
           interOpNumThreads: 1,
           intraOpNumThreads: 1
         };
-        
+
+        // Keep the raw model bytes + options around: this WASM backend's
+        // InferenceSession isn't safely reusable for a second run() call
+        // (it errors with "session is corrupted or out of memory" on the
+        // 2nd+ synthesis), so synthesize() recreates the session fresh
+        // each time from these cached bytes rather than re-fetching.
+        this.modelBuffer = modelBuffer;
+        this.sessionOptions = sessionOptions;
         this.session = await ort.InferenceSession.create(modelBuffer, sessionOptions);
         console.log('ONNX session created successfully');
         
@@ -286,7 +293,7 @@
         console.log('Running inference...');
         const startTime = performance.now();
         let results;
-        
+
         try {
           results = await this.session.run(inputs);
         } catch (error) {
@@ -406,10 +413,16 @@
         try {
           console.log(`Processing TTS for: "${text}"`);
           const wav = await this.synthesize(text, speed);
-          
+
+          // Stop whatever Sanctum is currently playing (real audio, eSpeak,
+          // or a previous Piper clip) so overlapping requests don't stack
+          // into a distorted mess — see currentPlayback in speech.js.
+          if (typeof stopCurrentPlayback === 'function') stopCurrentPlayback();
+
           // Create audio element and play
           const audio = new Audio();
           audio.src = URL.createObjectURL(wav);
+          if (typeof currentPlayback !== 'undefined') currentPlayback = audio;
           
           // Set volume if available from TTS settings
           if (window.TTS && window.TTS.volume) {
@@ -440,10 +453,12 @@
           await new Promise((audioResolve, audioReject) => {
             audio.onended = () => {
               URL.revokeObjectURL(audio.src);
+              if (typeof currentPlayback !== 'undefined' && currentPlayback === audio) currentPlayback = null;
               audioResolve();
             };
             audio.onerror = (e) => {
               URL.revokeObjectURL(audio.src);
+              if (typeof currentPlayback !== 'undefined' && currentPlayback === audio) currentPlayback = null;
               console.error('Audio playback error:', e);
               audioReject(new Error('Audio playback failed'));
             };
