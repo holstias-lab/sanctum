@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html><head><meta charset="UTF-8"><title>web speech test</title></head>
+<body style="font-family:sans-serif;max-width:500px;margin:40px auto">
+<p>Click each button to hear the browser's built-in voice (Web Speech API) for that word/language. Tell me which ones sound decent vs. which are missing/broken.</p>
+<div id="buttons"></div>
+<pre id="log" style="white-space:pre-wrap"></pre>
+<script>
+function log(m){document.getElementById('log').textContent += m + '\n';}
+
+function speak(text, lang) {
+  if (!('speechSynthesis' in window)) { log('No speechSynthesis support'); return; }
+  window.speechSynthesis.cancel();
+  const u = new SpeechSynthesisUtterance(text);
+  u.lang = lang;
+  u.rate = 0.9;
+  u.onstart = () => log('started: ' + text + ' (' + lang + ')');
+  u.onerror = (e) => log('ERROR for ' + text + ' (' + lang + '): ' + e.error);
+  u.onend = () => log('ended: ' + text + ' (' + lang + ')');
+  window.speechSynthesis.speak(u);
+}
+
+const tests = [
+  ['مرحبا', 'ar-SA', 'Arabic - hello'],
+  ['مرحبا', 'ar', 'Arabic (plain "ar") - hello'],
+  ['你好', 'zh-CN', 'Mandarin - hello'],
+  ['こんにちは', 'ja-JP', 'Japanese - hello'],
+  ['Hola', 'es-ES', 'Spanish - hello'],
+  ['Bonjour', 'fr-FR', 'French - hello'],
+];
+
+tests.forEach(([text, lang, label]) => {
+  const btn = document.createElement('button');
+  btn.textContent = label;
+  btn.style.display = 'block';
+  btn.style.margin = '8px 0';
+  btn.style.padding = '10px';
+  btn.style.width = '100%';
+  btn.style.fontSize = '16px';
+  btn.onclick = () => speak(text, lang);
+  document.getElementById('buttons').appendChild(btn);
+});
+
+const listBtn = document.createElement('button');
+listBtn.textContent = 'List available voices';
+listBtn.style.cssText = 'display:block;margin:16px 0;padding:10px;width:100%;font-size:16px';
+listBtn.onclick = () => {
+  const voices = window.speechSynthesis.getVoices();
+  log('--- ' + voices.length + ' voices available ---');
+  voices.forEach(v => log(v.name + ' | ' + v.lang + (v.localService ? ' (local)' : ' (remote)')));
+};
+document.getElementById('buttons').appendChild(listBtn);
+</script>
+</body></html>
