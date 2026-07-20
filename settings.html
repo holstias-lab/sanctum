@@ -34,6 +34,11 @@
         <input id="in-name" style="width:100%;padding:10px;margin:6px 0 16px;border-radius:8px;border:1px solid rgba(141,147,135,.3);background:var(--surface-nested-low);color:var(--on-surface)">
         <button class="btn btn-primary" onclick="saveName()">Save</button>
       </div>
+      <div class="card mb-2">
+        <div class="card-header"><h3 style="font-size:20px">Languages</h3></div>
+        <p class="text-muted body-md mb-2">Not learning what you meant to? Re-open the starter language picker — it won't remove any language you've already unlocked, it just lets you unlock another one for free.</p>
+        <button class="btn btn-outline" onclick="restartLanguagePicker()">Choose a New Starter Language</button>
+      </div>
       <div class="card">
         <div class="card-header"><h3 style="font-size:20px">Data</h3></div>
         <p class="text-muted body-md mb-2">Your XP, vocabulary, sessions, and Quran progress are synced to your account and cached in this browser for speed.</p>
@@ -97,6 +102,11 @@ function exportData() {
   a.href = URL.createObjectURL(blob);
   a.download = 'sanctum-backup.json';
   a.click();
+}
+function restartLanguagePicker() {
+  s.profile.onboarded = false;
+  Sanctum.persist();
+  location.href = 'onboarding.html';
 }
 function confirmReset() {
   if (confirm('This clears all local XP, vocabulary, and progress. This cannot be undone. Continue?')) {

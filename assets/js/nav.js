@@ -31,18 +31,11 @@ function renderSidebar(activeKey) {
       <span>${i.label}</span>
     </a>`).join('');
 
-  const langHtml = s.languages.map(l => {
-    if (l.unlocked) {
-      return `<a class="lang-item unlocked" href="index.html?lang=${l.code}">
-        <div class="left">${langIconHtml(l)}<span>${l.name}</span></div>
-        <div class="dot"></div>
-      </a>`;
-    }
-    return `<a class="lang-item locked" href="#" onclick="Sanctum.toast('${l.name} unlocks at ${l.xpRequired} XP'); return false;">
+  const langHtml = s.languages.filter(l => l.unlocked).map(l => `
+    <a class="lang-item unlocked" href="index.html?lang=${l.code}">
       <div class="left">${langIconHtml(l)}<span>${l.name}</span></div>
-      <span class="material-symbols-outlined lock">lock</span>
-    </a>`;
-  }).join('') + `<a class="lang-item" href="#" onclick="promptAddLanguage(); return false;" style="color:var(--primary)">
+      <div class="dot"></div>
+    </a>`).join('') + `<a class="lang-item" href="#" onclick="promptAddLanguage(); return false;" style="color:var(--primary)">
       <div class="left"><span class="material-symbols-outlined" style="font-size:20px">add</span><span>Add language</span></div>
     </a>`;
 
@@ -53,7 +46,7 @@ function renderSidebar(activeKey) {
     </div>
     <nav class="sidebar-nav">
       ${navHtml(NAV_ITEMS)}
-      <div class="nav-section-label"><span>My Languages</span></div>
+      <div class="nav-section-label"><span>My Languages</span><a href="index.html" style="font-size:12px;font-weight:700;color:var(--primary)">See all</a></div>
       <div class="lang-list">${langHtml}</div>
       <div style="height:1px;background:rgba(141,147,135,0.2);margin:12px 8px"></div>
       ${navHtml(NAV_ITEMS_2)}
