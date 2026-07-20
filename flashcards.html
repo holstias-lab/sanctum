@@ -125,7 +125,7 @@ function render() {
 function speakCurrent() {
   if (!deck.length) return;
   const w = deck[idx];
-  speakText(w.arabic, w.lang);
+  speakWord(w);
 }
 
 function speakExample() {

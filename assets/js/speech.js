@@ -157,3 +157,18 @@ async function speakText(text, langName) {
   const webSpeechLang = SPEECH_LANG_MAP[langName] || 'en-US';
   speakWithWebSpeech(text, webSpeechLang);
 }
+
+// Prefer a real human-voice recording (word.audio, a Wikimedia Commons
+// pronunciation clip) when one is attached; otherwise fall back to TTS.
+function speakWord(word) {
+  if (!word) return;
+  if (word.audio) {
+    const player = new Audio(word.audio);
+    player.play().catch((e) => {
+      console.error('Sanctum speech: real audio playback failed, falling back to TTS', e);
+      speakText(word.arabic, word.lang);
+    });
+    return;
+  }
+  speakText(word.arabic, word.lang);
+}

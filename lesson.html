@@ -31,7 +31,7 @@
     <span class="label-sm text-muted" style="letter-spacing:.2em">NEW WORD</span>
     <h1 class="display-lg text-primary-c mt-2" id="word-text" style="font-size:52px">—</h1>
     <p class="text-muted body-lg mt-1" id="word-translit"></p>
-    <button class="icon-btn mt-2" style="background:var(--surface-nested-high);border-radius:50%" onclick="speakText(currentWord.arabic, lang.name)"><span class="material-symbols-outlined">volume_up</span></button>
+    <button class="icon-btn mt-2" style="background:var(--surface-nested-high);border-radius:50%" onclick="speakWord(currentWord)"><span class="material-symbols-outlined">volume_up</span></button>
     <div class="nested mt-3" style="padding:16px" id="meaning-box">
       <p class="label-sm text-muted" style="text-transform:uppercase;letter-spacing:.1em">Means</p>
       <h3 class="headline-md mt-1" id="word-meaning">—</h3>
@@ -94,6 +94,7 @@ function renderDots() {
 async function showWord() {
   if (pos >= queue.length) { finishLesson(); return; }
   currentWord = queue[pos];
+  currentWord.lang = lang.name;
   document.getElementById('lesson-sub').textContent = `Word ${pos + 1} of ${queue.length}`;
   document.getElementById('word-text').textContent = currentWord.arabic;
   document.getElementById('word-translit').textContent = currentWord.translit;

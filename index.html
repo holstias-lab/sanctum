@@ -180,7 +180,7 @@ function renderVocabPreview() {
       <div class="flex justify-between items-start">
         <span class="arabic" style="flex:1">${w.arabic}</span>
         <div class="flex items-center gap-1">
-          <span class="material-symbols-outlined" style="font-size:18px;color:var(--primary);cursor:pointer" onclick="speakText('${String(w.arabic).replace(/'/g,"\\'")}', '${w.lang}')">volume_up</span>
+          <span class="material-symbols-outlined" style="font-size:18px;color:var(--primary);cursor:pointer" onclick="speakWord(s.vocab.find(x=>x.id==='${w.id}'))">volume_up</span>
           <span class="material-symbols-outlined" style="font-size:18px;color:var(--on-surface-variant);cursor:pointer" onclick="Sanctum.deleteWord('${w.id}'); location.reload()">close</span>
         </div>
       </div>
