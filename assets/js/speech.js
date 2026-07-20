@@ -150,7 +150,18 @@ function loadPiper() {
 async function speakWithPiper(text, voiceId) {
   await loadPiper();
   const instance = new ProperPiperTTS(voiceId);
-  await instance.speak(text, 1.0);
+  try {
+    await instance.speak(text, 1.0);
+  } finally {
+    // The ONNX WASM backend doesn't free a session's memory just because
+    // the JS object holding it gets garbage-collected — without this,
+    // each fresh-instance-per-call synthesis leaks WASM heap, and after
+    // a couple of words the runtime runs out of usable memory (shows up
+    // as a stall, then corrupted/garbled output on the next call).
+    if (instance.session && typeof instance.session.release === 'function') {
+      instance.session.release().catch(() => {});
+    }
+  }
 }
 
 function speakWithWebSpeech(text, langCode) {
