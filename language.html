@@ -7,9 +7,21 @@
 <script>(function(){try{var s=JSON.parse(localStorage.getItem('sanctum_state_v1')||'{}');document.documentElement.setAttribute('data-theme',(s.profile&&s.profile.theme)||'sage');}catch(e){}})();</script>
 <link rel="stylesheet" href="assets/css/sanctum.css">
 <style>
-.hero{border-radius:var(--radius-card);padding:40px;background:linear-gradient(135deg,rgba(183,220,162,0.1),rgba(183,220,162,0.02));border:1px solid rgba(183,220,162,0.15);display:flex;align-items:center;gap:24px;flex-wrap:wrap}
-.hero .flag{font-size:56px}
-.ring{position:relative;width:110px;height:110px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.course-hero{border-radius:var(--radius-card);padding:32px;background:linear-gradient(135deg,rgba(183,220,162,0.1),rgba(183,220,162,0.02));border:1px solid rgba(183,220,162,0.15)}
+.course-hero-icon{width:72px;height:72px;border-radius:var(--radius-lg);background:rgba(183,220,162,.12);border:1px solid rgba(183,220,162,.25);display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.pack-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:20px}
+.pack-card{border-radius:var(--radius-card);padding:24px;display:flex;flex-direction:column;gap:14px;transition:transform .2s ease}
+.pack-card.current{background:var(--surface-card);border:1px solid rgba(183,220,162,.3)}
+.pack-card.locked{background:var(--surface-nested-low);border:1px solid rgba(141,147,135,.1);opacity:.55}
+.pack-card.done{background:var(--surface-card);border:1px solid rgba(183,220,162,.2)}
+.pack-card.current:hover,.pack-card.done:hover{transform:translateY(-3px)}
+.pack-icon{width:44px;height:44px;border-radius:var(--radius-md);display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.lesson-row{border-radius:var(--radius-nested);padding:12px 14px;display:flex;align-items:center;justify-content:space-between;gap:10px;text-decoration:none;color:inherit}
+.lesson-row.row-next{background:var(--surface-nested-high);border-left:3px solid var(--primary)}
+.lesson-row.row-open{background:var(--surface-nested-low);cursor:pointer}
+.lesson-row.row-locked{background:var(--surface-nested-low);opacity:.55;cursor:default}
+.lesson-row.row-complete{background:var(--surface-nested-low);opacity:.85;cursor:pointer}
+.lesson-row:hover.row-open,.lesson-row:hover.row-next,.lesson-row:hover.row-complete{background:var(--surface-variant)}
 </style>
 </head>
 <body data-page="language">
@@ -25,36 +37,36 @@
   </div>
 
   <div id="hub-content">
-    <section class="hero mb-3">
-      <span class="flag" id="lang-flag">🌐</span>
-      <div style="flex:1;min-width:200px">
-        <h2 class="headline-lg" id="lang-name">Language</h2>
-        <p class="text-muted body-md" id="lang-status">Getting started</p>
-        <div class="flex gap-1 mt-2">
-          <button class="btn btn-primary" onclick="startLesson()">Start Lesson</button>
-          <button class="btn btn-outline" id="quiz-btn" onclick="startQuiz()">Take a Quiz</button>
+    <section class="course-hero mb-3">
+      <div class="flex items-center gap-2" style="flex-wrap:wrap;justify-content:space-between">
+        <div class="flex items-center gap-2">
+          <div class="course-hero-icon"><span id="lang-flag" style="font-size:36px">🌐</span></div>
+          <div>
+            <span class="label-sm text-muted" style="letter-spacing:.15em;text-transform:uppercase;color:var(--secondary)">Current Course</span>
+            <h2 class="headline-lg" id="lang-name" style="margin-top:2px">Language</h2>
+            <p class="text-muted body-md" id="lang-status">Getting started</p>
+          </div>
         </div>
-      </div>
-      <div class="ring" id="progress-ring" style="background:conic-gradient(var(--primary) 0deg, var(--surface-nested-low) 0deg)">
-        <div style="width:88px;height:88px;border-radius:50%;background:var(--surface);display:flex;align-items:center;justify-content:center;flex-direction:column">
-          <span class="headline-md" id="progress-pct" style="font-size:22px">0%</span>
-          <span class="label-sm text-muted">learned</span>
+        <div style="min-width:220px;flex:1;max-width:320px">
+          <div class="flex justify-between items-end mb-1">
+            <span class="label-sm text-muted">Overall Journey</span>
+            <span class="headline-md" id="overall-pct" style="font-size:22px;color:var(--primary)">0%</span>
+          </div>
+          <div style="height:10px;width:100%;background:var(--surface-nested-low);border-radius:var(--radius-full);overflow:hidden">
+            <div id="overall-bar" style="height:100%;background:var(--primary);border-radius:var(--radius-full);width:0%;transition:width .3s ease"></div>
+          </div>
         </div>
       </div>
     </section>
 
-    <div class="grid mb-3">
-      <section class="col-4"><div class="card stat-tile"><div class="num" id="stat-known">0</div><div class="lbl">Words Known</div></div></section>
-      <section class="col-4"><div class="card stat-tile"><div class="num" id="stat-mastered">0</div><div class="lbl">Words Mastered</div></div></section>
-      <section class="col-4"><div class="card stat-tile"><div class="num" id="stat-new">0</div><div class="lbl">New Words Ready</div></div></section>
-    </div>
+    <h3 class="headline-md mb-2" style="padding:0 4px">Your course road</h3>
+    <div class="pack-grid mb-3" id="pack-grid"></div>
 
-    <section class="mb-2">
-      <div class="flex justify-between items-end mb-2" style="padding:0 4px">
-        <h3 class="headline-md">Vocabulary in this Language</h3>
-        <a href="vocabulary.html" class="text-primary-c body-md">Manage all →</a>
-      </div>
-      <div class="word-row" id="vocab-preview"></div>
+    <section class="card grid" style="gap:24px">
+      <div class="col-3"><span class="label-sm text-muted" style="text-transform:uppercase">Words Mastered</span><div class="headline-lg mt-1" id="stat-mastered">0</div></div>
+      <div class="col-3"><span class="label-sm text-muted" style="text-transform:uppercase">Study Time</span><div class="headline-lg mt-1" id="stat-hours">0h</div></div>
+      <div class="col-3"><span class="label-sm text-muted" style="text-transform:uppercase">Current Streak</span><div class="headline-lg mt-1" id="stat-streak">0 days</div></div>
+      <div class="col-3 flex items-center"><a href="profile.html" class="btn btn-outline" style="width:100%;justify-content:center">Full Statistics →</a></div>
     </section>
   </div>
 </main>
@@ -72,6 +84,10 @@ const params = new URLSearchParams(location.search);
 const code = params.get('code');
 const lang = s.languages.find(l => l.code === code);
 
+function escapeHtml(str) {
+  return String(str).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+}
+
 if (!lang) {
   document.getElementById('hub-content').style.display = 'none';
   document.getElementById('locked-notice').style.display = 'block';
@@ -83,53 +99,84 @@ if (!lang) {
   document.getElementById('lang-flag').textContent = lang.flag || '🌐';
   document.getElementById('lang-name').textContent = lang.name;
   document.title = 'Nhoma — ' + lang.name;
+  render();
+}
 
+function render() {
   const wordsInLang = s.vocab.filter(w => w.lang === lang.name);
-  const pack = getLessonPack(lang.name);
   const knownTexts = new Set(wordsInLang.map(w => w.arabic));
-  const newWords = pack.filter(p => !knownTexts.has(p.arabic));
-  const masteredCount = wordsInLang.filter(w => (w.mastery || 0) >= 80).length;
-  const pctLearned = pack.length ? Math.round(((pack.length - newWords.length) / pack.length) * 100) : (wordsInLang.length ? 100 : 0);
+  const packs = getPacks(lang.name);
+
+  let totalWords = 0, knownWords = 0;
+  packs.forEach(p => p.lessons.forEach(l => {
+    totalWords += l.words.length;
+    knownWords += l.words.filter(w => knownTexts.has(w.arabic)).length;
+  }));
+  const overallPct = totalWords ? Math.round((knownWords / totalWords) * 100) : 0;
 
   document.getElementById('lang-status').textContent = wordsInLang.length
     ? `${wordsInLang.length} word${wordsInLang.length === 1 ? '' : 's'} learned so far`
-    : 'No words learned yet — start your first lesson';
-  document.getElementById('stat-known').textContent = wordsInLang.length;
+    : (packs.length ? 'No words learned yet — start your first lesson' : 'No starter course available yet for this language — add words manually instead.');
+  document.getElementById('overall-pct').textContent = overallPct + '%';
+  document.getElementById('overall-bar').style.width = overallPct + '%';
+
+  let currentPackIdx = packs.findIndex(p => p.lessons.some(l => l.words.some(w => !knownTexts.has(w.arabic))));
+  if (currentPackIdx === -1) currentPackIdx = packs.length;
+
+  document.getElementById('pack-grid').innerHTML = packs.map((pack, pi) => {
+    const packComplete = pack.lessons.every(l => l.words.every(w => knownTexts.has(w.arabic)));
+    const isLocked = pi > currentPackIdx;
+    const doneCount = pack.lessons.filter(l => l.words.every(w => knownTexts.has(w.arabic))).length;
+    let firstIncompleteFound = false;
+
+    const lessonsHtml = pack.lessons.map(lesson => {
+      const complete = lesson.words.every(w => knownTexts.has(w.arabic));
+      const href = `lesson.html?code=${encodeURIComponent(lang.code)}&pack=${encodeURIComponent(pack.id)}&lesson=${encodeURIComponent(lesson.id)}`;
+      let rowClass, icon, badge = '', clickable = true;
+
+      if (complete) {
+        rowClass = 'row-complete'; icon = 'check_circle';
+      } else if (isLocked) {
+        rowClass = 'row-locked'; icon = 'lock'; clickable = false;
+      } else if (!firstIncompleteFound) {
+        rowClass = 'row-next'; icon = 'play_circle';
+        badge = '<span class="badge" style="background:rgba(183,220,162,.2);color:var(--primary)">Up Next</span>';
+        firstIncompleteFound = true;
+      } else {
+        rowClass = 'row-open'; icon = 'lock_open';
+      }
+
+      const iconColor = complete ? 'var(--primary)' : (clickable ? 'var(--on-surface-variant)' : 'var(--outline)');
+      const tag = clickable ? 'a' : 'div';
+      return `<${tag} ${clickable ? `href="${href}"` : ''} class="lesson-row ${rowClass}">
+        <span class="flex items-center gap-1"><span class="material-symbols-outlined" style="font-size:18px;color:${iconColor}">${icon}</span><span class="body-md">${escapeHtml(lesson.name)}</span></span>
+        ${badge}
+      </${tag}>`;
+    }).join('');
+
+    const statusLabel = packComplete ? 'Complete' : (isLocked ? 'Up Ahead' : 'In Progress');
+    const statusColor = packComplete ? 'var(--primary)' : (isLocked ? 'var(--outline)' : 'var(--secondary)');
+    const iconBg = isLocked ? 'var(--surface-variant)' : 'rgba(183,220,162,.12)';
+    const iconColor = isLocked ? 'var(--on-surface-variant)' : 'var(--primary)';
+
+    return `<article class="pack-card ${isLocked ? 'locked' : (packComplete ? 'done' : 'current')}">
+      <div class="flex justify-between items-start gap-1">
+        <div class="pack-icon" style="background:${iconBg}"><span class="material-symbols-outlined" style="color:${iconColor}">${pack.icon}</span></div>
+        <div style="text-align:right">
+          <span class="label-sm" style="text-transform:uppercase;color:${statusColor}">${statusLabel}</span>
+          <h3 class="headline-md" style="font-size:19px;margin-top:2px">${escapeHtml(pack.name)}</h3>
+        </div>
+      </div>
+      <span class="label-sm text-muted">${doneCount}/${pack.lessons.length}</span>
+      <div class="flex" style="flex-direction:column;gap:8px">${lessonsHtml}</div>
+    </article>`;
+  }).join('') || '<p class="text-muted body-md">No course content available for this language yet — add words manually in the Vocabulary Bank.</p>';
+
+  const masteredCount = wordsInLang.filter(w => (w.mastery || 0) >= 80).length;
   document.getElementById('stat-mastered').textContent = masteredCount;
-  document.getElementById('stat-new').textContent = newWords.length;
-  document.getElementById('progress-pct').textContent = pctLearned + '%';
-  document.getElementById('progress-ring').style.background = `conic-gradient(var(--primary) ${pctLearned * 3.6}deg, var(--surface-nested-low) 0deg)`;
-
-  const quizBtn = document.getElementById('quiz-btn');
-  if (wordsInLang.length < 4) {
-    quizBtn.disabled = true;
-    quizBtn.style.opacity = 0.5;
-    quizBtn.title = 'Learn at least 4 words first';
-  }
-
-  const wrap = document.getElementById('vocab-preview');
-  wrap.innerHTML = wordsInLang.length ? wordsInLang.slice(0, 10).map(w => `
-    <div class="word-card">
-      ${w.image ? `<img src="${w.image}" style="width:100%;height:90px;object-fit:cover;border-radius:14px;margin-bottom:4px">` : ''}
-      <span class="arabic">${w.arabic}</span>
-      <div><h4>${w.meaning}</h4><p class="translit">${w.translit}</p></div>
-      <span class="label-sm text-muted">${w.mastery || 0}% mastered</span>
-    </div>`).join('') : '<p class="text-muted body-md">Nothing yet — start a lesson to learn your first words.</p>';
-
-  if (!newWords.length && !wordsInLang.length) {
-    document.getElementById('lang-status').textContent = 'No starter lesson available yet for this language — add words manually instead.';
-  }
-}
-
-function startLesson() {
-  if (!lang) return;
-  location.href = 'lesson.html?code=' + encodeURIComponent(lang.code);
-}
-function startQuiz() {
-  if (!lang) return;
-  const wordsInLang = s.vocab.filter(w => w.lang === lang.name);
-  if (wordsInLang.length < 4) { Sanctum.toast('Learn at least 4 words first'); return; }
-  location.href = 'quiz.html?code=' + encodeURIComponent(lang.code);
+  const minutesForLang = s.sessions.filter(se => se.language === lang.name).reduce((sum, se) => sum + (se.durationMin || 0), 0);
+  document.getElementById('stat-hours').textContent = (minutesForLang / 60).toFixed(1) + 'h';
+  document.getElementById('stat-streak').textContent = (s.profile.streak || 0) + ' days';
 }
 </script>
 </body>

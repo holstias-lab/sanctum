@@ -50,11 +50,11 @@
   </div>
 
   <div id="empty-card" class="lesson-card" style="display:none">
-    <h2 class="headline-md">All caught up!</h2>
-    <p class="text-muted body-md mt-2">There's no starter lesson content left for this language right now — nice work. You can always add your own words manually.</p>
+    <h2 class="headline-md">Already learned!</h2>
+    <p class="text-muted body-md mt-2">You already know every word in this lesson — nice work. You can always add your own words manually.</p>
     <div class="flex gap-1 mt-3" style="justify-content:center">
       <a href="vocabulary.html" class="btn btn-primary">Add a Word</a>
-      <a href="index.html" class="btn btn-outline">Back to Language Hub</a>
+      <a href="#" id="empty-hub-link" class="btn btn-outline">Back to Language Hub</a>
     </div>
   </div>
 </main>
@@ -78,10 +78,23 @@ if (!lang || !lang.unlocked) {
 }
 
 document.getElementById('complete-hub-link').href = 'language.html?code=' + encodeURIComponent(lang.code);
-document.getElementById('lesson-title').textContent = lang.name + ' Lesson';
+const emptyHubLink = document.getElementById('empty-hub-link');
+if (emptyHubLink) emptyHubLink.href = 'language.html?code=' + encodeURIComponent(lang.code);
+
+const packId = params.get('pack');
+const lessonId = params.get('lesson');
+const pack = getPacks(lang.name).find(p => p.id === packId);
+const lessonMeta = pack && pack.lessons.find(l => l.id === lessonId);
+
+if (!pack || !lessonMeta) {
+  document.body.innerHTML = '<main class="main"><p class="body-md">Lesson not found. <a href="language.html?code=' + encodeURIComponent(lang.code) + '" class="text-primary-c">Back to Language Hub</a></p></main>';
+  throw new Error('stop');
+}
+
+document.getElementById('lesson-title').textContent = lang.name + ' — ' + lessonMeta.name;
 
 const knownTexts = new Set(s.vocab.filter(w => w.lang === lang.name).map(w => w.arabic));
-const queue = getLessonPack(lang.name).filter(w => !knownTexts.has(w.arabic));
+const queue = getLesson(lang.name, packId, lessonId).filter(w => !knownTexts.has(w.arabic));
 let pos = 0;
 let xpEarned = 0;
 let currentWord = null;
@@ -132,6 +145,9 @@ function finishLesson() {
   document.getElementById('dots').style.display = 'none';
   document.getElementById('complete-card').style.display = 'block';
   document.getElementById('complete-summary').textContent = `You learned ${queue.length} new word${queue.length === 1 ? '' : 's'} and earned +${xpEarned} XP.`;
+  if (queue.length) {
+    Sanctum.logSession({ title: lessonMeta.name, language: lang.name, durationMin: Math.max(1, Math.round(queue.length * 0.5)), type: 'lesson', xp: xpEarned });
+  }
   const wordsNow = s.vocab.filter(w => w.lang === lang.name).length;
   document.getElementById('complete-quiz-btn').style.display = wordsNow >= 4 ? 'inline-flex' : 'none';
   Sanctum.toast(`Lesson complete — +${xpEarned} XP!`);
